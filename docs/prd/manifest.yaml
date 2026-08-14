@@ -1,0 +1,117 @@
+$schema: manifest.schema.json
+schema_version: 1
+system_id: html-poker-prd
+last_reconciled: "2026-08-14"
+
+authority:
+  - latest_explicit_owner_decision
+  - accepted_adr
+  - reference/DECISION-REGISTER.md
+  - MASTER-PRD.md
+  - active_phase_prd
+  - owning_module_prd
+  - ticket_or_implementation_note
+
+budgets_words:
+  master: 1500
+  phase: 1500
+  module: 1200
+
+default_load_rule:
+  required:
+    - MASTER-PRD.md
+    - exactly_one_active_phase_prd
+    - exactly_one_primary_module_prd
+    - cited_decision_rows_only
+  optional:
+    - up_to_two_manifest_dependencies
+  prohibited:
+    - preload_all_prds
+    - treat_research_default_as_owner_decision
+    - copy_requirements_into_non_owning_documents
+
+phases:
+  P1:
+    file: phases/P1-TRUSTED-HOST-DEALER.md
+    modules: [M01, M02, M03, M04, M05, M06, M07, M08, M09]
+  P2:
+    file: phases/P2-DIGITAL-ACCOUNTING.md
+    modules: [M01, M02, M03, M04, M05, M06, M07, M08, M09, M10]
+  P3:
+    file: phases/P3-SKINS-AND-AI.md
+    modules: [M01, M02, M03, M04, M05, M06, M07, M08, M09, M10, M11, M12]
+
+modules:
+  M01: {file: modules/M01-GAME-CORE.md, context_dependencies: [M02, M06, M07]}
+  M02: {file: modules/M02-CARD-CUSTODY-PRIVACY.md, context_dependencies: [M01, M07]}
+  M03: {file: modules/M03-IDENTITY-SEATS-CAPABILITIES.md, context_dependencies: [M01, M04, M07]}
+  M04: {file: modules/M04-CONNECTIVITY-SERVICE.md, context_dependencies: [M03, M07]}
+  M05: {file: modules/M05-AIRPLANE-MODE.md, context_dependencies: [M04, M09]}
+  M06: {file: modules/M06-PRESENTATION-INTERACTION.md, context_dependencies: [M01, M02, M03]}
+  M07: {file: modules/M07-PERSISTENCE-RECOVERY-HISTORY.md, context_dependencies: [M01, M02]}
+  M08: {file: modules/M08-DIAGNOSTICS-RED-TEAM.md, context_dependencies: [M01, M02, M03, M04, M05, M06, M07, M09]}
+  M09: {file: modules/M09-RELEASE-DISTRIBUTION.md, context_dependencies: [M04, M05]}
+  M10: {file: modules/M10-DIGITAL-ACCOUNTING.md, context_dependencies: [M01, M07]}
+  M11: {file: modules/M11-COMMUNITY-SKINS.md, context_dependencies: [M06, M09]}
+  M12: {file: modules/M12-AI-PLAYERS.md, context_dependencies: [M01, M02, M07, M10]}
+
+context_packs:
+  deal_and_show:
+    phase: P1
+    primary_module: M01
+    load: [MASTER-PRD.md, phases/P1-TRUSTED-HOST-DEALER.md, modules/M01-GAME-CORE.md, modules/M02-CARD-CUSTODY-PRIVACY.md, modules/M06-PRESENTATION-INTERACTION.md]
+  join_and_reconnect:
+    phase: P1
+    primary_module: M03
+    load: [MASTER-PRD.md, phases/P1-TRUSTED-HOST-DEALER.md, modules/M03-IDENTITY-SEATS-CAPABILITIES.md, modules/M04-CONNECTIVITY-SERVICE.md, modules/M07-PERSISTENCE-RECOVERY-HISTORY.md]
+  airplane:
+    phase: P1
+    primary_module: M05
+    load: [MASTER-PRD.md, phases/P1-TRUSTED-HOST-DEALER.md, modules/M05-AIRPLANE-MODE.md, modules/M04-CONNECTIVITY-SERVICE.md, modules/M09-RELEASE-DISTRIBUTION.md]
+  ui_mode:
+    phase: P1
+    primary_module: M06
+    load: [MASTER-PRD.md, phases/P1-TRUSTED-HOST-DEALER.md, modules/M06-PRESENTATION-INTERACTION.md, modules/M03-IDENTITY-SEATS-CAPABILITIES.md]
+  digital_chips:
+    phase: P2
+    primary_module: M10
+    load: [MASTER-PRD.md, phases/P2-DIGITAL-ACCOUNTING.md, modules/M10-DIGITAL-ACCOUNTING.md, modules/M01-GAME-CORE.md, modules/M07-PERSISTENCE-RECOVERY-HISTORY.md]
+  skin:
+    phase: P3
+    primary_module: M11
+    load: [MASTER-PRD.md, phases/P3-SKINS-AND-AI.md, modules/M11-COMMUNITY-SKINS.md, modules/M06-PRESENTATION-INTERACTION.md]
+  ai_seat:
+    phase: P3
+    primary_module: M12
+    load: [MASTER-PRD.md, phases/P3-SKINS-AND-AI.md, modules/M12-AI-PLAYERS.md, modules/M02-CARD-CUSTODY-PRIVACY.md, modules/M10-DIGITAL-ACCOUNTING.md]
+  card_release_red_team:
+    phase: P1
+    primary_module: M08
+    load: [MASTER-PRD.md, phases/P1-TRUSTED-HOST-DEALER.md, modules/M08-DIAGNOSTICS-RED-TEAM.md, modules/M02-CARD-CUSTODY-PRIVACY.md, modules/M09-RELEASE-DISTRIBUTION.md, reference/EVIDENCE-INDEX.md]
+  identity_transport_red_team:
+    phase: P1
+    primary_module: M08
+    load: [MASTER-PRD.md, phases/P1-TRUSTED-HOST-DEALER.md, modules/M08-DIAGNOSTICS-RED-TEAM.md, modules/M03-IDENTITY-SEATS-CAPABILITIES.md, modules/M04-CONNECTIVITY-SERVICE.md, reference/EVIDENCE-INDEX.md]
+  authority_recovery_red_team:
+    phase: P1
+    primary_module: M08
+    load: [MASTER-PRD.md, phases/P1-TRUSTED-HOST-DEALER.md, modules/M08-DIAGNOSTICS-RED-TEAM.md, modules/M01-GAME-CORE.md, modules/M07-PERSISTENCE-RECOVERY-HISTORY.md, reference/EVIDENCE-INDEX.md]
+  airplane_presentation_red_team:
+    phase: P1
+    primary_module: M08
+    load: [MASTER-PRD.md, phases/P1-TRUSTED-HOST-DEALER.md, modules/M08-DIAGNOSTICS-RED-TEAM.md, modules/M05-AIRPLANE-MODE.md, modules/M06-PRESENTATION-INTERACTION.md, reference/EVIDENCE-INDEX.md]
+
+reference:
+  glossary: reference/GLOSSARY.md
+  decisions: reference/DECISION-REGISTER.md
+  evidence: reference/EVIDENCE-INDEX.md
+  module_template: templates/MODULE-PRD-TEMPLATE.md
+  phase_template: templates/PHASE-PRD-TEMPLATE.md
+
+repository_reference:
+  documentation_map: ../README.md
+  architecture_layout: ../architecture/REPOSITORY-LAYOUT.md
+  adr_index: ../adr/README.md
+  research_index: ../research/README.md
+  quality_gates: ../quality/QUALITY-GATES.md
+  release_checklist: ../releasing/RELEASE-CHECKLIST.md

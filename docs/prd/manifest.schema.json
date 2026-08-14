@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HTML Poker App PRD manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "system_id",
+    "last_reconciled",
+    "authority",
+    "budgets_words",
+    "default_load_rule",
+    "phases",
+    "modules",
+    "context_packs",
+    "reference",
+    "repository_reference"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "manifest.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "system_id": {
+      "const": "html-poker-prd"
+    },
+    "last_reconciled": {
+      "type": "string",
+      "format": "date"
+    },
+    "authority": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "budgets_words": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["master", "phase", "module"],
+      "properties": {
+        "master": { "type": "integer", "minimum": 1 },
+        "phase": { "type": "integer", "minimum": 1 },
+        "module": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "default_load_rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "optional", "prohibited"],
+      "properties": {
+        "required": { "$ref": "#/$defs/stringList" },
+        "optional": { "$ref": "#/$defs/stringList" },
+        "prohibited": { "$ref": "#/$defs/stringList" }
+      }
+    },
+    "phases": {
+      "type": "object",
+      "minProperties": 1,
+      "patternProperties": {
+        "^P[1-9][0-9]*$": { "$ref": "#/$defs/phase" }
+      },
+      "additionalProperties": false
+    },
+    "modules": {
+      "type": "object",
+      "minProperties": 1,
+      "patternProperties": {
+        "^M[0-9]{2}$": { "$ref": "#/$defs/module" }
+      },
+      "additionalProperties": false
+    },
+    "context_packs": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "$ref": "#/$defs/contextPack" }
+    },
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["glossary", "decisions", "evidence", "module_template", "phase_template"],
+      "properties": {
+        "glossary": { "type": "string", "minLength": 1 },
+        "decisions": { "type": "string", "minLength": 1 },
+        "evidence": { "type": "string", "minLength": 1 },
+        "module_template": { "type": "string", "minLength": 1 },
+        "phase_template": { "type": "string", "minLength": 1 }
+      }
+    },
+    "repository_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["documentation_map", "architecture_layout", "adr_index", "research_index", "quality_gates", "release_checklist"],
+      "properties": {
+        "documentation_map": { "type": "string", "minLength": 1 },
+        "architecture_layout": { "type": "string", "minLength": 1 },
+        "adr_index": { "type": "string", "minLength": 1 },
+        "research_index": { "type": "string", "minLength": 1 },
+        "quality_gates": { "type": "string", "minLength": 1 },
+        "release_checklist": { "type": "string", "minLength": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "stringList": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "moduleId": {
+      "type": "string",
+      "pattern": "^M[0-9]{2}$"
+    },
+    "phase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "modules"],
+      "properties": {
+        "file": { "type": "string", "pattern": "^phases/.+\\.md$" },
+        "modules": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/moduleId" }
+        }
+      }
+    },
+    "module": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "context_dependencies"],
+      "properties": {
+        "file": { "type": "string", "pattern": "^modules/.+\\.md$" },
+        "context_dependencies": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/moduleId" }
+        }
+      }
+    },
+    "contextPack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phase", "primary_module", "load"],
+      "properties": {
+        "phase": {
+          "type": "string",
+          "pattern": "^P[1-9][0-9]*$"
+        },
+        "primary_module": { "$ref": "#/$defs/moduleId" },
+        "load": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

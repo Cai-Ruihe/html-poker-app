@@ -1,0 +1,27 @@
+{
+  "name": "@html-poker/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fontsource-variable/archivo": "5.3.0",
+    "@fontsource-variable/bricolage-grotesque": "5.3.0",
+    "@html-poker/card-custody": "workspace:*",
+    "@html-poker/game-core": "workspace:*",
+    "@html-poker/persistence": "workspace:*",
+    "@html-poker/presentation": "workspace:*",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "@vitejs/plugin-react": "6.0.5",
+    "vite": "8.2.1"
+  }
+}

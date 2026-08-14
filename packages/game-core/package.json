@@ -1,0 +1,13 @@
+{
+  "name": "@html-poker/game-core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@html-poker/card-custody": "workspace:*",
+    "@html-poker/persistence": "workspace:*"
+  }
+}

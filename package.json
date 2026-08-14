@@ -1,0 +1,50 @@
+{
+  "name": "html-poker-app",
+  "version": "0.0.0",
+  "description": "A trusted-host browser dealer for in-person, play-chip-only Texas Hold'em.",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=24 <25",
+    "pnpm": ">=11 <12"
+  },
+  "scripts": {
+    "build": "pnpm --filter @html-poker/web build",
+    "audit:prod": "pnpm audit --prod --audit-level high",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm docs:check && pnpm deps:check && pnpm test && pnpm build",
+    "deps:check": "pnpm peers check",
+    "dev": "pnpm --filter @html-poker/web dev",
+    "docs:check": "node tools/documentation/check-docs.mjs",
+    "format": "prettier --write \".github/workflows/**/*.{yml,yaml}\" \"apps/**/*.{css,html,js,json,ts,tsx}\" \"packages/**/*.{js,json,ts,tsx}\" \"tests/**/*.{js,json,ts,tsx}\" \"tools/**/*.{js,json,mjs,ts}\" \"*.{js,json,ts,yaml,yml}\"",
+    "format:check": "prettier --check \".github/workflows/**/*.{yml,yaml}\" \"apps/**/*.{css,html,js,json,ts,tsx}\" \"packages/**/*.{js,json,ts,tsx}\" \"tests/**/*.{js,json,ts,tsx}\" \"tools/**/*.{js,json,mjs,ts}\" \"*.{js,json,ts,yaml,yml}\"",
+    "lint": "eslint .",
+    "licenses:prod": "pnpm licenses list --prod",
+    "preview": "pnpm --filter @html-poker/web preview",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@html-poker/card-custody": "workspace:*",
+    "@html-poker/game-core": "workspace:*",
+    "@html-poker/persistence": "workspace:*",
+    "@axe-core/playwright": "4.13.0",
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.62.1",
+    "@types/node": "26.2.0",
+    "@vitest/coverage-v8": "4.1.10",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "eslint": "10.8.1",
+    "globals": "17.11.0",
+    "prettier": "3.9.6",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.67.0",
+    "vitest": "4.1.10",
+    "yaml": "2.9.0"
+  }
+}

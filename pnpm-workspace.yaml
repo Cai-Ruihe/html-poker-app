@@ -1,0 +1,9 @@
+packages:
+  - apps/*
+  - packages/*
+  - services/*
+
+minimumReleaseAge: 1440
+
+minimumReleaseAgeExclude:
+  - "@html-poker/*"

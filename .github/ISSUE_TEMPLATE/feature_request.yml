@@ -1,0 +1,52 @@
+name: Feature proposal
+description: Propose a product improvement with evidence and trade-offs
+title: "[Proposal]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Search the PRDs, decision register, ADRs, and existing issues first. Real-money, payment, cash-out, rake, and gambling-account features are outside project scope.
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+      description: Who encounters it, in which mode, and how often?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and precedent
+      description: Link observed behavior, usability evidence, standards, inspected products/code, or research. New ideas are welcome when logically justified.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed outcome
+      description: Describe the desired behavior, not only a UI control or implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and trade-offs
+      description: Include the current workaround and why it is insufficient.
+  - type: textarea
+    id: architecture
+    attributes:
+      label: Phase, module, and security effect
+      description: Name likely owners and any effect on card privacy, authority, recovery, connectivity, accessibility, or the minimal table UI.
+    validations:
+      required: true
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: This proposal does not involve real money, payment, cash-out, rake, or gambling accounts.
+          required: true
+        - label: I have not included private cards, credentials, invitation data, or vulnerability details.
+          required: true

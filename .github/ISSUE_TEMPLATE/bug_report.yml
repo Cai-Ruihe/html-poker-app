@@ -1,0 +1,77 @@
+name: Bug report
+description: Report a reproducible, non-sensitive problem
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not disclose hidden cards, deck order, credentials, invitation payloads, exploit details, or raw developer logs here. Use SECURITY.md for anything security-sensitive.
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: Release version, artifact identifier, or commit hash.
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Mode
+      options:
+        - Normal Mode
+        - Airplane Mode
+        - Player
+        - Tablet Table
+        - TV Table
+        - Public Table View
+        - Developer Mode
+        - Documentation or tooling
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Device, operating system, browser/version, network type, and whether the page was installed or opened as a file.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Use a fresh test game and remove all sensitive values.
+      placeholder: |
+        1. Start...
+        2. Join...
+        3. Observe...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Privacy-safe evidence
+      description: Screenshots or minimized/redacted output only. Do not upload support bundles unless a maintainer provides a private route.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed private cards, deck order, credentials, invitation data, names, and private logs.
+          required: true
+        - label: This is not a vulnerability report.
+          required: true

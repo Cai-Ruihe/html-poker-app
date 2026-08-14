@@ -1,0 +1,19 @@
+# Operating-system and editor residue
+.DS_Store
+.idea/
+.vscode/
+
+# Local secrets and configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Generated build and test output
+*.log
+coverage/
+dist/
+node_modules/
+test-results/
+playwright-report/

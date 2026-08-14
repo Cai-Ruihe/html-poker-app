@@ -1,0 +1,19 @@
+{
+  "name": "@html-poker/presentation",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.tsx"
+  },
+  "dependencies": {
+    "@html-poker/card-custody": "workspace:*",
+    "@html-poker/game-core": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=19 <20"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.18"
+  }
+}
