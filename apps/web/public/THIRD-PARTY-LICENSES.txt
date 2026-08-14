@@ -1,6 +1,45 @@
 HTML Poker App - Third-Party Licenses
 
-This distribution includes React, React DOM, and Scheduler 19.2.8.
+This notice bundle accompanies the Normal static build and is embedded in the
+Airplane artifact. Review the locked production inventory with:
+
+  pnpm licenses:prod
+
+Browser/runtime packages in this Phase 1 build:
+
+- React, React DOM, and Scheduler 19.2.8 — MIT
+- qrcode 1.5.4, dijkstrajs 1.0.3, pngjs 5.0.0, and fflate 0.8.3 — MIT
+- @zxing/browser 0.2.1 — MIT
+- @zxing/library 0.23.0 — Apache-2.0, with its bundled jai-imageio notice
+- @zxing/text-encoding 0.9.0 — Apache-2.0 option (the package is dual-licensed
+  Unlicense OR Apache-2.0)
+- Archivo variable font 5.3.0 — OFL-1.1
+
+The Connection Service separately uses ws 8.21.3 under MIT. Workspace package
+code is project-owned Apache-2.0 code; see the repository LICENSE and NOTICE.
+
+------------------------------------------------------------------------
+
+MIT-licensed package attributions
+
+React, React DOM, and Scheduler:
+Copyright (c) Meta Platforms, Inc. and affiliates.
+
+qrcode:
+Copyright (c) 2012 Ryan Day.
+
+dijkstrajs:
+Copyright (C) 2008 Wyatt Baldwin.
+
+pngjs:
+pngjs2 original work Copyright (c) 2015 Luke Page & Original Contributors.
+pngjs derived work Copyright (c) 2012 Kuba Niegowski.
+
+fflate:
+Copyright (c) Arjun Barrett.
+
+@zxing/browser:
+Copyright (c) 2018 ZXing for JS.
 
 MIT License
 
@@ -26,19 +65,32 @@ SOFTWARE.
 
 ------------------------------------------------------------------------
 
+Apache-2.0 licensed package acknowledgement
+
+@zxing/library is distributed under Apache License 2.0. Its upstream LICENSE
+also includes the following jai-imageio attribution:
+
+Copyright (c) 2005 Sun Microsystems, Inc.
+Copyright © 2010-2014 University of Manchester
+Copyright © 2010-2015 Stian Soiland-Reyes
+Copyright © 2015 Peter Hull
+All Rights Reserved.
+
+@zxing/text-encoding is used under its Apache-2.0 option. Its upstream notice
+states that encoding indexes, algorithms, and many comments derive from the
+Encoding Standard at https://encoding.spec.whatwg.org/.
+
+The complete Apache License 2.0 text accompanies this project as LICENSE and
+must remain with any release package that distributes these components.
+
+------------------------------------------------------------------------
+
 This distribution includes the Archivo variable font.
 
 Copyright 2020 The Archivo Project Authors
 (https://github.com/Omnibus-Type/Archivo)
 Archivo-Italic[wdth,wght].ttf: Copyright 2020 The Archivo Project Authors
 (https://github.com/Omnibus-Type/Archivo)
-
-This distribution includes the Bricolage Grotesque variable font.
-
-Copyright 2022 The Bricolage Grotesque Project Authors
-(https://github.com/ateliertriay/bricolage)
-
-Both font families are licensed under the following terms:
 
 -----------------------------------------------------------
 SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007

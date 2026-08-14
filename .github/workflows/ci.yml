@@ -35,7 +35,7 @@ jobs:
         run: pnpm check
       - name: Audit production dependencies
         run: pnpm audit:prod
-      - name: Install Chromium for journey tests
-        run: pnpm exec playwright install --with-deps chromium
-      - name: Verify Chromium journey
-        run: pnpm test:e2e --project chromium
+      - name: Install browser engines for journey tests
+        run: pnpm exec playwright install --with-deps chromium webkit
+      - name: Verify browser journeys
+        run: pnpm test:e2e

@@ -14,6 +14,7 @@ The documentation is deliberately split by authority and reading purpose. Start 
 
 ## Architecture and decisions
 
+- [Phase 1 runtime architecture](architecture/PHASE-1-RUNTIME.md) — current mode composition, trust boundaries, recovery, and evidence limits.
 - [Repository layout](architecture/REPOSITORY-LAYOUT.md) — source boundaries and dependency rules.
 - [ADR index](adr/README.md) — accepted cross-cutting architecture and governance choices.
 - [TypeScript browser monorepo ADR](adr/0007-typescript-browser-monorepo-toolchain.md) — current implementation and test toolchain.
@@ -21,7 +22,10 @@ The documentation is deliberately split by authority and reading purpose. Start 
 ## Quality and release
 
 - [Quality gates](quality/QUALITY-GATES.md) — checks required at contribution, phase, and release boundaries.
+- [Phase 1 local release candidate](releases/PHASE-1-LOCAL-RC.md) — implemented scope, local evidence, and explicit external release blockers.
 - [Release checklist](releasing/RELEASE-CHECKLIST.md) — evidence required before an official release.
+- [Normal Mode operations](operations/NORMAL-MODE.md) and [Airplane Mode operations](operations/AIRPLANE-MODE.md) — operator-facing local/deployer instructions.
+- [Card Privacy automated red-team record](security/PHASE-1-CARD-PRIVACY-RED-TEAM.md) — regression evidence and what it does not prove.
 - [Security policy](../SECURITY.md) — trust limits, invariants, and private reporting.
 - [Roadmap](../ROADMAP.md) — phase outcomes and evidence gates.
 

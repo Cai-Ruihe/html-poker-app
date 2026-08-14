@@ -1,94 +1,95 @@
 # HTML Poker App
 
-> Working title. A browser-based Texas Hold'em table for social, play-chip-only games.
+> A trusted-host digital dealer for in-person, play-chip-only Texas Hold'em.
 
-This project aims to bring the low-attention, in-person experience of a dedicated poker dealer app to any modern browser. Phones may hold private cards, while a tablet, television, or computer presents the public table. It is designed for ordinary internet use and for a preloaded, local-network **Airplane Mode**.
+HTML Poker keeps betting, chips, and conversation physical. A Trusted Host browser shuffles and deals; player phones receive only their own hole cards; a TV, public table, or tablet can show only public information. It is not an online gambling product, does not model money, and does not use player accounts.
 
-Phase 1 is now **in development**. A tested two-seat local preview can deal private hole cards, reveal the board, show a seat's cards, end a hand, and start the next one; the authority boundary already enforces the Phase 1 two-to-ten-seat range. It is not a release: joining, credentials, networking, durable recovery, Airplane Mode, and China-readiness evidence are not implemented yet.
+## Phase 1 status
 
-## Product principles
+**Fact — implemented and automated locally.** The Phase 1 codebase supports two to ten player seats, one-use/revocable QR or link invitations, role-scoped Player/TV/Public Table/Tablet surfaces, private card projection, guarded hand lifecycle, show/muck/fold handling, correction/void controls, encrypted IndexedDB recovery, redacted local diagnostics, Normal Mode direct WebRTC with card-blind relay fallback, reverse display pairing, and a standalone two-way-QR Airplane artifact.
+
+**Fact — automated evidence.** Contract suites cover authority, identity, persistence, diagnostics, and relay isolation. Chromium journeys cover local dealing, player refresh/recovery, disconnect-to-sit-out, Normal direct/relay routes and reverse display pairing, plus standalone Airplane boot and pairing.
+
+**Unknown — not a public release claim.** This local release candidate has not passed the required physical iOS/iPadOS, Android, TV, WAN-removal, hostile-network, Connection Service restart, or representative mainland-China matrices. It also has no GitHub remote, protected branch, release signature, or private vulnerability-reporting channel yet. Those are explicit release gates, not omissions hidden by a passing local suite.
+
+See the [Phase 1 local release-candidate record](docs/releases/PHASE-1-LOCAL-RC.md) for the exact boundary between demonstrated evidence and remaining gates.
+
+## Product constraints
 
 - **Play chips only.** No money, payment, cash-out, rake, or gambling accounts.
-- **Private cards first.** A device receives only the private information its role needs.
-- **Honest trust model.** Phase 1 trusts the active host; it does not claim protection from a malicious or compromised host.
-- **Robust local play.** Airplane Mode, China operation, and recovery are explicit test gates.
-- **No mandatory central poker engine.** Normal connectivity tries direct peer-to-peer, then deployer-owned private relay, then an optional deployer-owned cloud relay.
-- **No player accounts.** Table-scoped credentials restore a seat after refresh or temporary disconnection.
-- **Quiet table UI.** Common play stays simple; uncommon administration lives away from the main surface.
-- **Replaceable edges.** Presentation skins, transport, persistence, accounting, and future AI seats have narrow module boundaries.
+- **Trusted Host.** The active host can inspect and manipulate the deck by design; encryption does not make a malicious or compromised host honest.
+- **Card privacy first.** Other players, public surfaces, diagnostics, and the Connection Service do not receive unrevealed cards.
+- **No required central poker engine.** Normal Mode prefers direct WebRTC, then an operator-owned private relay, then an optional operator-owned cloud relay. Airplane Mode has no internet dependency.
+- **No player accounts.** A table-scoped credential restores a seat in the same browser; copied recovery links cannot open the same private seat simultaneously.
+- **Quiet instrument, not casino UI.** Regular play stays on the table; uncommon administration lives in an off-table drawer.
 
-## Roadmap
+## Quick start
 
-| Phase | Intended outcome | Status |
-|---|---|---|
-| 1 | Trusted-host digital dealer used with physical chips; Normal and Airplane modes | In development |
-| 2 | Optional digital play-chip accounting, history, and remote public-table viewing | Reserved |
-| 3 | Data-only community skins and optional provider-neutral AI training players | Reserved |
-
-See [ROADMAP.md](ROADMAP.md) for gates rather than date promises.
-
-## Start here
-
-- Product direction and document router: [Master PRD](docs/prd/MASTER-PRD.md)
-- Minimal-context loading instructions: [PRD system guide](docs/prd/README.md)
-- Document and architecture map: [docs/README.md](docs/README.md)
-- Planned source ownership: [repository layout](docs/architecture/REPOSITORY-LAYOUT.md)
-- Design decisions: [ADR index](docs/adr/README.md)
-- Contribution rules: [CONTRIBUTING.md](CONTRIBUTING.md)
-- Security model and private reporting: [SECURITY.md](SECURITY.md)
-- Bundled dependency and font notices: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
-
-Agents and contributors should not load every PRD. Use [docs/prd/manifest.yaml](docs/prd/manifest.yaml) to select one phase, one primary module, and only the dependencies relevant to the task.
-
-## Run the local preview
-
-Prerequisites are Node.js 24 and pnpm 11, as recorded in [ADR-0007](docs/adr/0007-typescript-browser-monorepo-toolchain.md).
+Requires Node.js 24 and pnpm 11, pinned in [ADR-0007](docs/adr/0007-typescript-browser-monorepo-toolchain.md).
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Open the local address printed by Vite. This preview intentionally lets one trusted operator switch among the public and seat projections so the projection boundary can be tested on one device; it is not a player-authentication model.
+Open the local address shown by Vite. With no relay URL configured, the app provides same-browser Normal development using the browser channel. Use a current, secure browser; the host preflight fails closed when its cryptography, persistence, projection, or exclusivity prerequisites are absent.
 
-Run the repository checks with:
+Build both distributable forms with:
+
+```sh
+pnpm build
+```
+
+- `dist/normal/` is the static Normal Mode build.
+- `dist/airplane/poker-airplane.html` is the standalone Airplane file. Open the downloaded file itself, not a development server.
+
+For actual multi-device Normal Mode and Airplane Mode instructions, see [Normal Mode operations](docs/operations/NORMAL-MODE.md) and [Airplane Mode operations](docs/operations/AIRPLANE-MODE.md).
+
+## Verify a change
 
 ```sh
 pnpm check
+pnpm test:coverage
+pnpm test:e2e
+pnpm audit:prod
+pnpm licenses:prod
 ```
 
-For the real-browser journey tests, install the pinned Playwright browsers once and run:
+Playwright browsers are installed separately:
 
 ```sh
 pnpm exec playwright install chromium webkit
-pnpm test:e2e
 ```
 
-## Security reality
+Check build determinism after a committed change with:
 
-Phase 1 is a **Trusted Host** design. Encryption protects card data in transit, at rest, in diagnostics, and from unauthorized peer roles. It cannot prevent the host process, a compromised host device, or a modified official-looking build from seeing or manipulating the deck. A future distributed “Mental Poker” design is recorded as a separate option, not a present guarantee.
+```sh
+pnpm release:reproducibility
+```
 
-Do not report a card-privacy vulnerability in a public issue. Follow [SECURITY.md](SECURITY.md).
+After a clean, committed worktree has built the artifacts, create and verify a local provenance manifest with:
 
-## Open-source model
+```sh
+pnpm release:manifest
+pnpm release:verify
+```
 
-The project is licensed under [Apache License 2.0](LICENSE): forks, modification, redistribution, and commercial use are allowed under its terms. The project owner controls what is merged and released from the official repository; independent forks do not become “Official Core” merely by reusing the code. See [GOVERNANCE.md](GOVERNANCE.md).
+The manifest is generated under ignored `dist/release/`; it is a local receipt, not a release signature.
 
-## Inspiration and independence
+## Architecture and documentation
 
-Bold Poker is an interaction reference because of its compact, physical-table-oriented flow. This project is not affiliated with or endorsed by Bold Poker. Its code, artwork, branding, and exact interface expression must not be copied.
+- [Master PRD](docs/prd/MASTER-PRD.md) and [Phase 1 PRD](docs/prd/phases/P1-TRUSTED-HOST-DEALER.md)
+- [Phase 1 runtime architecture](docs/architecture/PHASE-1-RUNTIME.md)
+- [Repository layout](docs/architecture/REPOSITORY-LAYOUT.md)
+- [Quality gates](docs/quality/QUALITY-GATES.md)
+- [Card Privacy automated red-team record](docs/security/PHASE-1-CARD-PRIVACY-RED-TEAM.md)
+- [Release checklist](docs/releasing/RELEASE-CHECKLIST.md)
+- [Contributing](CONTRIBUTING.md), [Security](SECURITY.md), and [Governance](GOVERNANCE.md)
 
-## Project status
+The project is Apache-2.0 licensed. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and the bundled `THIRD-PARTY-LICENSES.txt` for dependency/font notices.
 
-Facts today:
+## Open-source boundary
 
-- the modular PRD and architecture-document structure exists;
-- the strict TypeScript, React, Vite, Vitest, and Playwright toolchain is selected in [ADR-0007](docs/adr/0007-typescript-browser-monorepo-toolchain.md);
-- the first local create/deal/show/end vertical slice has contract and browser-journey evidence;
-- this durable folder is a local Git repository with no configured public remote;
-- the current authority store is memory-only, so refresh/recovery is not yet supported; and
-- release security, physical-device compatibility, networking, Airplane Mode, and China-readiness claims remain unverified until their named gates pass.
+This repository is ready for review and a future open-source publication, but publication itself is intentionally not performed by this codebase. Creating a public GitHub repository, configuring branch protection, enabling private vulnerability reporting, choosing release signing, deploying a Connection Service, and publishing artifacts remain owner-controlled external operations.
 
-## Licence
-
-Copyright 2026 Ruihe Cai. Project-owned code and documentation are licensed under the [Apache License, Version 2.0](LICENSE), except [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), which is an attributed Contributor Covenant adaptation under CC BY-SA 4.0. See [NOTICE](NOTICE).
+Bold Poker is an interaction reference only. HTML Poker is not affiliated with or endorsed by Bold Poker, and its code, branding, artwork, and exact interface expression are not copied.

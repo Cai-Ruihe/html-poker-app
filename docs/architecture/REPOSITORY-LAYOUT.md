@@ -16,7 +16,7 @@ flowchart LR
   CORE --> ACCT["Optional digital accounting"]
   NET["Realtime transport"] --> ID
   NET --> CORE
-  AIR["Airplane adapter"] --> NET
+  AIR["Airplane adapter\napps/web/src/airplane.ts"] --> NET
   RELAY["Card-blind Connection Service"] --> NET
   SKIN["Validated data-only skins"] --> UI
   DIAG["Redacted diagnostics"] -. observes allowlisted events .-> CORE
@@ -26,32 +26,27 @@ flowchart LR
 
 Arrows mean “may call or provide an adapter to,” not “may inspect internal state.” Card Custody produces role-filtered projections before transport or presentation. The Connection Service never calls poker rules and never receives card plaintext or keys.
 
-## Ownership tree (current and reserved)
+## Ownership tree (implemented today)
 
 ```text
 html-poker-app/
 ├── apps/
-│   └── web/                         # Browser shell and mode composition
+│   └── web/                         # Browser shell and Normal/Airplane composition
+│       ├── public/                  # URL-only deployer config and notice bundle
+│       └── src/                     # App, runtime, and Airplane QR/WebRTC adapter
 ├── packages/
 │   ├── game-core/                   # Commands, events, rules, lifecycle
 │   ├── card-custody/                # Shuffle, hidden state, projections
 │   ├── identity-capabilities/       # Join, seats, credentials, authority
 │   ├── realtime-transport/          # Protocol and P2P/relay adapters
-│   ├── airplane-mode/               # Offline bootstrap and packaging adapter
 │   ├── presentation/                # Player, Tablet, TV, Public table views
 │   ├── persistence/                 # Commit, replay, checkpoint, recovery
 │   ├── diagnostics/                 # Redacted schemas and support bundles
-│   ├── accounting/                  # Phase 2 play-chip ledger and settlement
-│   ├── skin-schema/                 # Phase 3 data-only skin validation
-│   └── ai-seat/                     # Phase 3 SeatController adapters
 ├── services/
-│   ├── connection-service/          # Card-blind signaling/relay/log storage
-│   └── ai-gateway/                  # Optional isolated provider credentials
+│   └── connection-service/          # Card-blind signaling, relay, ticket, pairing mailbox
 ├── tests/
 │   ├── contract/                    # Public module interface behavior
 │   ├── journey/                     # Supported user journeys and modes
-│   ├── compatibility/               # Browser/device/network matrix
-│   ├── fault/                       # Crash, duplication, partition, resume
 │   └── security/                    # Privacy and adversarial tests
 ├── tools/
 │   ├── documentation/               # Link, ID, manifest, and budget checks
@@ -60,7 +55,7 @@ html-poker-app/
 └── .github/                         # Contribution templates and automation
 ```
 
-This is a placement contract. Entries for later modules remain reserved and are not empty scaffold requirements; the stack ADR may still be superseded while preserving these ownership boundaries.
+The Airplane adapter deliberately lives in the web app because it is a browser delivery/bootstrap concern, while its message transport uses the same realtime boundary as Normal Mode. Phase 2 reserves `packages/accounting`; Phase 3 reserves `packages/skin-schema`, `packages/ai-seat`, and a separately isolated `services/ai-gateway`. They are not empty directories and must not be added merely to make the tree look complete.
 
 ## Dependency rules
 

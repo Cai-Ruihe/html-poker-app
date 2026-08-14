@@ -13,6 +13,7 @@ Use this checklist for a release candidate; do not mark an item complete without
 
 - [ ] Build starts from a clean checkout and locked dependencies/toolchain.
 - [ ] Normal and Airplane artifacts are immutable and self-contained for their declared mode.
+- [ ] `pnpm release:reproducibility` passes and a `pnpm release:manifest` / `pnpm release:verify` receipt records every artifact digest from the tagged commit.
 - [ ] Artifact digests and provenance/signature receipts are recorded.
 - [ ] Dependency vulnerability, licence, and NOTICE inventory is reviewed.
 - [ ] Artifact substitution, downgrade, mixed-version, and offline update behavior passes.
@@ -45,3 +46,5 @@ Use this checklist for a release candidate; do not mark an item complete without
 ## Release receipt
 
 Record version, date, commit, artifact digests, evidence links, approvers, known risks, rollback artifact, and final go/no-go decision in the future release-record directory. The receipt must not contain unrevealed cards, session credentials, or raw private diagnostics.
+
+The repository's generated local manifest is only a provenance input. It becomes an official release receipt only after the owner records the matching tag, signature policy, approvers, external test evidence, and go/no-go decision.

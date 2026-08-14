@@ -1,6 +1,6 @@
 # Quality gates
 
-**Status:** Normative baseline under [ADR-0007](../adr/0007-typescript-browser-monorepo-toolchain.md).
+**Status:** Normative baseline under [ADR-0007](../adr/0007-typescript-browser-monorepo-toolchain.md). The local Phase 1 implementation has automated evidence, but no official release gate is marked complete without the dated external receipt it requires.
 
 Quality claims require evidence on the affected surface. A passing unit suite alone cannot establish card privacy, browser compatibility, Airplane support, China readiness, or release integrity.
 
@@ -32,7 +32,11 @@ pnpm test:e2e
 
 Run `pnpm test:coverage` for authority, custody, persistence, and projection-policy changes. These commands are contribution gates; the physical device, network, security, and release gates below remain separate evidence requirements.
 
+The 80% Vitest threshold measures deterministic card, game, identity, diagnostics, transport, and relay-broker source. It deliberately does not pretend that a Node unit runner can witness the browser composition/runtime, IndexedDB/WebCrypto lease bridge, or Connection Service HTTP/WebSocket entry point. Those environment-bound surfaces require the relevant Playwright journeys and, before a support claim, the physical-device evidence in the release gate. New deterministic source belongs in the measured paths; adding a coverage exclusion is not an alternative to a test.
+
 Dependency or release changes must also run `pnpm audit:prod` and review `pnpm licenses:prod`. The lockfile, audit result, and licence inventory are evidence; they do not replace source/provenance review or the release notice bundle.
+
+For a committed candidate, run `pnpm release:reproducibility`, then create and verify the ignored local artifact receipt with `pnpm release:manifest` and `pnpm release:verify`. The receipt records source revision, lockfile digest, tool versions, and SHA-256 artifact entries; it is not a release signature.
 
 ## Module contract gates
 
@@ -55,6 +59,17 @@ Dependency or release changes must also run `pnpm audit:prod` and review `pnpm l
 Every phase has a Card Privacy Red Team review independent from the implementation pass. It attacks host/peer role confusion, projection leaks, browser storage, reconnect, diagnostics, backup, relay, supply chain, and the new phase boundary. Findings are tracked to fix, explicit risk acceptance, or release block.
 
 The red-team agent is a useful adversarial reviewer, not proof of perfect security or a substitute for later expert review where risk warrants it.
+
+## Phase 1 local evidence versus external gates
+
+| Surface | Current local evidence | Still required before public support claim |
+|---|---|---|
+| Core/identity/persistence | Contract tests and Chromium user journeys cover the implemented flows, recovery, exclusivity, invitation replay, replacement, and disconnect sit-out. | Storage pressure, browser discard, long suspend, physical-device behavior, and fault injection on the final candidate. |
+| Normal connectivity | Chromium journeys cover direct WebRTC after signaling, relay fallback, ticket binding, and reverse display pairing against a local service. | NAT/TURN, route loss/switch, service restart, load, TLS/reverse proxy, and representative networks. |
+| Airplane | Generated `file://` artifact boots with no observed external request; Chromium runs the local two-way QR direct-WebRTC journey. Headless Mobile WebKit boots the file but has no local ICE candidate in the current eight-second probe, so it is not counted as a pairing pass. | WAN-removed physical-device matrix, client isolation, camera/file handling, 2–10 seats plus public display, and refresh/re-pair evidence. |
+| Privacy | Automated card-projection, hostile-name, storage, diagnostics, relay, and artifact regressions pass. | The frozen-candidate four-pack Card Privacy Red Team and owner disposition of every finding. |
+| Distribution | Normal/Airplane builds and reproducibility/provenance scripts exist. | Clean-clone run, signature/provenance policy, published notices/SBOM, integrity substitution review, and owner-approved release receipt. |
+| China | No local claim. | Dated representative network measurements and legal/operational review. |
 
 ## Release gate
 

@@ -6,6 +6,11 @@ All notable project changes will be documented here. The format follows [Keep a 
 
 ### Added
 
+- Complete Phase 1 trusted-host dealer slice: two-to-ten seat capabilities, one-use/revocable invitations, Player/TV/Public Table/Tablet projections, hand lifecycle controls, seat replacement/reorder/dealer relocation, void/correction records, encrypted recovery, and redacted diagnostics.
+- Normal Mode route implementation with local browser channel, direct WebRTC after private signaling, card-blind private relay fallback, table-scoped four-hour relay tickets, host-side ticket renewal, and host-approved reverse display pairing.
+- Standalone Airplane Mode artifact with fully bundled assets, restrictive offline CSP, two-way QR offer/answer pairing, local `iceServers: []` WebRTC, native QR detection with bundled ZXing fallback, and artifact request regression coverage.
+- Phase 1 operations, runtime architecture, automated privacy-red-team, and local release-candidate records that distinguish demonstrated local evidence from device/network/release gates.
+- Release provenance tooling for two-build artifact-digest reproducibility checks and a clean-worktree SHA-256 manifest.
 - Modular Master, phase, and module PRD system with a machine-readable context manifest.
 - Decision register, glossary, evidence index, and reusable PRD templates.
 - Open-source contribution, security, governance, conduct, architecture-decision, quality, and release documentation.
@@ -20,6 +25,8 @@ All notable project changes will be documented here. The format follows [Keep a 
 
 ### Security
 
+- Replaced static relay credential configuration with URL-only deployment configuration; a host operator token mints a table-scoped ticket locally and is not placed in player links.
+- Added encrypted reverse-display pairing responses, relay table/host/protocol binding, relay-ticket expiry/renewal behavior, and browser evidence for direct/relay route behavior.
 - Documented the Phase 1 Trusted Host limitation and mandatory Card Privacy Red Team gate.
 - Kept custody state out of presentation interfaces and added negative tests for cross-seat and public projection leakage.
 - Made custody state opaque outside its owning module, isolated projection arrays from authoritative state, required active Hand IDs on hand-scoped commands, rejected post-completion exposure, and made storage exceptions fail closed.

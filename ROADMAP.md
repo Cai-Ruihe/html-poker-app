@@ -9,32 +9,18 @@ This roadmap is ordered by capability and evidence gates, not calendar dates. A 
 - Added locked dependencies, automated documentation checks, contract tests, real-browser journey tests, and a clean-build CI workflow.
 - Create the public GitHub repository only after private security/conduct contact channels and branch-protection ownership are configured.
 
-## Phase 1 — Trusted-Host dealer (in development)
+## Phase 1 — Trusted-Host dealer (local release candidate; external gates open)
 
-Verified locally in the first tracer slice:
+Implemented locally with automated evidence:
 
-- enforce the two-to-ten-seat authority range and exercise the two-seat local preview with a Web Crypto-shuffled hold'em hand;
-- expose public and seat-scoped projections without placing another seat's cards in the public DOM;
-- reveal flop, turn, and river; show a seat's cards; end a hand; and start the next hand;
-- reject stale commands, preserve idempotent receipts, and withhold acknowledgement on persistence failure; and
-- render responsive desktop and mobile-WebKit journeys with an automated accessibility scan.
+- enforce two-to-ten seat capacity; issue/revoke/recover table-scoped credentials; and deny copied-seat tabs;
+- deliver private hole-card/public projections across host, Player, Tablet Control, TV, and Public Table roles;
+- support fold/undo/show/muck, streets, guarded end/next hand, seat reorder/replacement/dealer relocation, void/correction, and disconnect-to-sit-out;
+- atomically persist authority state, validate deterministic same-browser host replay, and preserve encrypted player recovery;
+- use direct WebRTC after relay signaling, operator-owned relay fallback with scoped/renewable tickets, and host-approved reverse TV/Public Table pairing; and
+- build a standalone `file://` Airplane artifact with two-way QR pairing, no external requests, empty ICE-server list, and local direct-WebRTC test evidence.
 
-The local preview deliberately uses an in-memory store and a trusted operator projection switcher. It is not evidence for seat authentication, refresh recovery, multi-device transport, physical iOS, Airplane Mode, hostile networks, or China operation.
-
-Remaining Phase 1 outcome:
-
-Deliver a browser dealer for in-person Texas Hold'em played with physical chips:
-
-- host, player, Tablet Table, and TV Table modes;
-- private hole-card delivery and public board progression;
-- QR and equivalent full-URL joining;
-- direct P2P, deployer private relay, and optional deployer cloud relay;
-- preloaded standalone Airplane Mode over a private, non-isolating local Wi-Fi network;
-- refresh/reconnect recovery, hand-end checkpoints, and manual diagnostic snapshot;
-- explicit fold, show, muck, dealer movement, sit-out, and end-hand behavior; and
-- redacted developer diagnostics with visible Hand ID and 30-day maximum retention.
-
-Base release gates include hidden-card red teaming, host-refresh behavior, unsupported-browser handling, device/browser coverage, fault injection, and Airplane Mode journey tests. Measured operation on representative mainland-China networks is a separate gate for “China-ready” and equivalent claims; a plainly labeled general release may proceed without that claim when Airplane Mode passes and the online limitation is visible.
+The local candidate is not a release. Base external gates include hidden-card red teaming, actual device/browser coverage, WAN-removed Airplane tests, 2–10 physical devices plus public display, client-isolation checks, host/relay failure and network-switch tests, dependency/release signing review, and private disclosure-channel setup. Measured operation on representative mainland-China networks is a separate gate for “China-ready” and equivalent claims; it is currently unverified.
 
 ## Phase 2 — optional digital play-chip accounting
 
