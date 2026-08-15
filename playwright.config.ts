@@ -23,11 +23,10 @@ export default defineConfig({
     timeout: 30_000,
     url: "http://127.0.0.1:4173",
   },
-  // GitHub's shared Linux runner cannot reliably resolve Chromium's generated
-  // mDNS ICE hostnames between isolated browser contexts. Expose runner-local
-  // host candidates only inside CI, and serialize the hardware-sensitive
-  // WebRTC/QR journeys to avoid CPU contention. Production browsers keep their
-  // normal privacy settings.
+  // GitHub's shared Linux runner has no LAN interface for two isolated browser
+  // contexts to discover. Add Chromium's test-only loopback ICE interface,
+  // expose those runner-local candidates, and serialize hardware-sensitive
+  // WebRTC/QR journeys. Production browsers keep their normal privacy settings.
   ...(isCI ? { workers: 1 } : {}),
   projects: [
     {
@@ -37,7 +36,10 @@ export default defineConfig({
         ...(isCI
           ? {
               launchOptions: {
-                args: ["--disable-features=WebRtcHideLocalIpsWithMdns"],
+                args: [
+                  "--allow-loopback-in-peer-connection",
+                  "--disable-features=WebRtcHideLocalIpsWithMdns",
+                ],
               },
             }
           : {}),
