@@ -24,6 +24,16 @@ Open that exact HTTPS address on the host and every iPhone, confirm **Build 0.1.
 
 For the short operating sequence and phone-replacement recovery, use the [Airplane Mode party runbook](docs/operations/AIRPLANE-MODE.md#same-wi-fi-party-setup).
 
+## Normal Mode field deployment
+
+The owner-authorized Normal field build is published at:
+
+**https://cai-ruihe.github.io/html-poker-app/normal/**
+
+Normal Mode uses ordinary one-use invitation links/QRs and a card-blind Connection Service. The current field service runs on the owner's laptop through an outbound TLS tunnel, so the laptop and its container runtime must remain awake. The operator token stays outside the repository and public site. This temporary service has no uptime guarantee; it is not the later permanent deployment claim.
+
+See [Normal Mode operations](docs/operations/NORMAL-MODE.md) for the host flow, service boundary, and restart procedure.
+
 ## Product constraints
 
 - **Play chips only.** No money, payment, cash-out, rake, or gambling accounts.

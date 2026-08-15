@@ -11,11 +11,13 @@ All notable project changes will be documented here. The format follows [Keep a 
 - Preserved a live client endpoint across restorable `pagehide` events and reconnect presence on `pageshow`, instead of converting every temporary mobile suspension into a forced disconnect.
 - Removed unexplained red start-screen, board-rail, and moving cut-card ornaments that encoded no game state.
 - Made dense Airplane offer QRs easier to scan with a one-click full-screen view, higher-resolution camera requests, and an independent bundled live-frame decoder fallback.
+- Made the enlarged Airplane QR explicitly direct phones to the poker app's in-page scanner and reject the standalone Camera path that cannot interpret encrypted WebRTC offers.
 
 ### Changed
 
 - Bumped the visible Phase 1 build identity to `0.1.1-phase1`, added best-effort active-table screen wake locks, and verified Airplane replacement of a closed phone into the same active seat and cards.
 - Added an owner-authorized GitHub Pages field-build deployment that runs only after the complete CI and browser journey gate succeeds.
+- Added a CI-packaged `/normal/` field build whose deploy-time configuration requires one exact WSS service origin and narrows browser connections to that origin.
 
 ### Added
 
@@ -34,6 +36,7 @@ All notable project changes will be documented here. The format follows [Keep a 
 - Automated documentation manifest, link, identifier, relationship, and document-budget validation.
 - Workspace-boundary lint rules, peer-dependency checks, production dependency auditing, and weekly Dependabot configuration.
 - Immutable commit pins for third-party GitHub Actions used by continuous integration.
+- A non-root, health-checked Connection Service container recipe for owner-operated deployments.
 - A production-artifact third-party licence bundle covering React and the bundled OFL fonts.
 
 ### Security

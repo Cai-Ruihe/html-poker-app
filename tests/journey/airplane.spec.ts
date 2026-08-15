@@ -172,6 +172,15 @@ test("the host can enlarge a dense Airplane QR for phone scanning", async ({
   await expect(
     host.getByRole("dialog", { name: "Enlarged Player pairing QR" }),
   ).toBeVisible();
+  await expect(
+    host.getByText("Do not use the phone's Camera app.", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    host.getByText(
+      "On the phone, open this poker app, choose Join an Airplane table, then use Scan host offer QR.",
+      { exact: true },
+    ),
+  ).toBeVisible();
   const bounds = await host
     .getByAltText("Enlarged Player Airplane offer QR code")
     .boundingBox();

@@ -67,15 +67,20 @@ jobs:
           cache: pnpm
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
-      - name: Build standalone Airplane page
+      - name: Build Phase 1 browser artifacts
         run: pnpm build:normal && pnpm build:airplane
+      - name: Configure hosted Normal Mode
+        env:
+          NORMAL_CONNECTION_SERVICE_URL: ${{ vars.NORMAL_CONNECTION_SERVICE_URL }}
+        run: pnpm release:configure-normal
       - name: Create release receipt
         run: pnpm release:manifest
       - name: Package canonical party site
         run: |
-          mkdir -p _site
+          mkdir -p _site/normal
           cp dist/airplane/poker-airplane.html _site/index.html
           cp dist/airplane/poker-airplane.html _site/poker-airplane.html
+          cp -R dist/normal/. _site/normal/
           cp dist/release/phase-1-manifest.json _site/phase-1-manifest.json
       - name: Configure GitHub Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

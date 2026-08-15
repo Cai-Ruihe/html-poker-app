@@ -683,7 +683,7 @@ function AirplaneHostPairingCard({
         <h2>{offer ? "Scan this offer" : "Prepare local pairing"}</h2>
         <p>
           {offer
-            ? "On the other device, open this same downloaded HTML file and choose Join an Airplane table. Use its in-page camera—not the phone's standalone Camera app—then scan the answer here."
+            ? "On the other device, open this same poker page and choose Join an Airplane table. Use its in-page camera—not the phone's standalone Camera app—then scan the answer here."
             : "Creates a one-use, no-internet WebRTC offer. Both devices must use private Wi-Fi without client isolation."}
         </p>
         {error ? (
@@ -752,12 +752,19 @@ function AirplaneHostPairingCard({
                 Close
               </button>
             </header>
+            <div className="qr-display-instruction">
+              <strong>Do not use the phone's Camera app.</strong>
+              <p>
+                On the phone, open this poker app, choose Join an Airplane
+                table, then use Scan host offer QR.
+              </p>
+            </div>
             <div className="qr-display-code">
               <QrImage
                 label={`Enlarged ${label} Airplane offer QR code`}
                 value={offer.code}
               />
-              <p>Hold the phone steady and let this code fill its guide.</p>
+              <p>Hold the phone steady and let this code fill the guide.</p>
             </div>
           </section>
         </div>

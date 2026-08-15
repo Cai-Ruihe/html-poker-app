@@ -553,6 +553,27 @@ button:disabled {
   box-shadow: var(--shadow);
 }
 
+.qr-display-instruction {
+  display: grid;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--rule);
+  padding: 0.8rem 1.15rem;
+  background: var(--surface);
+  text-align: center;
+}
+
+.qr-display-instruction strong {
+  color: var(--green-dark);
+  font-size: 0.9rem;
+}
+
+.qr-display-instruction p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
 .qr-display-code {
   display: grid;
   place-items: center;
