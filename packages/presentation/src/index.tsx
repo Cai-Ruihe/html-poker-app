@@ -1,11 +1,4 @@
-import {
-  useRef,
-  useState,
-  type CSSProperties,
-  type KeyboardEvent,
-  type PointerEvent,
-  type ReactNode,
-} from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import type { Card, Street } from "@html-poker/card-custody";
 import type {
@@ -127,11 +120,6 @@ function BoardRail({ board }: { readonly board: readonly Card[] }) {
           );
         })}
       </div>
-      <span
-        className="cut-card"
-        style={{ "--rail-progress": board.length } as CSSProperties}
-        aria-hidden="true"
-      />
     </section>
   );
 }
@@ -289,38 +277,23 @@ function DealerControls(props: TableSurfaceProps) {
 function PrivateHand(
   props: TableSurfaceProps & { readonly projection: SeatProjection },
 ) {
-  const [peekProgress, setPeekProgress] = useState(0);
-  const [locallyCovered, setLocallyCovered] = useState(false);
-  const startY = useRef<number | undefined>(undefined);
+  const [cardsVisibleOnDevice, setCardsVisibleOnDevice] = useState(false);
   const status = props.projection.self.status;
-  const revealed = status === "shown" && !locallyCovered;
+  const handId = props.projection.handId;
+  const privateCards = props.projection.self.holeCards.join(",");
 
-  function pointerDown(event: PointerEvent<HTMLButtonElement>) {
-    startY.current = event.clientY;
-    event.currentTarget.setPointerCapture(event.pointerId);
-    setPeekProgress(0.18);
-  }
+  useEffect(() => {
+    setCardsVisibleOnDevice(false);
+  }, [handId, privateCards]);
 
-  function pointerMove(event: PointerEvent<HTMLButtonElement>) {
-    if (startY.current === undefined) return;
-    setPeekProgress(
-      Math.min(1, Math.max(0.12, (startY.current - event.clientY + 24) / 150)),
-    );
-  }
-
-  function finishPeek() {
-    if (peekProgress >= 0.92 && status === "active") props.onShowCards?.();
-    setPeekProgress(0);
-    startY.current = undefined;
-  }
-
-  function keyDown(event: KeyboardEvent<HTMLButtonElement>) {
-    if (event.key === " " || event.key === "Enter") setPeekProgress(0.5);
-  }
-
-  function keyUp(event: KeyboardEvent<HTMLButtonElement>) {
-    if (event.key === " " || event.key === "Enter") finishPeek();
-  }
+  useEffect(() => {
+    function coverWhenHidden() {
+      if (document.visibilityState === "hidden") setCardsVisibleOnDevice(false);
+    }
+    document.addEventListener("visibilitychange", coverWhenHidden);
+    return () =>
+      document.removeEventListener("visibilitychange", coverWhenHidden);
+  }, []);
 
   return (
     <section className="private-hand" aria-labelledby="private-title">
@@ -328,35 +301,39 @@ function PrivateHand(
         <span className="section-label">Private hand</span>
         <h1 id="private-title">Your cards</h1>
         <p>
-          {revealed
+          {status === "shown"
             ? "Shown to the table. Covering them here does not undo the show."
-            : "Keep one finger on the cover and slide upward to peek."}
+            : cardsVisibleOnDevice
+              ? "Visible only on this phone until you choose a table action."
+              : "Reveal them privately, then hide them before passing the phone."}
         </p>
       </div>
       <div className="private-hand__cards">
         {props.projection.self.holeCards.map((card) => (
           <PlayingCard card={card} key={card} marker="private" />
         ))}
-        {!revealed ? (
+        {!cardsVisibleOnDevice ? (
           <button
-            aria-label="Hold and slide up to peek at cards"
+            aria-label="Reveal my cards privately"
             className="card-cover"
-            onKeyDown={keyDown}
-            onKeyUp={keyUp}
-            onPointerCancel={finishPeek}
-            onPointerDown={pointerDown}
-            onPointerMove={pointerMove}
-            onPointerUp={finishPeek}
-            style={{ "--peek": peekProgress } as CSSProperties}
+            onClick={() => setCardsVisibleOnDevice(true)}
             type="button"
           >
-            <span>
-              {peekProgress >= 0.92 ? "Release to show" : "Slide to peek"}
-            </span>
+            <span>Reveal my cards privately</span>
+            <small>Only visible on this phone.</small>
           </button>
         ) : null}
       </div>
       <div className="player-actions">
+        {cardsVisibleOnDevice ? (
+          <ActionButton
+            disabled={false}
+            onClick={() => setCardsVisibleOnDevice(false)}
+            quiet
+          >
+            Hide my cards
+          </ActionButton>
+        ) : null}
         {status === "folded-provisional" ? (
           <>
             <div className="undo-window" aria-label="Fold undo window">
@@ -383,7 +360,7 @@ function PrivateHand(
               disabled={props.busy || !props.onShowCards}
               onClick={() => props.onShowCards?.()}
             >
-              Show cards
+              Show cards to table
             </ActionButton>
             <ActionButton
               disabled={props.busy || !props.onMuck}
@@ -393,14 +370,6 @@ function PrivateHand(
               Muck
             </ActionButton>
           </>
-        ) : status === "shown" ? (
-          <ActionButton
-            disabled={false}
-            onClick={() => setLocallyCovered(!locallyCovered)}
-            quiet
-          >
-            {locallyCovered ? "Show on this phone" : "Turn down on this phone"}
-          </ActionButton>
         ) : null}
       </div>
       <label className="sit-out-control">

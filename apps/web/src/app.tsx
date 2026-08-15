@@ -13,6 +13,7 @@ import type { CapabilityRole } from "@html-poker/identity-capabilities";
 import { TableSurface } from "@html-poker/presentation";
 
 import {
+  BUILD_VERSION,
   createNormalDisplayPairingRequest,
   HostTableRuntime,
   TableClientRuntime,
@@ -34,6 +35,55 @@ import {
 interface CapabilityCheck {
   readonly available: boolean;
   readonly label: string;
+}
+
+interface ScreenWakeLockSentinel {
+  readonly released: boolean;
+  release(): Promise<void>;
+}
+
+interface ScreenWakeLockManager {
+  request(type: "screen"): Promise<ScreenWakeLockSentinel>;
+}
+
+function useScreenWakeLock(active: boolean) {
+  useEffect(() => {
+    if (!active) return;
+    let cancelled = false;
+    let sentinel: ScreenWakeLockSentinel | undefined;
+    const manager = (
+      globalThis.navigator as Navigator & {
+        readonly wakeLock?: ScreenWakeLockManager;
+      }
+    ).wakeLock;
+    if (!manager) return;
+
+    async function request() {
+      if (cancelled || document.visibilityState !== "visible") return;
+      try {
+        sentinel = await manager.request("screen");
+      } catch {
+        // Best effort: browser or power policy may refuse the request.
+      }
+    }
+
+    function restoreWhenVisible() {
+      if (
+        document.visibilityState === "visible" &&
+        sentinel?.released !== false
+      ) {
+        void request();
+      }
+    }
+
+    void request();
+    document.addEventListener("visibilitychange", restoreWhenVisible);
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", restoreWhenVisible);
+      void sentinel?.release().catch(() => undefined);
+    };
+  }, [active]);
 }
 
 function capabilityChecks(): readonly CapabilityCheck[] {
@@ -114,7 +164,9 @@ function Home({
 
   return (
     <main className="home-shell">
-      <BrandBar aside={<span className="build-label">Phase 1</span>} />
+      <BrandBar
+        aside={<span className="build-label">Build {BUILD_VERSION}</span>}
+      />
       <div className="home-layout">
         <section className="home-intro" aria-labelledby="home-title">
           <p className="section-label">For the table already in front of you</p>
@@ -129,7 +181,6 @@ function Home({
               <strong>cards</strong>
               <small>one trusted browser</small>
             </div>
-            <i />
           </div>
         </section>
 
@@ -1322,6 +1373,7 @@ function HostTable({ runtime }: { readonly runtime: HostTableRuntime }) {
   const [error, setError] = useState<string>();
   const [adminOpen, setAdminOpen] = useState(false);
   const [developerMode, setDeveloperMode] = useState(false);
+  useScreenWakeLock(true);
   const projection = snapshot.projection;
   if (!projection) return null;
 
@@ -1449,22 +1501,36 @@ function PlayerExperience({
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  useScreenWakeLock(snapshot.status === "playing");
 
   useEffect(() => {
-    let closing = false;
-    const close = () => {
-      if (closing) return;
-      closing = true;
-      // pagehide is best effort: browsers may terminate a page before an
-      // asynchronous message can reach the host. The host also reconciles a
-      // seat on its next authenticated request.
-      void runtime
-        .setPresence(false)
-        .catch(() => undefined)
-        .finally(() => runtime.close());
+    let hidden = false;
+    const hide = () => {
+      if (hidden) return;
+      hidden = true;
+      // Browsers may terminate a page before this best-effort signal reaches
+      // the host. Do not close the endpoint here: pagehide also covers a
+      // restorable back-forward-cache or mobile suspension.
+      void runtime.setPresence(false).catch(() => undefined);
     };
-    globalThis.addEventListener("pagehide", close);
-    return () => globalThis.removeEventListener("pagehide", close);
+    const show = () => {
+      if (!hidden) return;
+      hidden = false;
+      setError(undefined);
+      void runtime.setPresence(true).catch(() => {
+        setError(
+          isAirplaneMode()
+            ? "Connection did not resume. Ask the host to replace this device from Players."
+            : "Connection did not resume. Check the network and try the saved table again.",
+        );
+      });
+    };
+    globalThis.addEventListener("pagehide", hide);
+    globalThis.addEventListener("pageshow", show);
+    return () => {
+      globalThis.removeEventListener("pagehide", hide);
+      globalThis.removeEventListener("pageshow", show);
+    };
   }, [runtime]);
 
   useEffect(() => {

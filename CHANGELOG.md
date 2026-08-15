@@ -4,6 +4,18 @@ All notable project changes will be documented here. The format follows [Keep a 
 
 ## [Unreleased]
 
+### Fixed
+
+- Replaced the iPhone-only slide-to-peek gesture—which could accidentally publish a hand—with a one-tap **Reveal my cards privately** control, automatic cover on visibility loss, and a separate **Show cards to table** action.
+- Serialized client recovery commits so overlapping table updates and `pagehide` cannot race into `Client recovery commit failed: revision-conflict`.
+- Preserved a live client endpoint across restorable `pagehide` events and reconnect presence on `pageshow`, instead of converting every temporary mobile suspension into a forced disconnect.
+- Removed unexplained red start-screen, board-rail, and moving cut-card ornaments that encoded no game state.
+
+### Changed
+
+- Bumped the visible Phase 1 build identity to `0.1.1-phase1`, added best-effort active-table screen wake locks, and verified Airplane replacement of a closed phone into the same active seat and cards.
+- Added an owner-authorized GitHub Pages field-build deployment that runs only after the complete CI and browser journey gate succeeds.
+
 ### Added
 
 - Complete Phase 1 trusted-host dealer slice: two-to-ten seat capabilities, one-use/revocable invitations, Player/TV/Public Table/Tablet projections, hand lifecycle controls, seat replacement/reorder/dealer relocation, void/correction records, encrypted recovery, and redacted diagnostics.

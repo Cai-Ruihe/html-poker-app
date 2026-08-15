@@ -83,7 +83,7 @@ test("host and two player devices complete a private deal-only hand without exte
   await expect(host.locator("[data-board-card]")).toHaveCount(3);
   await expect(alice.locator("[data-board-card]")).toHaveCount(3);
 
-  await alice.getByRole("button", { name: "Show cards" }).click();
+  await alice.getByRole("button", { name: "Show cards to table" }).click();
   await expect(host.locator("[data-shown-card]")).toHaveCount(2);
   await bob.getByRole("button", { name: "Muck" }).click();
   await expect(host.getByText("mucked", { exact: true })).toBeVisible();
@@ -125,6 +125,34 @@ test("rapid repeated dealer input commits only one transition", async ({
   expect(pageErrors).toEqual([]);
 });
 
+test("overlapping table updates do not corrupt player recovery state", async ({
+  context,
+  page: host,
+}) => {
+  const { alice, bob } = await createTableWithTwoPlayers(host, context);
+
+  await Promise.all([
+    alice.getByRole("button", { name: "Show cards to table" }).click(),
+    bob.getByRole("button", { name: "Muck" }).click(),
+  ]);
+
+  await expect(host.locator("[data-shown-card]")).toHaveCount(2);
+  await expect(host.getByText("mucked", { exact: true })).toBeVisible();
+  await alice.evaluate(() => globalThis.dispatchEvent(new Event("pagehide")));
+  await host.getByRole("button", { name: /^Players/ }).click();
+  await expect(
+    host
+      .locator(".roster li")
+      .filter({ hasText: "Alice" })
+      .getByText("playing · offline", { exact: true }),
+  ).toBeVisible();
+  await alice.waitForTimeout(500);
+  await expect(alice.getByText(/Client recovery commit failed/u)).toHaveCount(
+    0,
+  );
+  await expect(bob.getByText(/Client recovery commit failed/u)).toHaveCount(0);
+});
+
 test("host and player refresh recover the same active hand and private seat", async ({
   context,
   page: host,
@@ -157,7 +185,7 @@ test("host and player refresh recover the same active hand and private seat", as
     )
     .toEqual(cardsBeforeRefresh);
 
-  await alice.getByRole("button", { name: "Show cards" }).click();
+  await alice.getByRole("button", { name: "Show cards to table" }).click();
   await expect(host.locator("[data-shown-card]")).toHaveCount(2);
 });
 
@@ -203,6 +231,29 @@ test("a disconnected player sits out after the current hand ends", async ({
   await expect(
     aliceRosterItem.getByText("sitting out · offline", { exact: true }),
   ).toBeVisible();
+});
+
+test("a temporarily hidden player page reconnects when it becomes visible", async ({
+  context,
+  page: host,
+}) => {
+  const { alice } = await createTableWithTwoPlayers(host, context);
+  await alice.evaluate(() => globalThis.dispatchEvent(new Event("pagehide")));
+  await host.getByRole("button", { name: /^Players/ }).click();
+  const aliceRosterItem = host
+    .locator(".roster li")
+    .filter({ hasText: "Alice" });
+  await expect(
+    aliceRosterItem.getByText("playing · offline", { exact: true }),
+  ).toBeVisible();
+
+  await alice.evaluate(() => globalThis.dispatchEvent(new Event("pageshow")));
+
+  await expect(
+    aliceRosterItem.getByText("playing", { exact: true }),
+  ).toBeVisible();
+  await expect(alice.locator("[data-private-card]")).toHaveCount(2);
+  await expect(alice.getByText(/recovery commit failed/u)).toHaveCount(0);
 });
 
 test("closing and reopening the Join Window invalidates the old invitation", async ({
@@ -258,12 +309,14 @@ test("a one-use player replacement preserves the seat and revokes the old device
   ).toBeVisible();
   await expect(replacement.locator("[data-private-card]")).toHaveCount(2);
 
-  await alice.getByRole("button", { name: "Show cards" }).click();
+  await alice.getByRole("button", { name: "Show cards to table" }).click();
   await expect(
     alice.getByRole("heading", { name: "This seat could not be opened" }),
   ).toBeVisible();
   await expect(alice.getByText("credential-revoked")).toBeVisible();
-  await replacement.getByRole("button", { name: "Show cards" }).click();
+  await replacement
+    .getByRole("button", { name: "Show cards to table" })
+    .click();
   await expect(host.locator("[data-shown-card]")).toHaveCount(2);
 });
 

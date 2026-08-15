@@ -164,18 +164,6 @@ button:disabled {
   background: var(--canvas);
 }
 
-.home-intro::after {
-  position: absolute;
-  right: -3rem;
-  bottom: 2rem;
-  width: 14rem;
-  height: 0.5rem;
-  border-top: 2px solid var(--red);
-  border-bottom: 2px solid var(--red);
-  content: "";
-  transform: rotate(-4deg);
-}
-
 .home-intro h1 {
   max-width: 13ch;
   margin: 0;
@@ -228,12 +216,6 @@ button:disabled {
 .deck-statement small {
   color: var(--quiet);
   font-size: 0.72rem;
-}
-
-.deck-statement i {
-  width: 0.45rem;
-  height: 3.1rem;
-  background: var(--red);
 }
 
 .start-panel {
@@ -1057,24 +1039,6 @@ button:disabled {
   padding: clamp(0.9rem, 2vw, 1.5rem) 0;
 }
 
-.dealer-rail::before,
-.dealer-rail::after {
-  position: absolute;
-  left: 0;
-  width: 1.4rem;
-  height: 0.35rem;
-  background: var(--red);
-  content: "";
-}
-
-.dealer-rail::before {
-  top: -0.48rem;
-}
-
-.dealer-rail::after {
-  bottom: -0.48rem;
-}
-
 .dealer-rail__label {
   display: grid;
   gap: 0.25rem;
@@ -1144,18 +1108,6 @@ button:disabled {
 .card-space span {
   font-family: Georgia, serif;
   font-size: 0.72rem;
-}
-
-.cut-card {
-  position: absolute;
-  z-index: 2;
-  right: calc((5 - var(--rail-progress)) * 12% + 1%);
-  bottom: -0.7rem;
-  width: 0.38rem;
-  height: 1.2rem;
-  border-radius: 0.1rem;
-  background: var(--red);
-  transition: right 260ms ease;
 }
 
 .seat-grid {
@@ -1822,16 +1774,14 @@ button:disabled {
   z-index: 2;
   inset: 0;
   display: grid;
-  place-items: end center;
+  place-content: center;
+  gap: 0.45rem;
   border: 0;
   border-radius: 0.95rem;
   padding: 1rem;
   color: white;
   background: var(--green);
-  cursor: grab;
-  transform: translateY(calc(var(--peek) * -72%));
-  transition: transform 90ms linear;
-  touch-action: none;
+  cursor: pointer;
 }
 
 .card-cover::before {
@@ -1845,9 +1795,16 @@ button:disabled {
 .card-cover span {
   position: relative;
   z-index: 1;
-  font-size: 0.7rem;
+  font-size: clamp(0.78rem, 3vw, 1rem);
   font-weight: 720;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.01em;
+}
+
+.card-cover small {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.68rem;
 }
 
 .player-actions {

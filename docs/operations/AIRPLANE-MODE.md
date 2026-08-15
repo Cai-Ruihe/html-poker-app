@@ -2,6 +2,26 @@
 
 **Status:** Local operator guide. **Audience:** a group preparing an offline physical table. **Update when:** artifact format, pairing protocol, or device support matrix changes.
 
+## Same-Wi-Fi party setup
+
+Use this route when internet is available for the initial page load and the goal is one consistent build across iPhones:
+
+1. On the laptop and every phone, open **https://cai-ruihe.github.io/html-poker-app/**. On iPhone, prefer a normal Safari tab over opening an HTML attachment from Files or a file-manager browser.
+2. Confirm every start screen says **Build 0.1.1-phase1**. Do not reuse an older saved table or mix this URL with a copied HTML file.
+3. Keep every device on the same non-isolating Wi-Fi. The laptop does not need an inbound port, public server, router forwarding, or the home's static public IP.
+4. Create a new table on the laptop and complete the two-QR pairing flow for each player.
+5. On a player phone, choose **Reveal my cards privately** to view the hand. This changes only that phone. **Show cards to table** is the separate public action.
+6. Keep each game tab open. The app requests a screen wake lock while a table is active when the browser permits it. A temporarily hidden page now reconnects its presence when shown again if WebRTC survived; a manually closed tab or an iOS process discard can still destroy the direct channel.
+
+If a player phone disconnects or its tab closes:
+
+1. On the host, open **Players** and find that player's seat.
+2. Choose **Replace device**, then **Pair Replacement for _name_**.
+3. On the player's phone, reopen the same party URL, choose **Join an Airplane table**, and complete the two QR scans.
+4. The one-use replacement keeps the same seat and active hole cards and revokes the old phone credential.
+
+This replacement flow is the safe recovery path for a destroyed Airplane peer channel. Automatic reconnect after a fully closed tab is not claimed because serverless WebRTC has no surviving signaling route.
+
 ## Before travel
 
 1. Build from the reviewed commit with `pnpm build`.
@@ -37,6 +57,8 @@ The Airplane QR contains local pairing data, not a website address. The phone's 
 - **Camera blocked or missing:** allow camera access for the local file and try again. If the browser still refuses camera access, choose **Use a saved QR image** in the scanner.
 - **QR unreadable:** raise the screen brightness, keep the whole white border visible, and move the camera until the QR sits inside the four-corner guide. Avoid re-compressing screenshots. Live video and saved images both use the bundled local decoder.
 - **Wrong or old file:** update every device to the same generated artifact and create a fresh offer.
+- **Phone locked or tab closed:** reopen the current build and ask the host to use **Players → Replace device** for that seat. Complete a fresh two-QR pairing; do not try to reuse the dead direct channel.
+- **`revision-conflict` banner:** do not continue with an older build. Build `0.1.1-phase1` serializes overlapping recovery commits, including the `pagehide` race reproduced from the field report.
 - **Channel does not open:** treat client isolation or unsupported local WebRTC as the likely cause; use a different private Wi-Fi network or return to Normal Mode when connectivity is available.
 - **Host loss:** Phase 1 permits permanent host loss to end the game. Same-browser local recovery is the only supported authority recovery path; do not copy active custody state between devices.
 

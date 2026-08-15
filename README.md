@@ -10,9 +10,19 @@ HTML Poker keeps betting, chips, and conversation physical. A Trusted Host brows
 
 **Fact — automated evidence.** Contract suites cover authority, identity, persistence, diagnostics, and relay isolation. Chromium journeys cover local dealing, player refresh/recovery, disconnect-to-sit-out, Normal direct/relay routes and reverse display pairing, plus standalone Airplane boot and pairing.
 
-**Unknown — not a public release claim.** This local release candidate has not passed the required physical iOS/iPadOS, Android, TV, WAN-removal, hostile-network, Connection Service restart, or representative mainland-China matrices. It also has no GitHub remote, protected branch, release signature, or private vulnerability-reporting channel yet. Those are explicit release gates, not omissions hidden by a passing local suite.
+**Unknown — not a public release claim.** This local release candidate has not passed the required physical iOS/iPadOS, Android, TV, WAN-removal, hostile-network, Connection Service restart, or representative mainland-China matrices. Public source and a CI-gated field build do not replace protected branch rules, release signing, Private Vulnerability Reporting, or the remaining device/network evidence. Those are explicit release gates, not omissions hidden by a passing local suite.
 
 See the [Phase 1 local release-candidate record](docs/releases/PHASE-1-LOCAL-RC.md) for the exact boundary between demonstrated evidence and remaining gates.
+
+## Same-Wi-Fi party build
+
+The owner-authorized field build is published from `main` only after the full CI and browser journey suite passes:
+
+**https://cai-ruihe.github.io/html-poker-app/**
+
+Open that exact HTTPS address on the host and every iPhone, confirm **Build 0.1.1-phase1**, and create a fresh table. This removes copied-file version drift and gives the in-page QR scanner a normal secure web origin. The page still uses Airplane Mode's local, serverless WebRTC path after it loads; GitHub Pages does not receive cards or table messages.
+
+For the short operating sequence and phone-replacement recovery, use the [Airplane Mode party runbook](docs/operations/AIRPLANE-MODE.md#same-wi-fi-party-setup).
 
 ## Product constraints
 
