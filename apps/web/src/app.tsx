@@ -8,6 +8,8 @@ import {
 } from "react";
 import QRCode from "qrcode";
 import { BrowserQRCodeReader } from "@zxing/browser";
+import { DecodeHintType } from "@zxing/library";
+import jsQR from "jsqr";
 
 import type { CapabilityRole } from "@html-poker/identity-capabilities";
 import { TableSurface } from "@html-poker/presentation";
@@ -398,23 +400,99 @@ function QrCameraScanner({
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    const reader = new BrowserQRCodeReader(undefined, {
+    const hints = new Map<DecodeHintType, unknown>();
+    hints.set(DecodeHintType.TRY_HARDER, true);
+    const reader = new BrowserQRCodeReader(hints, {
       delayBetweenScanAttempts: 180,
       delayBetweenScanSuccess: 500,
     });
+    const fallbackCanvas = document.createElement("canvas");
+    const fallbackContext = fallbackCanvas.getContext("2d", {
+      willReadFrequently: true,
+    });
     let active = true;
+    let fallbackScanTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
+
+    const acceptResult = (code: string, stop?: () => void) => {
+      if (!active || handledRef.current) return;
+      handledRef.current = true;
+      if (fallbackScanTimer !== undefined) {
+        globalThis.clearTimeout(fallbackScanTimer);
+      }
+      if (stop) stop();
+      else controlsRef.current?.stop();
+      onCodeRef.current(code);
+    };
+
+    const scanFallbackFrame = () => {
+      if (!active || handledRef.current) return;
+      if (
+        fallbackContext &&
+        video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA &&
+        video.videoWidth > 0 &&
+        video.videoHeight > 0
+      ) {
+        try {
+          const scale = Math.min(
+            1,
+            960 / Math.max(video.videoWidth, video.videoHeight),
+          );
+          const frameWidth = Math.max(1, Math.round(video.videoWidth * scale));
+          const frameHeight = Math.max(
+            1,
+            Math.round(video.videoHeight * scale),
+          );
+          if (
+            fallbackCanvas.width !== frameWidth ||
+            fallbackCanvas.height !== frameHeight
+          ) {
+            fallbackCanvas.width = frameWidth;
+            fallbackCanvas.height = frameHeight;
+          }
+          fallbackContext.drawImage(
+            video,
+            0,
+            0,
+            fallbackCanvas.width,
+            fallbackCanvas.height,
+          );
+          const frame = fallbackContext.getImageData(
+            0,
+            0,
+            fallbackCanvas.width,
+            fallbackCanvas.height,
+          );
+          const decoded = jsQR(
+            frame.data,
+            fallbackCanvas.width,
+            fallbackCanvas.height,
+            { inversionAttempts: "dontInvert" },
+          );
+          if (decoded?.data) {
+            acceptResult(decoded.data);
+            return;
+          }
+        } catch {
+          // The regular perspective-aware scanner continues in parallel.
+        }
+      }
+      fallbackScanTimer = globalThis.setTimeout(scanFallbackFrame, 360);
+    };
+    fallbackScanTimer = globalThis.setTimeout(scanFallbackFrame, 360);
+
     void reader
       .decodeFromConstraints(
         {
           audio: false,
-          video: { facingMode: { ideal: "environment" } },
+          video: {
+            facingMode: { ideal: "environment" },
+            height: { ideal: 1_080 },
+            width: { ideal: 1_920 },
+          },
         },
         video,
         (result, _error, controls) => {
-          if (!active || handledRef.current || !result) return;
-          handledRef.current = true;
-          controls.stop();
-          onCodeRef.current(result.getText());
+          if (result) acceptResult(result.getText(), () => controls.stop());
         },
       )
       .then((controls) => {
@@ -429,6 +507,9 @@ function QrCameraScanner({
       });
     return () => {
       active = false;
+      if (fallbackScanTimer !== undefined) {
+        globalThis.clearTimeout(fallbackScanTimer);
+      }
       controlsRef.current?.stop();
       controlsRef.current = null;
     };
@@ -525,12 +606,23 @@ function AirplaneHostPairingCard({
   const [busy, setBusy] = useState(false);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string>();
+  const [qrExpanded, setQrExpanded] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
+
+  useEffect(() => {
+    if (!qrExpanded) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setQrExpanded(false);
+    };
+    globalThis.addEventListener("keydown", closeOnEscape);
+    return () => globalThis.removeEventListener("keydown", closeOnEscape);
+  }, [qrExpanded]);
 
   async function prepare() {
     setBusy(true);
     setConnected(false);
     setError(undefined);
+    setQrExpanded(false);
     try {
       setOffer(await runtime.createAirplaneOffer(role));
     } catch (caught) {
@@ -567,10 +659,19 @@ function AirplaneHostPairingCard({
     >
       <div className="airplane-pairing-card__qr">
         {offer ? (
-          <QrImage
-            label={`${label} Airplane offer QR code`}
-            value={offer.code}
-          />
+          <>
+            <QrImage
+              label={`${label} Airplane offer QR code`}
+              value={offer.code}
+            />
+            <button
+              className="button button--quiet qr-expand-button"
+              onClick={() => setQrExpanded(true)}
+              type="button"
+            >
+              Enlarge QR
+            </button>
+          </>
         ) : (
           <span className="airplane-pairing-placeholder" aria-hidden="true">
             ↔
@@ -625,6 +726,41 @@ function AirplaneHostPairingCard({
             void accept(code);
           }}
         />
+      ) : null}
+      {qrExpanded && offer ? (
+        <div
+          aria-labelledby="enlarged-airplane-qr-title"
+          aria-modal="true"
+          className="qr-display-backdrop"
+          role="dialog"
+        >
+          <section className="qr-display-sheet">
+            <header className="qr-camera-header">
+              <div>
+                <p className="section-label">Airplane · {label}</p>
+                <h2 id="enlarged-airplane-qr-title">
+                  Enlarged {label} pairing QR
+                </h2>
+              </div>
+              <button
+                aria-label="Close enlarged QR"
+                autoFocus
+                className="qr-camera-close"
+                onClick={() => setQrExpanded(false)}
+                type="button"
+              >
+                Close
+              </button>
+            </header>
+            <div className="qr-display-code">
+              <QrImage
+                label={`Enlarged ${label} Airplane offer QR code`}
+                value={offer.code}
+              />
+              <p>Hold the phone steady and let this code fill its guide.</p>
+            </div>
+          </section>
+        </div>
       ) : null}
     </section>
   );

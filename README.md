@@ -20,7 +20,7 @@ The owner-authorized field build is published from `main` only after the configu
 
 **https://cai-ruihe.github.io/html-poker-app/**
 
-Open that exact HTTPS address on the host and every iPhone, confirm **Build 0.1.1-phase1**, and create a fresh table. This removes copied-file version drift and gives the in-page QR scanner a normal secure web origin. The page still uses Airplane Mode's local, serverless WebRTC path after it loads; GitHub Pages does not receive cards or table messages.
+Open that exact HTTPS address on the host and every iPhone, confirm **Build 0.1.1-phase1**, and create a fresh table. This removes copied-file version drift and gives the in-page QR scanner a normal secure web origin. Use **Enlarge QR** before each phone scans the laptop's offer. The page still uses Airplane Mode's local, serverless WebRTC path after it loads; GitHub Pages does not receive cards or table messages.
 
 For the short operating sequence and phone-replacement recovery, use the [Airplane Mode party runbook](docs/operations/AIRPLANE-MODE.md#same-wi-fi-party-setup).
 

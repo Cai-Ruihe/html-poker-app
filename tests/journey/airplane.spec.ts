@@ -156,6 +156,28 @@ test("the Airplane start screen has no unexplained red ornaments", async ({
   expect(await unexplainedRedDecorations(page)).toEqual([]);
 });
 
+test("the host can enlarge a dense Airplane QR for phone scanning", async ({
+  context,
+}, testInfo: TestInfo) => {
+  test.skip(
+    testInfo.project.name !== "chromium",
+    "Headless Mobile WebKit cannot create the prerequisite file-origin WebRTC offer; the responsive enlarged QR uses the same component.",
+  );
+  const host = await openAirplanePage(context);
+  await host.getByRole("button", { name: "Create table" }).click();
+  await host.getByRole("button", { name: "Pair Player" }).click();
+
+  await host.getByRole("button", { name: "Enlarge QR" }).click();
+
+  await expect(
+    host.getByRole("dialog", { name: "Enlarged Player pairing QR" }),
+  ).toBeVisible();
+  const bounds = await host
+    .getByAltText("Enlarged Player Airplane offer QR code")
+    .boundingBox();
+  expect(bounds?.width).toBeGreaterThanOrEqual(500);
+});
+
 test("host answer scan opens the live camera with an image fallback", async ({
   context,
 }, testInfo: TestInfo) => {
@@ -258,14 +280,14 @@ test("live camera frame decodes the host offer into an answer QR", async ({
             image.src = source;
             await image.decode();
             const canvas = document.createElement("canvas");
-            canvas.width = 640;
-            canvas.height = 640;
+            canvas.width = 1_280;
+            canvas.height = 1_280;
             const drawing = canvas.getContext("2d");
             if (!drawing) throw new Error("Camera fixture canvas unavailable.");
             const paintFrame = () => {
               drawing.fillStyle = "#ffffff";
               drawing.fillRect(0, 0, canvas.width, canvas.height);
-              drawing.drawImage(image, 64, 64, 512, 512);
+              drawing.drawImage(image, 128, 128, 1_024, 1_024);
             };
             paintFrame();
             const stream = canvas.captureStream(10);

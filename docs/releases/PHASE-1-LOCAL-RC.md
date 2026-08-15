@@ -12,6 +12,7 @@ This candidate implements the Phase 1 trusted-host digital-dealer slice: physica
 pnpm check
 pnpm test:coverage
 pnpm test:e2e
+CI=true pnpm exec playwright test tests/journey/airplane.spec.ts --project=chromium --grep "live camera frame" --repeat-each=10
 pnpm audit:prod
 pnpm licenses:prod
 pnpm release:reproducibility
@@ -33,7 +34,7 @@ The manifest contains the source revision, package-manager/Node metadata, lockfi
 | Physical device/browser matrix | Open | Local browser emulation and a synthetic camera QR stream are not actual iOS/iPadOS, Android, TV, camera, file-opening, backgrounding, or storage evidence. Headless Mobile WebKit and GitHub-hosted Linux Chromium expose no usable local ICE interface, so real direct-pairing remains a local Chromium test plus a physical-device gate rather than a fabricated hosted-CI pass. |
 | WAN-removed Airplane matrix | Open | A desktop `file://` journey does not prove hotspot behavior, client-isolation detection, or two-to-ten real devices plus public display. |
 | Normal network/TURN/reconnect matrix | Open | Direct local candidates and local relay fallback do not establish NAT, TURN, network switch, long suspend, service restart, or throughput behavior. |
-| Initial-load performance | Open | The current Normal JavaScript bundle is about 826 KB before compression (about 230 KB gzip) and emits the bundler's large-chunk warning. No device/network performance budget has been measured, so it is not a supported performance claim. |
+| Initial-load performance | Open | The current Normal JavaScript bundle is about 962 KB before compression (about 280 KB gzip) and emits the bundler's large-chunk warning. The increase supplies the independent camera-frame decoder used by the QR robustness fallback. No device/network performance budget has been measured, so it is not a supported performance claim. |
 | China readiness | Open | No dated representative mainland network measurements exist. |
 | Independent Card Privacy Red Team | Open | Automated regressions exist; an independent frozen-candidate review does not. |
 | Supply-chain release approval | Open | Audit/licence commands are local evidence only; no release signing identity, SBOM/provenance attestation, or owner approval is configured. |

@@ -454,6 +454,8 @@ button:disabled {
 .airplane-pairing-card__qr {
   display: grid;
   min-height: 20rem;
+  align-content: center;
+  gap: 0.75rem;
   place-items: center;
   border-right: 1px solid var(--rule);
   padding: 1.2rem;
@@ -464,6 +466,10 @@ button:disabled {
   display: block;
   width: min(19rem, 100%);
   border: 0.55rem solid white;
+}
+
+.qr-expand-button {
+  min-width: 8rem;
 }
 
 .airplane-pairing-placeholder {
@@ -524,6 +530,49 @@ button:disabled {
   padding: clamp(0.75rem, 4vw, 2.5rem);
   background: rgba(18, 61, 52, 0.34);
   backdrop-filter: blur(0.35rem);
+}
+
+.qr-display-backdrop {
+  position: fixed;
+  z-index: 110;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: 1rem;
+  background: rgba(18, 61, 52, 0.42);
+  backdrop-filter: blur(0.35rem);
+}
+
+.qr-display-sheet {
+  width: min(52rem, 100%);
+  overflow: hidden;
+  border: 1px solid var(--rule-strong);
+  border-radius: 0.9rem;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.qr-display-code {
+  display: grid;
+  place-items: center;
+  padding: 0.8rem 1rem 1rem;
+  background: var(--surface-muted);
+}
+
+.qr-display-code img {
+  display: block;
+  width: min(82vw, calc(100svh - 10rem), 44rem);
+  max-width: 100%;
+  border: 0.7rem solid white;
+}
+
+.qr-display-code p {
+  margin: 0.6rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 680;
+  text-align: center;
 }
 
 .qr-camera-sheet {

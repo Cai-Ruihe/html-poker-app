@@ -10,6 +10,7 @@ All notable project changes will be documented here. The format follows [Keep a 
 - Serialized client recovery commits so overlapping table updates and `pagehide` cannot race into `Client recovery commit failed: revision-conflict`.
 - Preserved a live client endpoint across restorable `pagehide` events and reconnect presence on `pageshow`, instead of converting every temporary mobile suspension into a forced disconnect.
 - Removed unexplained red start-screen, board-rail, and moving cut-card ornaments that encoded no game state.
+- Made dense Airplane offer QRs easier to scan with a one-click full-screen view, higher-resolution camera requests, and an independent bundled live-frame decoder fallback.
 
 ### Changed
 
@@ -20,7 +21,7 @@ All notable project changes will be documented here. The format follows [Keep a 
 
 - Complete Phase 1 trusted-host dealer slice: two-to-ten seat capabilities, one-use/revocable invitations, Player/TV/Public Table/Tablet projections, hand lifecycle controls, seat replacement/reorder/dealer relocation, void/correction records, encrypted recovery, and redacted diagnostics.
 - Normal Mode route implementation with local browser channel, direct WebRTC after private signaling, card-blind private relay fallback, table-scoped four-hour relay tickets, host-side ticket renewal, and host-approved reverse display pairing.
-- Standalone Airplane Mode artifact with fully bundled assets, restrictive offline CSP, two-way QR offer/answer pairing, local `iceServers: []` WebRTC, native QR detection with bundled ZXing fallback, and artifact request regression coverage.
+- Standalone Airplane Mode artifact with fully bundled assets, restrictive offline CSP, two-way QR offer/answer pairing, local `iceServers: []` WebRTC, native saved-image detection plus bundled ZXing/jsQR fallbacks, and artifact request regression coverage.
 - Phase 1 operations, runtime architecture, automated privacy-red-team, and local release-candidate records that distinguish demonstrated local evidence from device/network/release gates.
 - Release provenance tooling for two-build artifact-digest reproducibility checks and a clean-worktree SHA-256 manifest.
 - Modular Master, phase, and module PRD system with a machine-readable context manifest.
