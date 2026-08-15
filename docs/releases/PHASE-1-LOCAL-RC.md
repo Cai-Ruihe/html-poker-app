@@ -37,7 +37,7 @@ The manifest contains the source revision, package-manager/Node metadata, lockfi
 | China readiness | Open | No dated representative mainland network measurements exist. |
 | Independent Card Privacy Red Team | Open | Automated regressions exist; an independent frozen-candidate review does not. |
 | Supply-chain release approval | Open | Audit/licence commands are local evidence only; no release signing identity, SBOM/provenance attestation, or owner approval is configured. |
-| GitHub/security operations | Partial | Public source and an owner-authorized Pages field build are automated after CI. Protected branch rules, release signing, Private Vulnerability Reporting, and a monitored reporting contact remain open. |
+| GitHub/security operations | Partial | Public source, an owner-authorized Pages field build after CI, Private Vulnerability Reporting, dependency alerts, and automatic security fixes are active. Protected branch rules, release signing, and a monitored response-time commitment remain open. |
 
 ## Honest label
 

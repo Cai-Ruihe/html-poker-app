@@ -1,12 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const isCI = Boolean(process.env.CI);
+
 export default defineConfig({
   expect: { timeout: 5_000 },
   fullyParallel: true,
   outputDir: "test-results/playwright",
-  reporter: process.env.CI
-    ? [["github"], ["html", { open: "never" }]]
-    : [["list"]],
+  reporter: isCI ? [["github"], ["html", { open: "never" }]] : [["list"]],
   testDir: "tests",
   testMatch: ["journey/**/*.spec.ts", "security/**/*.spec.ts"],
   use: {
@@ -23,8 +23,26 @@ export default defineConfig({
     timeout: 30_000,
     url: "http://127.0.0.1:4173",
   },
+  // GitHub's shared Linux runner cannot reliably resolve Chromium's generated
+  // mDNS ICE hostnames between isolated browser contexts. Expose runner-local
+  // host candidates only inside CI, and serialize the hardware-sensitive
+  // WebRTC/QR journeys to avoid CPU contention. Production browsers keep their
+  // normal privacy settings.
+  ...(isCI ? { workers: 1 } : {}),
   projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    {
+      name: "chromium",
+      use: {
+        ...devices["Desktop Chrome"],
+        ...(isCI
+          ? {
+              launchOptions: {
+                args: ["--disable-features=WebRtcHideLocalIpsWithMdns"],
+              },
+            }
+          : {}),
+      },
+    },
     { name: "mobile-webkit", use: { ...devices["iPhone 15"] } },
   ],
 });

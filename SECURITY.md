@@ -12,7 +12,7 @@ The [Phase 1 Card Privacy automated red-team record](docs/security/PHASE-1-CARD-
 
 Do not open a public issue for a suspected vulnerability involving hidden cards, deck order, credentials, session takeover, unauthorized control, dependency compromise, release tampering, diagnostic leakage, or AI-provider data exposure.
 
-Before the first public release, the project owner must enable [GitHub Private Vulnerability Reporting](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/configure-vulnerability-reporting/configure-for-a-repository) or publish a dedicated private security address. This is a release blocker. Until that channel exists, contact the repository owner through a private method listed on their GitHub profile and include only enough non-sensitive detail to establish contact.
+Use [GitHub Private Vulnerability Reporting](https://github.com/Cai-Ruihe/html-poker-app/security/advisories/new) for this repository. Send only the minimum evidence needed to reproduce the issue; do not attach real game data, active invitation codes, recovery URLs, or credentials.
 
 In a report, include:
 
