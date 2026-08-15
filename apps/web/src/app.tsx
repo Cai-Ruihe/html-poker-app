@@ -1538,9 +1538,51 @@ function downloadText(filename: string, value: string) {
   URL.revokeObjectURL(url);
 }
 
+const dealerInputGuardMs = 600;
+
+function useDealerActionGuard() {
+  const [busy, setBusy] = useState(false);
+  const locked = useRef(false);
+  const releaseTimer = useRef<
+    ReturnType<typeof globalThis.setTimeout> | undefined
+  >(undefined);
+
+  useEffect(
+    () => () => {
+      if (releaseTimer.current !== undefined) {
+        globalThis.clearTimeout(releaseTimer.current);
+      }
+    },
+    [],
+  );
+
+  function run(action: () => Promise<void>, onError: (error: unknown) => void) {
+    if (locked.current) return;
+    locked.current = true;
+    setBusy(true);
+    const startedAt = globalThis.performance.now();
+    void Promise.resolve()
+      .then(action)
+      .catch(onError)
+      .finally(() => {
+        const elapsed = globalThis.performance.now() - startedAt;
+        releaseTimer.current = globalThis.setTimeout(
+          () => {
+            locked.current = false;
+            setBusy(false);
+          },
+          Math.max(0, dealerInputGuardMs - elapsed),
+        );
+      });
+  }
+
+  return { busy, run } as const;
+}
+
 function HostTable({ runtime }: { readonly runtime: HostTableRuntime }) {
   const snapshot = useHostSnapshot(runtime);
   const [busy, setBusy] = useState(false);
+  const actionGuard = useDealerActionGuard();
   const [error, setError] = useState<string>();
   const [adminOpen, setAdminOpen] = useState(false);
   const [developerMode, setDeveloperMode] = useState(false);
@@ -1561,6 +1603,22 @@ function HostTable({ runtime }: { readonly runtime: HostTableRuntime }) {
         );
       })
       .finally(() => setBusy(false));
+  }
+
+  function performDealerAction(action: () => Promise<void>) {
+    actionGuard.run(
+      () => {
+        setError(undefined);
+        return action();
+      },
+      (caught: unknown) => {
+        setError(
+          caught instanceof Error
+            ? caught.message
+            : "The table did not advance.",
+        );
+      },
+    );
   }
 
   return (
@@ -1584,7 +1642,7 @@ function HostTable({ runtime }: { readonly runtime: HostTableRuntime }) {
         </button>
       </nav>
       <TableSurface
-        busy={busy}
+        busy={busy || actionGuard.busy}
         connectionLabel={snapshot.connectionLabel}
         developerMode={developerMode}
         {...((error ?? snapshot.error)
@@ -1597,9 +1655,13 @@ function HostTable({ runtime }: { readonly runtime: HostTableRuntime }) {
             runtime.exportDiagnostics(),
           )
         }
-        onEndHand={() => perform(() => runtime.endHand())}
-        onRevealStreet={(street) => perform(() => runtime.revealStreet(street))}
-        onStartNextHand={() => perform(() => runtime.startNextHand())}
+        onEndHand={() => performDealerAction(() => runtime.endHand())}
+        onRevealStreet={(street) =>
+          performDealerAction(() => runtime.revealStreet(street))
+        }
+        onStartNextHand={() =>
+          performDealerAction(() => runtime.startNextHand())
+        }
         projection={projection}
       />
       {adminOpen ? (
@@ -1846,7 +1908,7 @@ function PlayerExperience({
 function RoleExperience({ runtime }: { readonly runtime: TableClientRuntime }) {
   const snapshot = useClientSnapshot(runtime);
   const joinStarted = useRef(false);
-  const [busy, setBusy] = useState(false);
+  const actionGuard = useDealerActionGuard();
   const [error, setError] = useState<string>();
 
   useEffect(() => {
@@ -1896,24 +1958,24 @@ function RoleExperience({ runtime }: { readonly runtime: TableClientRuntime }) {
   }
 
   function perform(action: Parameters<TableClientRuntime["performDealer"]>[0]) {
-    if (busy) return;
-    setBusy(true);
-    setError(undefined);
-    void runtime
-      .performDealer(action)
-      .catch((caught: unknown) => {
+    actionGuard.run(
+      () => {
+        setError(undefined);
+        return runtime.performDealer(action);
+      },
+      (caught: unknown) => {
         setError(
           caught instanceof Error
             ? caught.message
             : "The dealer action was not accepted.",
         );
-      })
-      .finally(() => setBusy(false));
+      },
+    );
   }
 
   return (
     <TableSurface
-      busy={busy}
+      busy={actionGuard.busy}
       connectionLabel={snapshot.connectionLabel}
       {...((error ?? snapshot.error)
         ? { errorMessage: error ?? snapshot.error }
