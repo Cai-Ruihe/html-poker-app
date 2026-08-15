@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const scriptPath = fileURLToPath(import.meta.url);
 const broadConnectPolicy = "connect-src 'self' https: wss:;";
+const localQrImagePolicy = "img-src 'self' data: blob:;";
 
 function validatedServiceUrl(candidate) {
   if (!candidate) {
@@ -45,6 +46,11 @@ export async function configureNormalBuild(
   if (!html.includes(broadConnectPolicy)) {
     throw new Error(
       "The Normal artifact no longer contains the expected baseline connect-src policy.",
+    );
+  }
+  if (!html.includes(localQrImagePolicy)) {
+    throw new Error(
+      "The Normal artifact CSP must allow blob: images for local QR scans.",
     );
   }
   const configuredHtml = html.replace(
