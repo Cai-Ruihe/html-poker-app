@@ -281,11 +281,14 @@ function QrImage({
     let active = true;
     setSource(undefined);
     setError(false);
+    const isDensePairingCode =
+      value.startsWith("HTMLPOKER-AIRPLANE-1:") ||
+      value.startsWith("HTMLPOKER-NORMAL-DISPLAY-1:");
     void QRCode.toDataURL(value, {
       color: { dark: "#19211f", light: "#ffffff" },
       errorCorrectionLevel: "L",
-      margin: value.startsWith("HTMLPOKER-AIRPLANE-1:") ? 4 : 2,
-      width: value.startsWith("HTMLPOKER-AIRPLANE-1:") ? 1_024 : 360,
+      margin: isDensePairingCode ? 4 : 2,
+      width: isDensePairingCode ? 1_024 : 512,
     }).then(
       (dataUrl) => {
         if (active) setSource(dataUrl);
@@ -302,6 +305,24 @@ function QrImage({
     return <span className="qr-error">Pairing QR could not be rendered.</span>;
   }
   return source ? <img alt={label} src={source} /> : null;
+}
+
+function decodeQrPixels(image: HTMLImageElement): string | undefined {
+  const naturalWidth = image.naturalWidth || image.width;
+  const naturalHeight = image.naturalHeight || image.height;
+  if (naturalWidth < 1 || naturalHeight < 1) return undefined;
+
+  const scale = Math.min(1, 1_600 / Math.max(naturalWidth, naturalHeight));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(naturalWidth * scale));
+  canvas.height = Math.max(1, Math.round(naturalHeight * scale));
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) return undefined;
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
+  return jsQR(pixels.data, canvas.width, canvas.height, {
+    inversionAttempts: "attemptBoth",
+  })?.data;
 }
 
 async function scanQrImage(file: File): Promise<string> {
@@ -350,10 +371,20 @@ async function scanQrImage(file: File): Promise<string> {
         // The bundled decoder below is the cross-browser fallback.
       }
     }
-    const result = await new BrowserQRCodeReader().decodeFromImageElement(
-      image,
-    );
-    return result.getText();
+    const pixelResult = decodeQrPixels(image);
+    if (pixelResult) return pixelResult;
+    try {
+      const hints = new Map<DecodeHintType, unknown>();
+      hints.set(DecodeHintType.TRY_HARDER, true);
+      const result = await new BrowserQRCodeReader(
+        hints,
+      ).decodeFromImageElement(image);
+      return result.getText();
+    } catch {
+      throw new Error(
+        "No usable QR data was found. Fill the code guide and try again in good light.",
+      );
+    }
   } finally {
     URL.revokeObjectURL(objectUrl);
   }
@@ -998,11 +1029,8 @@ function NormalDisplayPairingCard({
     try {
       setPairedRole(await runtime.pairNormalDisplay(await scanQrImage(file)));
     } catch (caught) {
-      setError(
-        caught instanceof Error
-          ? caught.message
-          : "The display pairing QR could not be accepted.",
-      );
+      const message = caught instanceof Error ? caught.message.trim() : "";
+      setError(message || "The display pairing QR could not be accepted.");
     } finally {
       setBusy(false);
     }

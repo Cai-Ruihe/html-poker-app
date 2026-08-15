@@ -326,6 +326,13 @@ test("an unpaired Normal TV receives its requested role only after host scan-pai
       .getByAltText("TV display pairing QR code")
       .getAttribute("src");
     if (!requestSource) throw new Error("The display pairing QR is missing.");
+    await expect
+      .poll(() =>
+        tv
+          .getByAltText("TV display pairing QR code")
+          .evaluate((image: HTMLImageElement) => image.naturalWidth),
+      )
+      .toBe(1_024);
     await expect(
       tv.getByText("Waiting for the host scan", { exact: true }),
     ).toBeVisible();
