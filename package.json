@@ -26,6 +26,7 @@
     "licenses:prod": "pnpm licenses list --prod",
     "preview": "pnpm --filter @html-poker/web preview",
     "release:local-rc": "pnpm build && pnpm release:manifest",
+    "release:configure-normal": "node tools/release/configure-normal.mjs",
     "release:manifest": "node tools/release/create-manifest.mjs",
     "release:reproducibility": "node tools/release/verify-reproducibility.mjs",
     "release:verify": "node tools/release/create-manifest.mjs --verify",

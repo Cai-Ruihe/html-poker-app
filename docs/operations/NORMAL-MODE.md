@@ -1,6 +1,25 @@
 # Normal Mode operations
 
-**Status:** Local deployment guide, not an official hosted-service runbook. **Audience:** a deployer running their own static site and Connection Service. **Update when:** relay protocol, ticket handling, configuration, or supported matrix changes.
+**Status:** Local guide plus owner-authorized temporary field deployment; not an official hosted-service runbook. **Audience:** the owner or a deployer running the static site and Connection Service. **Update when:** relay protocol, ticket handling, configuration, or supported matrix changes.
+
+## Current owner field deployment
+
+The CI-gated Normal web artifact is published at:
+
+**https://cai-ruihe.github.io/html-poker-app/normal/**
+
+The current Connection Service runs in the `html-poker-normal-service` container on the owner's laptop. An outbound `html-poker-normal-tunnel` container supplies trusted HTTPS/WSS without opening a router or laptop port. Keep the laptop and OrbStack awake while playing.
+
+The operator token is stored outside the repository at `$HOME/Library/Application Support/HTML Poker/normal-service/operator-token` with owner-only permissions. Paste it into the host's **Private relay host token** field; never send it to player devices or add it to GitHub.
+
+This first field setup uses a Cloudflare Quick Tunnel. Cloudflare documents Quick Tunnels as testing/development infrastructure with no uptime guarantee, and its random hostname changes if the tunnel is recreated. If that happens, update the `NORMAL_CONNECTION_SERVICE_URL` GitHub repository variable, rerun the CI-gated Pages deployment, and verify the new live artifact before starting a table. Do not silently restart the tunnel and continue using a stale site configuration.
+
+Operational checks:
+
+```sh
+docker inspect --format '{{.State.Health.Status}}' html-poker-normal-service
+docker ps --filter name=html-poker-normal
+```
 
 ## What Normal Mode needs
 
@@ -21,9 +40,11 @@ Run the built service after setting the variables:
 pnpm --filter @html-poker/connection-service start
 ```
 
+For a locked production container, first build the service and create its production-only pnpm deployment directory, then build with `services/connection-service/Dockerfile`. The image runs as the unprivileged `node` user, exposes only port 8787 inside its private container network, and includes a health check.
+
 Terminate TLS at a deployer-controlled reverse proxy and configure the browser with `wss://` in production. Use ordinary ingress rate limiting and network restrictions around the service; those controls are deployment infrastructure, not code supplied by this repository.
 
-The static Normal artifact permits secure `https:` and `wss:` connection endpoints so that a deployer can use its own service. At deployment, send a stricter HTTP Content-Security-Policy header with the exact service origin in `connect-src`; a header policy can narrow the artifact's baseline policy. Do not rely on a broad static policy as the final production boundary.
+The baseline Normal artifact permits secure `https:` and `wss:` connection endpoints so that a deployer can use its own service. `pnpm release:configure-normal` rejects non-WSS endpoints, writes the URL-only runtime configuration, and narrows the built page's `connect-src` policy to that exact HTTPS/WSS origin. A deployer-controlled HTTP header may narrow the policy further.
 
 ## Static configuration
 
