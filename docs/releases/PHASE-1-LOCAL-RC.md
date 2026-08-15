@@ -30,7 +30,7 @@ The manifest contains the source revision, package-manager/Node metadata, lockfi
 
 | Gate | Status | Why it is not claimed |
 |---|---|---|
-| Physical device/browser matrix | Open | Local browser emulation and a synthetic camera QR stream are not actual iOS/iPadOS, Android, TV, camera, file-opening, backgrounding, or storage evidence. The current headless Mobile WebKit `file://` probe produced no local ICE candidate after eight seconds, so local Chromium `file://` plus CI Chromium over the identical Pages-served artifact—not a fabricated WebKit pass—supply the automated direct-pairing evidence. |
+| Physical device/browser matrix | Open | Local browser emulation and a synthetic camera QR stream are not actual iOS/iPadOS, Android, TV, camera, file-opening, backgrounding, or storage evidence. Headless Mobile WebKit and GitHub-hosted Linux Chromium expose no usable local ICE interface, so real direct-pairing remains a local Chromium test plus a physical-device gate rather than a fabricated hosted-CI pass. |
 | WAN-removed Airplane matrix | Open | A desktop `file://` journey does not prove hotspot behavior, client-isolation detection, or two-to-ten real devices plus public display. |
 | Normal network/TURN/reconnect matrix | Open | Direct local candidates and local relay fallback do not establish NAT, TURN, network switch, long suspend, service restart, or throughput behavior. |
 | Initial-load performance | Open | The current Normal JavaScript bundle is about 826 KB before compression (about 230 KB gzip) and emits the bundler's large-chunk warning. No device/network performance budget has been measured, so it is not a supported performance claim. |

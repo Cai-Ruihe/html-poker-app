@@ -16,7 +16,7 @@ See the [Phase 1 local release-candidate record](docs/releases/PHASE-1-LOCAL-RC.
 
 ## Same-Wi-Fi party build
 
-The owner-authorized field build is published from `main` only after the full CI and browser journey suite passes:
+The owner-authorized field build is published from `main` only after the configured CI and browser journey gates pass. GitHub's hosted Linux runner cannot expose a local ICE interface, so the three real Airplane peer-to-peer journeys remain mandatory local tests and are explicit hosted-CI skips rather than claimed passes:
 
 **https://cai-ruihe.github.io/html-poker-app/**
 

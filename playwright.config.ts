@@ -16,35 +16,19 @@ export default defineConfig({
   },
   webServer: {
     command:
-      "pnpm build && node tools/testing/stage-airplane-preview.mjs && pnpm --filter @html-poker/web preview --host 127.0.0.1 --port 4173",
+      "pnpm build && pnpm --filter @html-poker/web preview --host 127.0.0.1 --port 4173",
     reuseExistingServer: !process.env.CI,
     stderr: "pipe",
     stdout: "pipe",
     timeout: 30_000,
     url: "http://127.0.0.1:4173",
   },
-  // GitHub's shared Linux runner has no LAN interface for two isolated browser
-  // contexts to discover. Add Chromium's test-only loopback ICE interface,
-  // expose those runner-local candidates, and serialize hardware-sensitive
-  // WebRTC/QR journeys. Production browsers keep their normal privacy settings.
-  ...(isCI ? { workers: 1 } : {}),
+  // Serialize hardware-sensitive WebRTC/QR journeys and revision assertions.
+  // The suite is small enough that deterministic scheduling is preferable to
+  // parallel resource contention on both laptops and shared CI runners.
+  workers: 1,
   projects: [
-    {
-      name: "chromium",
-      use: {
-        ...devices["Desktop Chrome"],
-        ...(isCI
-          ? {
-              launchOptions: {
-                args: [
-                  "--allow-loopback-in-peer-connection",
-                  "--disable-features=WebRtcHideLocalIpsWithMdns",
-                ],
-              },
-            }
-          : {}),
-      },
-    },
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
     { name: "mobile-webkit", use: { ...devices["iPhone 15"] } },
   ],
 });
