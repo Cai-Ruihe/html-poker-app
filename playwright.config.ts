@@ -16,7 +16,7 @@ export default defineConfig({
   },
   webServer: {
     command:
-      "pnpm build && pnpm --filter @html-poker/web preview --host 127.0.0.1 --port 4173",
+      "pnpm build && node tools/testing/stage-airplane-preview.mjs && pnpm --filter @html-poker/web preview --host 127.0.0.1 --port 4173",
     reuseExistingServer: !process.env.CI,
     stderr: "pipe",
     stdout: "pipe",

@@ -30,9 +30,16 @@ function dataUrlFile(source: string, name: string) {
   };
 }
 
-async function openAirplanePage(context: BrowserContext): Promise<Page> {
+async function openAirplanePage(
+  context: BrowserContext,
+  options: { readonly forceFile?: boolean } = {},
+): Promise<Page> {
   const page = await context.newPage();
-  await page.goto(airplaneUrl);
+  await page.goto(
+    process.env.CI && !options.forceFile
+      ? "/__airplane-test.html"
+      : airplaneUrl,
+  );
   await expect(
     page.getByRole("button", { name: "Create table" }),
   ).toBeVisible();
@@ -241,7 +248,7 @@ test("live camera frame decodes the host offer into an answer QR", async ({
   const hostContext = await browser.newContext();
   const playerContext = await browser.newContext();
   try {
-    const host = await openAirplanePage(hostContext);
+    const host = await openAirplanePage(hostContext, { forceFile: true });
     await host.getByRole("button", { name: "Create table" }).click();
     await host.getByRole("button", { name: "Pair Player" }).click();
     const offerImage = host.getByAltText("Player Airplane offer QR code");
@@ -282,7 +289,7 @@ test("live camera frame decodes the host offer into an answer QR", async ({
         },
       });
     }, offerSource);
-    const player = await openAirplanePage(playerContext);
+    const player = await openAirplanePage(playerContext, { forceFile: true });
     await player
       .getByRole("button", { name: "Join an Airplane table" })
       .click();
