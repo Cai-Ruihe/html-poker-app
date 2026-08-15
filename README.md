@@ -10,9 +10,19 @@ HTML Poker keeps betting, chips, and conversation physical. A Trusted Host brows
 
 **Fact — automated evidence.** Contract suites cover authority, identity, persistence, diagnostics, and relay isolation. Chromium journeys cover local dealing, player refresh/recovery, disconnect-to-sit-out, Normal direct/relay routes and reverse display pairing, plus standalone Airplane boot and pairing.
 
-**Unknown — not a public release claim.** This local release candidate has not passed the required physical iOS/iPadOS, Android, TV, WAN-removal, hostile-network, Connection Service restart, or representative mainland-China matrices. It also has no GitHub remote, protected branch, release signature, or private vulnerability-reporting channel yet. Those are explicit release gates, not omissions hidden by a passing local suite.
+**Unknown — not a public release claim.** This local release candidate has not passed the required physical iOS/iPadOS, Android, TV, WAN-removal, hostile-network, Connection Service restart, or representative mainland-China matrices. Public source, Private Vulnerability Reporting, and a CI-gated field build do not replace protected branch rules, release signing, or the remaining device/network evidence. Those are explicit release gates, not omissions hidden by a passing local suite.
 
 See the [Phase 1 local release-candidate record](docs/releases/PHASE-1-LOCAL-RC.md) for the exact boundary between demonstrated evidence and remaining gates.
+
+## Same-Wi-Fi party build
+
+The owner-authorized field build is published from `main` only after the configured CI and browser journey gates pass. GitHub's hosted Linux runner cannot expose a local ICE interface, so the three real Airplane peer-to-peer journeys remain mandatory local tests and are explicit hosted-CI skips rather than claimed passes:
+
+**https://cai-ruihe.github.io/html-poker-app/**
+
+Open that exact HTTPS address on the host and every iPhone, confirm **Build 0.1.1-phase1**, and create a fresh table. This removes copied-file version drift and gives the in-page QR scanner a normal secure web origin. Use **Enlarge QR** before each phone scans the laptop's offer. The page still uses Airplane Mode's local, serverless WebRTC path after it loads; GitHub Pages does not receive cards or table messages.
+
+For the short operating sequence and phone-replacement recovery, use the [Airplane Mode party runbook](docs/operations/AIRPLANE-MODE.md#same-wi-fi-party-setup).
 
 ## Product constraints
 
@@ -90,6 +100,6 @@ The project is Apache-2.0 licensed. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOT
 
 ## Open-source boundary
 
-This repository is ready for review and a future open-source publication, but publication itself is intentionally not performed by this codebase. Creating a public GitHub repository, configuring branch protection, enabling private vulnerability reporting, choosing release signing, deploying a Connection Service, and publishing artifacts remain owner-controlled external operations.
+The source is public under Apache-2.0 at **https://github.com/Cai-Ruihe/html-poker-app**. Private Vulnerability Reporting, dependency alerts, and automatic security fixes are enabled for that repository. The Pages party build is an explicitly labelled field build; protected branch rules, release signing, an official versioned release, and any Connection Service deployment remain separate owner-controlled gates.
 
 Bold Poker is an interaction reference only. HTML Poker is not affiliated with or endorsed by Bold Poker, and its code, branding, artwork, and exact interface expression are not copied.

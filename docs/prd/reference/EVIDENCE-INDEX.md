@@ -30,7 +30,7 @@ Load this file only for architecture, security, provider-policy, or disputed-def
 
 - [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt): the controlling licence text for copyright, patent, redistribution, NOTICE, contribution, and trademark boundaries.
 - [Contributor Covenant 2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct.html) and its [current adoption/licence notice](https://www.contributor-covenant.org/adopt/): the attributed CC BY-SA 4.0 base for the project Code of Conduct.
-- [GitHub private vulnerability reporting](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/configure-vulnerability-reporting/configure-for-a-repository): the planned private disclosure channel once the public repository exists.
+- [GitHub private vulnerability reporting](https://github.com/Cai-Ruihe/html-poker-app/security/advisories/new): the active private disclosure channel for the public repository.
 
 ## Open-source and academic references
 

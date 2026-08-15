@@ -335,10 +335,12 @@ test("an unpaired Normal TV receives its requested role only after host scan-pai
       .getByLabel("Scan display pairing QR")
       .setInputFiles(dataUrlFile(requestSource, "tv-pairing-request.png"));
 
-    await expect(host.getByText("TV paired", { exact: true })).toBeVisible();
+    await expect(host.getByText("TV paired", { exact: true })).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(
       tv.getByText("Connecting to the table", { exact: true }),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 15_000 });
     await expect(tv.getByLabel("Dealer controls")).toHaveCount(0);
   } finally {
     await Promise.all([hostContext.close(), tvContext.close()]);

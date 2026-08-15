@@ -39,7 +39,7 @@ import {
   type HostAirplanePairing,
 } from "./airplane";
 
-export const BUILD_VERSION = "0.1.0-phase1";
+export const BUILD_VERSION = "0.1.1-phase1";
 export const PROTOCOL_VERSION = 1;
 
 const requestTimeoutMs = 7_500;
@@ -2333,6 +2333,7 @@ export class HostTableRuntime {
         authenticated.seatId,
       );
       await this.persistRecovery();
+      this.emit();
     }
     const sealed = await seal(secret, response, aad);
     await this.endpoint.sendOn(
@@ -2710,7 +2711,9 @@ export class TableClientRuntime {
     string,
     (message: JoinResponseMessage | CapabilityResponseMessage) => void
   >();
+  private presencePaused = false;
   private projection: PublicProjection | SeatProjection | undefined;
+  private recoveryCommitTail: Promise<void> = Promise.resolve();
   private recoveryRevision: number;
   private readonly recoveryStore: AtomicTableStore<ClientRecoveryState>;
   private relayRoutes: RelayRouteConfiguration | undefined;
@@ -2755,7 +2758,11 @@ export class TableClientRuntime {
         this.pending.has(message.requestId)
       ) {
         this.pending.get(message.requestId)?.(message);
-      } else if (message.kind === "table-changed" && this.credential) {
+      } else if (
+        message.kind === "table-changed" &&
+        this.credential &&
+        !this.presencePaused
+      ) {
         void this.refresh().catch((error) => this.captureError(error));
       }
     });
@@ -2935,9 +2942,11 @@ export class TableClientRuntime {
   async setPresence(connected: boolean): Promise<void> {
     if (this.role !== "player" || !this.credential) return;
     if (connected) {
+      this.presencePaused = false;
       await this.refresh();
       return;
     }
+    this.presencePaused = true;
     await this.performPlayer({ type: "disconnect" });
   }
 
@@ -3043,27 +3052,32 @@ export class TableClientRuntime {
     for (const listener of this.listeners) listener();
   }
 
-  private async persistRecovery(): Promise<void> {
-    if (!this.credential) return;
-    const nextRevision = this.recoveryRevision + 1;
-    const result = await this.recoveryStore.commit(this.recoveryRevision, {
-      revision: nextRevision,
-      state: {
-        binding: { ...this.binding },
-        clientInstanceId: this.clientInstanceId,
-        credential: { ...this.credential },
-        privacyClass: "client-recovery-secret",
-        ...(this.relayRoutes ? { relayRoutes: this.relayRoutes } : {}),
-        role: this.role,
-        schemaVersion: 1,
-        ...(this.seat ? { seat: { ...this.seat } } : {}),
-        slotId: this.slotId,
-      },
+  private persistRecovery(): Promise<void> {
+    if (!this.credential) return Promise.resolve();
+    const commit = this.recoveryCommitTail.then(async () => {
+      if (!this.credential) return;
+      const nextRevision = this.recoveryRevision + 1;
+      const result = await this.recoveryStore.commit(this.recoveryRevision, {
+        revision: nextRevision,
+        state: {
+          binding: { ...this.binding },
+          clientInstanceId: this.clientInstanceId,
+          credential: { ...this.credential },
+          privacyClass: "client-recovery-secret",
+          ...(this.relayRoutes ? { relayRoutes: this.relayRoutes } : {}),
+          role: this.role,
+          schemaVersion: 1,
+          ...(this.seat ? { seat: { ...this.seat } } : {}),
+          slotId: this.slotId,
+        },
+      });
+      if (result.status !== "committed") {
+        throw new Error(`Client recovery commit failed: ${result.status}`);
+      }
+      this.recoveryRevision = nextRevision;
     });
-    if (result.status !== "committed") {
-      throw new Error(`Client recovery commit failed: ${result.status}`);
-    }
-    this.recoveryRevision = nextRevision;
+    this.recoveryCommitTail = commit.catch(() => undefined);
+    return commit;
   }
 
   private async refresh(): Promise<void> {
