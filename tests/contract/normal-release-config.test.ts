@@ -16,7 +16,7 @@ const configureScript = path.join(
   "configure-normal.mjs",
 );
 const baselineCsp =
-  "connect-src 'self' https: wss:; font-src 'self'; form-action 'self'";
+  "connect-src 'self' https: wss:; font-src 'self'; form-action 'self'; img-src 'self' data: blob:;";
 
 async function fixture(): Promise<string> {
   const root = await mkdtemp(path.join(tmpdir(), "html-poker-normal-config-"));
@@ -74,6 +74,7 @@ describe("Normal release configuration", () => {
       "connect-src 'self' https://relay.example.test wss://relay.example.test;",
     );
     expect(html).not.toContain("connect-src 'self' https: wss:;");
+    expect(html).toContain("img-src 'self' data: blob:;");
   });
 
   it("rejects an insecure public Connection Service URL", async () => {
@@ -89,6 +90,28 @@ describe("Normal release configuration", () => {
       }),
     ).rejects.toMatchObject({
       stderr: expect.stringContaining("wss://"),
+    });
+  });
+
+  it("rejects an artifact that would block a locally selected QR image", async () => {
+    const root = await fixture();
+    const indexPath = path.join(root, "dist", "normal", "index.html");
+    await writeFile(
+      indexPath,
+      `<meta http-equiv="Content-Security-Policy" content="${baselineCsp.replace(" blob:", "")}">`,
+      "utf8",
+    );
+
+    await expect(
+      execute(process.execPath, [configureScript], {
+        cwd: root,
+        env: {
+          ...process.env,
+          NORMAL_CONNECTION_SERVICE_URL: "wss://relay.example.test",
+        },
+      }),
+    ).rejects.toMatchObject({
+      stderr: expect.stringContaining("blob:"),
     });
   });
 });
