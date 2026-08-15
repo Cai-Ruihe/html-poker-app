@@ -6,7 +6,7 @@ HTML Poker keeps betting, chips, and conversation physical. A Trusted Host brows
 
 ## Phase 1 status
 
-**Fact — implemented and automated locally.** The Phase 1 codebase supports two to ten player seats, one-use/revocable QR or link invitations, role-scoped Player/TV/Public Table/Tablet surfaces, private card projection, guarded hand lifecycle, show/muck/fold handling, correction/void controls, encrypted IndexedDB recovery, redacted local diagnostics, Normal Mode direct WebRTC with card-blind relay fallback, reverse display pairing, and a standalone two-way-QR Airplane artifact.
+**Fact — implemented and automated locally.** The Phase 1 codebase supports two to ten player seats, one-use/revocable QR or link invitations, role-scoped Player/TV/Public Table/Tablet surfaces, private card projection, guarded hand lifecycle, show/muck/fold handling, correction/void controls, encrypted IndexedDB recovery, redacted local diagnostics, Normal Mode direct WebRTC with card-blind relay fallback, reverse display pairing, and a standalone two-way-QR Airplane artifact with in-page camera scanning and saved-image fallback.
 
 **Fact — automated evidence.** Contract suites cover authority, identity, persistence, diagnostics, and relay isolation. Chromium journeys cover local dealing, player refresh/recovery, disconnect-to-sit-out, Normal direct/relay routes and reverse display pairing, plus standalone Airplane boot and pairing.
 

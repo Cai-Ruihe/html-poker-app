@@ -520,12 +520,166 @@ button:disabled {
   overflow: hidden;
 }
 
-.qr-file-button input,
-.airplane-scan-target input {
+.qr-file-button:focus-within {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.qr-file-button input {
   position: absolute;
   width: 1px;
   height: 1px;
   opacity: 0;
+}
+
+.qr-camera-backdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: clamp(0.75rem, 4vw, 2.5rem);
+  background: rgba(18, 61, 52, 0.34);
+  backdrop-filter: blur(0.35rem);
+}
+
+.qr-camera-sheet {
+  width: min(34rem, 100%);
+  overflow: hidden;
+  border: 1px solid var(--rule-strong);
+  border-radius: 0.9rem;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.qr-camera-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--rule);
+  padding: 1rem 1.15rem;
+}
+
+.qr-camera-header h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.25rem, 4vw, 1.7rem);
+  line-height: 1.1;
+}
+
+.qr-camera-close {
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 0.48rem 0.7rem;
+  color: var(--ink-soft);
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 720;
+}
+
+.qr-camera-viewfinder {
+  position: relative;
+  display: grid;
+  min-height: 20rem;
+  overflow: hidden;
+  place-items: center;
+  background: var(--ink);
+}
+
+.qr-camera-viewfinder video {
+  width: 100%;
+  height: 100%;
+  min-height: 20rem;
+  object-fit: cover;
+}
+
+.qr-camera-corners {
+  position: absolute;
+  width: min(66%, 18rem);
+  aspect-ratio: 1;
+  background:
+    linear-gradient(var(--surface), var(--surface)) left top / 2.8rem 0.24rem
+      no-repeat,
+    linear-gradient(var(--surface), var(--surface)) left top / 0.24rem 2.8rem
+      no-repeat,
+    linear-gradient(var(--surface), var(--surface)) right top / 2.8rem 0.24rem
+      no-repeat,
+    linear-gradient(var(--surface), var(--surface)) right top / 0.24rem 2.8rem
+      no-repeat,
+    linear-gradient(var(--surface), var(--surface)) left bottom / 2.8rem 0.24rem
+      no-repeat,
+    linear-gradient(var(--surface), var(--surface)) left bottom / 0.24rem 2.8rem
+      no-repeat,
+    linear-gradient(var(--surface), var(--surface)) right bottom / 2.8rem
+      0.24rem no-repeat,
+    linear-gradient(var(--surface), var(--surface)) right bottom / 0.24rem
+      2.8rem no-repeat;
+  filter: drop-shadow(0 0.08rem 0.18rem rgba(0, 0, 0, 0.42));
+}
+
+.qr-camera-viewfinder p {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  left: 1rem;
+  margin: 0;
+  border-radius: 0.45rem;
+  padding: 0.62rem 0.75rem;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 0.76rem;
+  font-weight: 690;
+  text-align: center;
+}
+
+.qr-camera-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid var(--rule);
+  padding: 1rem 1.15rem;
+}
+
+.qr-camera-actions small {
+  max-width: 18rem;
+  color: var(--quiet);
+  font-size: 0.68rem;
+  line-height: 1.4;
+  text-align: right;
+}
+
+@media (max-width: 42rem) {
+  .qr-camera-backdrop {
+    align-items: end;
+    padding: 0;
+  }
+
+  .qr-camera-sheet {
+    width: 100%;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 0.9rem 0.9rem 0 0;
+  }
+
+  .qr-camera-viewfinder,
+  .qr-camera-viewfinder video {
+    min-height: min(58svh, 28rem);
+  }
+
+  .qr-camera-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .qr-camera-actions small {
+    max-width: none;
+    text-align: left;
+  }
 }
 
 .qr-error {
@@ -1579,7 +1733,9 @@ button:disabled {
   border: 2px dashed var(--green);
   border-radius: 0.8rem;
   color: var(--green-dark);
+  background: var(--surface-muted);
   cursor: pointer;
+  font-weight: 720;
   text-align: center;
 }
 

@@ -306,6 +306,159 @@ async function scanQrImage(file: File): Promise<string> {
   }
 }
 
+function cameraFailureMessage(caught: unknown): string {
+  if (!globalThis.navigator.mediaDevices?.getUserMedia) {
+    return "This browser cannot open a camera from this file. Use a saved QR image instead.";
+  }
+  if (caught instanceof DOMException) {
+    if (caught.name === "NotAllowedError") {
+      return "Camera access was blocked. Allow camera access, then open the scanner again.";
+    }
+    if (caught.name === "NotFoundError") {
+      return "No camera was found on this device. Use a saved QR image instead.";
+    }
+    if (caught.name === "NotReadableError") {
+      return "The camera is already in use by another app. Close that app, then try again.";
+    }
+  }
+  return "The camera could not start. Use a saved QR image instead.";
+}
+
+function QrCameraScanner({
+  label,
+  onClose,
+  onCode,
+}: {
+  readonly label: string;
+  readonly onClose: () => void;
+  readonly onCode: (code: string) => void;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const controlsRef = useRef<{ stop(): void } | null>(null);
+  const handledRef = useRef(false);
+  const onCodeRef = useRef(onCode);
+  const [cameraError, setCameraError] = useState<string>();
+  const [imageError, setImageError] = useState<string>();
+
+  useEffect(() => {
+    onCodeRef.current = onCode;
+  }, [onCode]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const reader = new BrowserQRCodeReader(undefined, {
+      delayBetweenScanAttempts: 180,
+      delayBetweenScanSuccess: 500,
+    });
+    let active = true;
+    void reader
+      .decodeFromConstraints(
+        {
+          audio: false,
+          video: { facingMode: { ideal: "environment" } },
+        },
+        video,
+        (result, _error, controls) => {
+          if (!active || handledRef.current || !result) return;
+          handledRef.current = true;
+          controls.stop();
+          onCodeRef.current(result.getText());
+        },
+      )
+      .then((controls) => {
+        if (!active) {
+          controls.stop();
+          return;
+        }
+        controlsRef.current = controls;
+      })
+      .catch((caught: unknown) => {
+        if (active) setCameraError(cameraFailureMessage(caught));
+      });
+    return () => {
+      active = false;
+      controlsRef.current?.stop();
+      controlsRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    globalThis.addEventListener("keydown", closeOnEscape);
+    return () => globalThis.removeEventListener("keydown", closeOnEscape);
+  }, [onClose]);
+
+  async function readSavedImage(file: File) {
+    setImageError(undefined);
+    try {
+      onCode(await scanQrImage(file));
+    } catch (caught) {
+      setImageError(
+        caught instanceof Error
+          ? caught.message
+          : "The selected image does not contain a readable QR code.",
+      );
+    }
+  }
+
+  return (
+    <div
+      aria-labelledby="qr-camera-title"
+      aria-modal="true"
+      className="qr-camera-backdrop"
+      role="dialog"
+    >
+      <section className="qr-camera-sheet">
+        <header className="qr-camera-header">
+          <div>
+            <p className="section-label">Live camera</p>
+            <h2 id="qr-camera-title">{label}</h2>
+          </div>
+          <button
+            aria-label="Close camera"
+            autoFocus
+            className="qr-camera-close"
+            onClick={onClose}
+            type="button"
+          >
+            Close
+          </button>
+        </header>
+        <div className="qr-camera-viewfinder">
+          <video autoPlay muted playsInline ref={videoRef} />
+          <span className="qr-camera-corners" aria-hidden="true" />
+          <p aria-live="polite">
+            {cameraError ?? "Hold the QR inside the four corners."}
+          </p>
+        </div>
+        {imageError ? (
+          <p className="inline-warning" role="alert">
+            {imageError}
+          </p>
+        ) : null}
+        <div className="qr-camera-actions">
+          <label className="button button--quiet qr-file-button">
+            <span>Use a saved QR image</span>
+            <input
+              accept="image/*"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void readSavedImage(file);
+                event.target.value = "";
+              }}
+              type="file"
+            />
+          </label>
+          <small>Nothing from the camera leaves this device.</small>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function AirplaneHostPairingCard({
   compact = false,
   label,
@@ -321,6 +474,7 @@ function AirplaneHostPairingCard({
   const [busy, setBusy] = useState(false);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string>();
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   async function prepare() {
     setBusy(true);
@@ -339,11 +493,11 @@ function AirplaneHostPairingCard({
     }
   }
 
-  async function accept(file: File) {
+  async function accept(code: string) {
     setBusy(true);
     setError(undefined);
     try {
-      await runtime.acceptAirplaneAnswer(await scanQrImage(file));
+      await runtime.acceptAirplaneAnswer(code);
       setConnected(true);
     } catch (caught) {
       setError(
@@ -377,7 +531,7 @@ function AirplaneHostPairingCard({
         <h2>{offer ? "Scan this offer" : "Prepare local pairing"}</h2>
         <p>
           {offer
-            ? "Open the same downloaded file on the other device, scan this QR, then scan its answer below."
+            ? "On the other device, open this same downloaded HTML file and choose Join an Airplane table. Use its in-page camera—not the phone's standalone Camera app—then scan the answer here."
             : "Creates a one-use, no-internet WebRTC offer. Both devices must use private Wi-Fi without client isolation."}
         </p>
         {error ? (
@@ -400,23 +554,27 @@ function AirplaneHostPairingCard({
             {busy ? "Preparing…" : offer ? "New offer" : `Pair ${label}`}
           </button>
           {offer ? (
-            <label className="button button--quiet qr-file-button">
-              <span>{`Scan ${label} answer QR`}</span>
-              <input
-                accept="image/*"
-                capture="environment"
-                disabled={busy}
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) void accept(file);
-                  event.target.value = "";
-                }}
-                type="file"
-              />
-            </label>
+            <button
+              className="button button--quiet"
+              disabled={busy}
+              onClick={() => setScannerOpen(true)}
+              type="button"
+            >
+              {`Scan ${label} answer QR`}
+            </button>
           ) : null}
         </div>
       </div>
+      {scannerOpen ? (
+        <QrCameraScanner
+          label={`Scan ${label} answer QR`}
+          onClose={() => setScannerOpen(false)}
+          onCode={(code) => {
+            setScannerOpen(false);
+            void accept(code);
+          }}
+        />
+      ) : null}
     </section>
   );
 }
@@ -1552,16 +1710,15 @@ function AirplaneJoin({
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  const [scannerOpen, setScannerOpen] = useState(false);
 
-  async function readOffer(file: File) {
+  async function readOffer(code: string) {
     pairing?.runtime.close();
     setPairing(undefined);
     setBusy(true);
     setError(undefined);
     try {
-      setPairing(
-        await TableClientRuntime.fromAirplaneOffer(await scanQrImage(file)),
-      );
+      setPairing(await TableClientRuntime.fromAirplaneOffer(code));
     } catch (caught) {
       setError(
         caught instanceof Error
@@ -1607,7 +1764,7 @@ function AirplaneJoin({
           <p>
             {pairing
               ? "The host scans this answer on their device. Then join over the direct local WebRTC channel."
-              : "Take a photo of the offer QR shown by the Trusted Host. The image is decoded only on this device."}
+              : "Point this device's camera at the offer QR shown by the Trusted Host. It is decoded only on this device."}
           </p>
         </div>
         <div className="airplane-join-card__pairing">
@@ -1617,21 +1774,15 @@ function AirplaneJoin({
               value={pairing.answerCode}
             />
           ) : (
-            <label className="airplane-scan-target">
+            <button
+              className="airplane-scan-target"
+              disabled={busy}
+              onClick={() => setScannerOpen(true)}
+              type="button"
+            >
               <span>{busy ? "Reading QR…" : "Scan host offer QR"}</span>
-              <small>Camera or saved QR image</small>
-              <input
-                accept="image/*"
-                capture="environment"
-                disabled={busy}
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) void readOffer(file);
-                  event.target.value = "";
-                }}
-                type="file"
-              />
-            </label>
+              <small>Opens the camera</small>
+            </button>
           )}
         </div>
         {pairing?.runtime.role === "player" ? (
@@ -1676,6 +1827,16 @@ function AirplaneJoin({
           ) : null}
         </div>
       </section>
+      {scannerOpen ? (
+        <QrCameraScanner
+          label="Scan host offer QR"
+          onClose={() => setScannerOpen(false)}
+          onCode={(code) => {
+            setScannerOpen(false);
+            void readOffer(code);
+          }}
+        />
+      ) : null}
     </main>
   );
 }

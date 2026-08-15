@@ -143,8 +143,8 @@ async function joinPlayer(
   return player;
 }
 
-test.beforeAll(async (fixtures, testInfo) => {
-  void fixtures;
+test.beforeAll(async ({ browserName }, testInfo) => {
+  void browserName;
   if (testInfo.project.name === "mobile-webkit") return;
   relay = spawn(
     process.execPath,
@@ -168,14 +168,18 @@ test.afterAll(() => {
   relay?.kill("SIGTERM");
 });
 
-test("the configured Connection Service rejects a different WebSocket origin", async (fixtures, testInfo) => {
-  void fixtures;
+test("the configured Connection Service rejects a different WebSocket origin", async ({
+  browserName,
+}, testInfo) => {
+  void browserName;
   skipInsecureLocalRelayOnMobileWebKit(testInfo);
   await expect(rejectedWebSocketUpgrade()).resolves.toBe(403);
 });
 
-test("the Connection Service allows its POST ticket preflight", async (fixtures, testInfo) => {
-  void fixtures;
+test("the Connection Service allows its POST ticket preflight", async ({
+  browserName,
+}, testInfo) => {
+  void browserName;
   skipInsecureLocalRelayOnMobileWebKit(testInfo);
   await expect(preflightMethods()).resolves.toContain("POST");
 });

@@ -10,6 +10,8 @@ import {
   type TestInfo,
 } from "@playwright/test";
 
+test.describe.configure({ mode: "default" });
+
 const airplanePath = path.join(
   process.cwd(),
   "dist",
@@ -65,16 +67,20 @@ async function pairPlayer(
   if (!offerSource) throw new Error("The host offer QR did not render.");
 
   await player.getByRole("button", { name: "Join an Airplane table" }).click();
+  await player.getByRole("button", { name: "Scan host offer QR" }).click();
   await player
-    .getByLabel("Scan host offer QR")
+    .getByRole("dialog", { name: "Scan host offer QR" })
+    .getByLabel("Use a saved QR image")
     .setInputFiles(dataUrlFile(offerSource, `${displayName}-offer.png`));
   const answerImage = player.getByAltText("Airplane answer QR code");
   await expect(answerImage).toBeVisible({ timeout: 12_000 });
   const answerSource = await answerImage.getAttribute("src");
   if (!answerSource) throw new Error("The player answer QR did not render.");
 
+  await host.getByRole("button", { name: "Scan Player answer QR" }).click();
   await host
-    .getByLabel("Scan Player answer QR")
+    .getByRole("dialog", { name: "Scan Player answer QR" })
+    .getByLabel("Use a saved QR image")
     .setInputFiles(dataUrlFile(answerSource, `${displayName}-answer.png`));
   await expect(
     host.getByText("Direct channel paired. The other device can now join."),
@@ -105,6 +111,146 @@ test("standalone artifact boots from file with no external request", async ({
   expect(source).toContain("html-poker-third-party-licenses");
   expect(source).toContain("html-poker-project-license");
   expect(await context.cookies()).toEqual([]);
+});
+
+test("host answer scan opens the live camera with an image fallback", async ({
+  context,
+}, testInfo: TestInfo) => {
+  test.skip(
+    testInfo.project.name !== "chromium",
+    "Headless Mobile WebKit cannot create the prerequisite file-origin WebRTC offer; the join-side camera UI is still exercised there.",
+  );
+  const host = await openAirplanePage(context);
+  await host.addInitScript(() => {
+    Object.defineProperty(globalThis.navigator, "mediaDevices", {
+      configurable: true,
+      value: {
+        getUserMedia: async () => {
+          Reflect.set(globalThis, "__htmlPokerCameraRequests", 1);
+          return new MediaStream();
+        },
+      },
+    });
+  });
+  await host.reload();
+  await host.getByRole("button", { name: "Create table" }).click();
+  await host.getByRole("button", { name: "Pair Player" }).click();
+  await expect(
+    host.getByAltText("Player Airplane offer QR code"),
+  ).toBeVisible();
+
+  await host.getByRole("button", { name: "Scan Player answer QR" }).click();
+
+  await expect(
+    host.getByRole("dialog", { name: "Scan Player answer QR" }),
+  ).toBeVisible();
+  await expect
+    .poll(() =>
+      host.evaluate(() => Reflect.get(globalThis, "__htmlPokerCameraRequests")),
+    )
+    .toBe(1);
+  await expect(
+    host.getByRole("button", { name: "Use a saved QR image" }),
+  ).toBeVisible();
+});
+
+test("joining device scans the host offer with the live camera", async ({
+  context,
+}) => {
+  await context.addInitScript(() => {
+    Object.defineProperty(globalThis.navigator, "mediaDevices", {
+      configurable: true,
+      value: {
+        getUserMedia: async () => {
+          Reflect.set(globalThis, "__htmlPokerCameraRequests", 1);
+          return new MediaStream();
+        },
+      },
+    });
+  });
+  const player = await openAirplanePage(context);
+  await player.getByRole("button", { name: "Join an Airplane table" }).click();
+
+  await player.getByRole("button", { name: "Scan host offer QR" }).click();
+
+  await expect(
+    player.getByRole("dialog", { name: "Scan host offer QR" }),
+  ).toBeVisible();
+  await expect
+    .poll(() =>
+      player.evaluate(() =>
+        Reflect.get(globalThis, "__htmlPokerCameraRequests"),
+      ),
+    )
+    .toBe(1);
+  await expect(
+    player.getByRole("button", { name: "Use a saved QR image" }),
+  ).toBeVisible();
+});
+
+test("live camera frame decodes the host offer into an answer QR", async ({
+  browser,
+}, testInfo: TestInfo) => {
+  test.skip(
+    testInfo.project.name !== "chromium",
+    "The deterministic canvas camera fixture and local file-origin WebRTC path are verified in Chromium; physical Mobile WebKit remains a release gate.",
+  );
+  const hostContext = await browser.newContext();
+  const playerContext = await browser.newContext();
+  try {
+    const host = await openAirplanePage(hostContext);
+    await host.getByRole("button", { name: "Create table" }).click();
+    await host.getByRole("button", { name: "Pair Player" }).click();
+    const offerImage = host.getByAltText("Player Airplane offer QR code");
+    await expect(offerImage).toBeVisible();
+    const offerSource = await offerImage.getAttribute("src");
+    if (!offerSource) throw new Error("The host offer QR did not render.");
+
+    await playerContext.addInitScript(async (source) => {
+      Object.defineProperty(globalThis.navigator, "mediaDevices", {
+        configurable: true,
+        value: {
+          getUserMedia: async () => {
+            const image = new Image();
+            image.src = source;
+            await image.decode();
+            const canvas = document.createElement("canvas");
+            canvas.width = 640;
+            canvas.height = 640;
+            const drawing = canvas.getContext("2d");
+            if (!drawing) throw new Error("Camera fixture canvas unavailable.");
+            const paintFrame = () => {
+              drawing.fillStyle = "#ffffff";
+              drawing.fillRect(0, 0, canvas.width, canvas.height);
+              drawing.drawImage(image, 64, 64, 512, 512);
+            };
+            paintFrame();
+            const stream = canvas.captureStream(10);
+            const refresh = globalThis.setInterval(paintFrame, 100);
+            for (const track of stream.getTracks()) {
+              const stop = track.stop.bind(track);
+              track.stop = () => {
+                globalThis.clearInterval(refresh);
+                stop();
+              };
+            }
+            return stream;
+          },
+        },
+      });
+    }, offerSource);
+    const player = await openAirplanePage(playerContext);
+    await player
+      .getByRole("button", { name: "Join an Airplane table" })
+      .click();
+    await player.getByRole("button", { name: "Scan host offer QR" }).click();
+
+    await expect(player.getByAltText("Airplane answer QR code")).toBeVisible({
+      timeout: 12_000,
+    });
+  } finally {
+    await Promise.all([hostContext.close(), playerContext.close()]);
+  }
 });
 
 test("two players pair by two-way QR and deal over direct local WebRTC", async ({
