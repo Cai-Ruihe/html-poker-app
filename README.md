@@ -8,9 +8,9 @@ HTML Poker keeps betting, chips, and conversation physical. A Trusted Host brows
 
 **Fact — implemented and automated locally.** The Phase 1 codebase supports two to ten player seats, one-use/revocable QR or link invitations, role-scoped Player/TV/Public Table/Tablet surfaces, private card projection, guarded hand lifecycle, show/muck/fold handling, correction/void controls, encrypted IndexedDB recovery, redacted local diagnostics, Normal Mode direct WebRTC with card-blind relay fallback, reverse display pairing, and a standalone two-way-QR Airplane artifact with in-page camera scanning and saved-image fallback.
 
-**Fact — automated evidence.** Contract suites cover authority, identity, persistence, diagnostics, and relay isolation. Chromium journeys cover local dealing, player refresh/recovery, disconnect-to-sit-out, Normal direct/relay routes and reverse display pairing, plus standalone Airplane boot and pairing.
+**Fact — automated evidence.** Contract suites cover authority, identity, persistence, diagnostics, and relay isolation. Chromium and Mobile WebKit journeys cover a host joining its own table, switching among host/private/tablet views, player refresh/recovery, and disconnect-to-sit-out. Chromium additionally covers Normal direct/relay routes, reverse display pairing, stale-link diagnosis and ticket refresh after a service restart, plus standalone Airplane boot and pairing.
 
-**Unknown — not a public release claim.** This local release candidate has not passed the required physical iOS/iPadOS, Android, TV, WAN-removal, hostile-network, Connection Service restart, or representative mainland-China matrices. Public source, Private Vulnerability Reporting, and a CI-gated field build do not replace protected branch rules, release signing, or the remaining device/network evidence. Those are explicit release gates, not omissions hidden by a passing local suite.
+**Unknown — not a public release claim.** This local release candidate has not passed the required physical iOS/iPadOS, Android, TV, WAN-removal, hostile-network, already-connected-client survival across a Connection Service restart, or representative mainland-China matrices. Public source, Private Vulnerability Reporting, and a CI-gated field build do not replace protected branch rules, release signing, or the remaining device/network evidence. Those are explicit release gates, not omissions hidden by a passing local suite.
 
 See the [Phase 1 local release-candidate record](docs/releases/PHASE-1-LOCAL-RC.md) for the exact boundary between demonstrated evidence and remaining gates.
 
@@ -31,6 +31,8 @@ The owner-authorized Normal field build is published at:
 **https://cai-ruihe.github.io/html-poker-app/normal/**
 
 Normal Mode uses ordinary one-use invitation links/QRs and a card-blind Connection Service. The current field service runs on the owner's laptop through an outbound TLS tunnel, so the laptop and its container runtime must remain awake. The operator token stays outside the repository and public site. This temporary service has no uptime guarantee; it is not the later permanent deployment claim.
+
+If the host phone or iPad is also playing, choose **Join my own table** before dealing. Keep that one page foregrounded and use **Host Controls**, **My Hand**, and **Table View**; a separate background iOS tab is not required.
 
 See [Normal Mode operations](docs/operations/NORMAL-MODE.md) for the host flow, service boundary, and restart procedure.
 

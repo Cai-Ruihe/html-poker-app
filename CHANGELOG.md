@@ -6,6 +6,7 @@ All notable project changes will be documented here. The format follows [Keep a 
 
 ### Fixed
 
+- Replaced the generic Normal Mode route failure with restart-aware instructions, and added a regression that refreshes the host's relay ticket and joins through the regenerated invitation after an in-memory Connection Service restart.
 - Replaced the iPhone-only slide-to-peek gesture—which could accidentally publish a hand—with a one-tap **Reveal my cards privately** control, automatic cover on visibility loss, and a separate **Show cards to table** action.
 - Serialized client recovery commits so overlapping table updates and `pagehide` cannot race into `Client recovery commit failed: revision-conflict`.
 - Preserved a live client endpoint across restorable `pagehide` events and reconnect presence on `pageshow`, instead of converting every temporary mobile suspension into a forced disconnect.
@@ -21,6 +22,7 @@ All notable project changes will be documented here. The format follows [Keep a 
 
 ### Added
 
+- Added a single-page host-device flow: **Join my own table** redeems an ordinary Player credential, then **Host Controls**, **My Hand**, and **Table View** switch among authority, private, and public projections without relying on a background iOS tab.
 - Complete Phase 1 trusted-host dealer slice: two-to-ten seat capabilities, one-use/revocable invitations, Player/TV/Public Table/Tablet projections, hand lifecycle controls, seat replacement/reorder/dealer relocation, void/correction records, encrypted recovery, and redacted diagnostics.
 - Normal Mode route implementation with local browser channel, direct WebRTC after private signaling, card-blind private relay fallback, table-scoped four-hour relay tickets, host-side ticket renewal, and host-approved reverse display pairing.
 - Standalone Airplane Mode artifact with fully bundled assets, restrictive offline CSP, two-way QR offer/answer pairing, local `iceServers: []` WebRTC, native saved-image detection plus bundled ZXing/jsQR fallbacks, and artifact request regression coverage.

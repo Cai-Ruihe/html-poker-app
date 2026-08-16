@@ -24,7 +24,7 @@ This is the searchable source of settled product choices. Load rows by ID rather
 | AUTH-TRUSTED-HOST | One active host owns Phase 1 game truth and readable card custody. | locked | M01, M02 |
 | AUTH-FUTURE-MENTAL-POKER | Preserve a replaceable Card Custody seam for a future separately reviewed host-blind option. | locked | M02 |
 | AUTH-HOST-DEATH | Permanent host loss may end a Phase 1 game; automatic host migration is not promised. | locked | M07 |
-| AUTH-HOST-CAN-PLAY | The host operator may join from another device as an ordinary player. | locked | M03 |
+| AUTH-HOST-CAN-PLAY | The host operator may redeem an ordinary Player invitation on the host device or another device. The resulting Seat Credential and private projection remain separate from host authority. | locked | M03, M06 |
 | ARCH-SHARED-CORE | Normal/Airplane modes and all presentations share one core with replaceable adapters. | locked | M01 |
 | RULES-VERSIONED-PROFILE | Each table pins one supported, versioned Rules Profile; unsupported combinations fail before play. | research-default | M01 |
 | PHASE1-ONE-TABLE-PER-HOST | One Trusted Host runtime owns one table; a card-blind Connection Service may multiplex isolated tables. | research-default | M01, M04 |
@@ -71,6 +71,7 @@ This is the searchable source of settled product choices. Load rows by ID rather
 |---|---|---|---|
 | MODE-SEPARATION | Player, Tablet, TV, Public Table, and Developer experiences are distinct projections/presentations. | locked | M06 |
 | MODE-TABLE-CONTROL | A device with a valid Table-Control Capability may switch to Tablet Mode without first-use approval; Public/display authority cannot self-upgrade or see cards. | locked | M03, M06 |
+| MODE-HOST-DEVICE-SWITCH | A Trusted Host device exposes Host Controls, My Hand after redeeming a separate Player invitation, and Table View after dealing. Switching occurs in one active document and changes presentation only; it neither mints nor upgrades authority. | locked | P1, M03, M06 |
 | SEAT-AUTO-AND-DRAG | Auto-assign seats and allow visual positions to move during play without changing logical order. | locked | M03, M06 |
 | DEALER-RELOCATION | Separate administration changes the logical dealer seat without dealing or posting blinds. | locked | M01, M06 |
 | FOLD-UNDO | Fold has a visible five-second undo window ending earlier at the first dependent irreversible progression. | locked | M01, M06 |

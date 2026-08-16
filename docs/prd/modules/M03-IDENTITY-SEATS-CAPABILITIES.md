@@ -2,7 +2,7 @@
 id: PRD-M03
 kind: module
 status: current
-last_reconciled: 2026-08-14
+last_reconciled: 2026-08-16
 decision_ids:
   - PHASE1-TABLE-SIZE
   - GOV-CUSTOM-HOST
@@ -19,6 +19,7 @@ decision_ids:
   - RECOVERY-PLAYER
   - RECOVERY-DISCONNECT-SIT-OUT
   - MODE-TABLE-CONTROL
+  - MODE-HOST-DEVICE-SWITCH
   - SEAT-AUTO-AND-DRAG
   - FOLD-SIT-OUT
 router: ../manifest.yaml
@@ -59,7 +60,7 @@ The interface opens/closes invitation scopes, redeems a one-use invitation into 
 3. As a returning player, I want the same seat after refresh without relying on my display name.
 4. As a player with a replacement phone, I want the host to issue a one-use replacement that revokes the old device.
 5. As a display, I want only public state; as a controller, I want dealer controls without cards.
-6. As a host-player, I want host authority and my player seat to remain separate.
+6. As a host-player, I want to take an ordinary player seat on the host device or another device while host authority and my Seat Credential remain separate.
 7. As a table, we want disconnected players sitting out for later hands without revealing cards.
 8. As a folded player, I want to mark myself sitting out for future hands immediately instead of waiting for the hand to end.
 9. As an awkward-input display, I want to show a pairing QR that the host scans instead of typing a full table URL with a TV remote.
@@ -73,11 +74,12 @@ The interface opens/closes invitation scopes, redeems a one-use invitation into 
 - Public/display capabilities cannot mint or self-upgrade into Table-Control. Control links are powerful short-lived bearer capabilities with roster visibility and immediate revoke/rotate.
 - Normal Mode may reverse the display bootstrap: an untrusted display request shows an ephemeral QR, and an authorized host/admin device scans it to issue only the selected Public, TV, or Table-Control capability. That scan is the bootstrap; mode switching later adds no approval prompt and no stronger authority.
 - Join invitations bind the active host key independently of signaling. Typed codes/files remain deferred.
+- Joining on the host device redeems the same ordinary one-use Player invitation and creates the same revocable Seat Credential as an external player. The host recovery URL may reference the local player slot, but the credential secret remains in encrypted browser recovery storage.
 - Visual `displayPosition` never changes logical seat/dealer/blind order.
 
 ## Testing Decisions
 
-Test wrong role/table/host/version, expired/replayed invitations, Join Window closure, duplicate names, reverse-display pairing, copied control link, capability confusion, replacement race, old-device return, simultaneous tabs, seat recovery, new mid-hand join, disconnect through hand end, and host-player separation. Assert that no capability grants a stronger scope through UI mode switching.
+Test wrong role/table/host/version, expired/replayed invitations, Join Window closure, duplicate names, reverse-display pairing, copied control link, capability confusion, replacement race, old-device return, simultaneous tabs, seat recovery, new mid-hand join, disconnect through hand end, and same- or separate-device host-player separation. Assert that no capability grants a stronger scope through UI mode switching and that Table View contains no private-card DOM.
 
 ## Out of Scope
 

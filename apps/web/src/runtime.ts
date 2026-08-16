@@ -1423,7 +1423,7 @@ class RoomEndpoint {
       }
     }
     throw new Error(
-      "No route reached the Trusted Host. Check the table link and relay configuration.",
+      "No route reached the Trusted Host. This table link may be stale after the host or Connection Service restarted. Ask the Trusted Host to refresh the relay ticket and share a new link, or create a new table.",
     );
   }
 
@@ -2681,6 +2681,10 @@ export interface ClientRecoveryDetails {
   readonly slotId: string;
 }
 
+export interface ClientRuntimeLaunchOptions {
+  readonly recoveryNavigation?: "client" | "embedded-host";
+}
+
 interface ClientRuntimeOptions {
   readonly airplanePairing?: ClientAirplanePairing;
   readonly binding: PeerBinding;
@@ -2690,6 +2694,7 @@ interface ClientRuntimeOptions {
   readonly lease?: ExclusiveHostLease;
   readonly relayRoutes?: RelayRouteConfiguration;
   readonly recoveryRevision: number;
+  readonly recoveryNavigation?: "client" | "embedded-host";
   readonly role: CapabilityRole;
   readonly seat?: RoomSeat;
   readonly slotId: string;
@@ -2715,6 +2720,7 @@ export class TableClientRuntime {
   private projection: PublicProjection | SeatProjection | undefined;
   private recoveryCommitTail: Promise<void> = Promise.resolve();
   private recoveryRevision: number;
+  private readonly recoveryNavigation: "client" | "embedded-host";
   private readonly recoveryStore: AtomicTableStore<ClientRecoveryState>;
   private relayRoutes: RelayRouteConfiguration | undefined;
   private seat: RoomSeat | undefined;
@@ -2731,6 +2737,7 @@ export class TableClientRuntime {
     this.lease = options.lease;
     this.relayRoutes = cloneRelayRoutes(options.relayRoutes);
     this.recoveryRevision = options.recoveryRevision;
+    this.recoveryNavigation = options.recoveryNavigation ?? "client";
     this.slotId = options.slotId;
     this.recoveryStore = clientRecoveryStore(
       options.binding.tableId,
@@ -2768,13 +2775,17 @@ export class TableClientRuntime {
     });
   }
 
-  static fromInvitation(details: InvitationDetails): TableClientRuntime {
+  static fromInvitation(
+    details: InvitationDetails,
+    options: ClientRuntimeLaunchOptions = {},
+  ): TableClientRuntime {
     return new TableClientRuntime({
       binding: details.binding,
       clientInstanceId: makeId("client"),
       invitationToken: details.invitationToken,
       ...(details.relayRoutes ? { relayRoutes: details.relayRoutes } : {}),
       recoveryRevision: 0,
+      ...options,
       role: details.role,
       slotId: makeId("slot"),
     });
@@ -2808,6 +2819,7 @@ export class TableClientRuntime {
 
   static async recover(
     details: ClientRecoveryDetails,
+    options: ClientRuntimeLaunchOptions = {},
   ): Promise<TableClientRuntime> {
     const lease = await acquireClientLease(
       details.binding.tableId,
@@ -2835,6 +2847,7 @@ export class TableClientRuntime {
           ? { relayRoutes: saved.state.relayRoutes }
           : {}),
         recoveryRevision: saved.revision,
+        ...options,
         role: saved.state.role,
         ...(saved.state.seat ? { seat: saved.state.seat } : {}),
         slotId: saved.state.slotId,
@@ -2852,6 +2865,14 @@ export class TableClientRuntime {
     this.airplanePairing?.close();
     this.lease?.release();
     this.lease = undefined;
+  }
+
+  recoveryDetails(): ClientRecoveryDetails {
+    return {
+      binding: { ...this.binding },
+      role: this.role,
+      slotId: this.slotId,
+    };
   }
 
   async join(displayName?: string): Promise<void> {
@@ -2913,12 +2934,14 @@ export class TableClientRuntime {
     this.seat = response.seat;
     this.status = "waiting";
     await this.persistRecovery();
-    replaceWithClientRecoveryUrl(
-      globalThis.location,
-      this.binding,
-      this.role,
-      this.slotId,
-    );
+    if (this.recoveryNavigation === "client") {
+      replaceWithClientRecoveryUrl(
+        globalThis.location,
+        this.binding,
+        this.role,
+        this.slotId,
+      );
+    }
     this.emit();
     await this.refresh();
   }
@@ -3219,6 +3242,22 @@ export function parseHostRecovery(hash: string): string | undefined {
   return parameters.get("table") ?? undefined;
 }
 
+export function parseHostPlayerRecovery(
+  hash: string,
+  binding: PeerBinding,
+): ClientRecoveryDetails | undefined {
+  const parameters = new URLSearchParams(hash.replace(/^#/, ""));
+  const slotId = parameters.get("player-slot");
+  if (
+    parameters.get("resume") !== "host" ||
+    parameters.get("table") !== binding.tableId ||
+    !slotId
+  ) {
+    return undefined;
+  }
+  return { binding: { ...binding }, role: "player", slotId };
+}
+
 export function invitationUrl(
   location: Location,
   runtime: HostTableRuntime,
@@ -3255,10 +3294,13 @@ export function invitationUrl(
 export function replaceWithHostRecoveryUrl(
   location: Location,
   tableId: string,
+  playerSlotId?: string,
 ): void {
   const url = new URL(location.href);
   url.search = "";
-  url.hash = new URLSearchParams({ resume: "host", table: tableId }).toString();
+  const parameters = new URLSearchParams({ resume: "host", table: tableId });
+  if (playerSlotId) parameters.set("player-slot", playerSlotId);
+  url.hash = parameters.toString();
   globalThis.history.replaceState(null, "", url);
 }
 

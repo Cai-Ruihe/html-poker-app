@@ -2,7 +2,7 @@
 id: PRD-P1
 kind: phase
 status: current
-last_reconciled: 2026-08-14
+last_reconciled: 2026-08-16
 decision_ids:
   - SCOPE-PLAY-MONEY
   - PHASE1-DEAL-ONLY
@@ -13,6 +13,7 @@ decision_ids:
   - AUTH-TRUSTED-HOST
   - AUTH-HOST-DEATH
   - AUTH-HOST-CAN-PLAY
+  - MODE-HOST-DEVICE-SWITCH
   - ARCH-SHARED-CORE
   - NET-ROUTE
   - NET-AIRPLANE
@@ -46,7 +47,7 @@ A capable browser creates one table, owns the shuffled deck, and commits an orde
 
 1. As a host, I want a capability check before creating a table so that an unsuitable browser fails before cards are dealt.
 2. As a player, I want QR/full-URL joining without an account or per-player approval prompt.
-3. As a host who is also playing, I want a separate Player device and credential so my role does not leak cards or authority.
+3. As a host who is also playing, I want a separate Player credential and private view on this device or another device so my role does not leak cards or authority.
 4. As a player, I want cover-and-drag peek, fold with guarded undo, irreversible Show, and private muck/concede behavior.
 5. As a dealer, I want explicit street advance and guarded End Hand, including when everyone folds.
 6. As a group, we want the Public Table to evaluate available shown hands without forcing folded/mucked players to reveal.
@@ -63,6 +64,7 @@ A capable browser creates one table, owns the shuffled deck, and commits an orde
 - A new player waits for the next hand; a recovered Seat Credential may resume the current hand.
 - Show is irreversible. Fold undo ends at the first dependent progression. A correction appends an event and never erases exposure.
 - A Public Table/display permission cannot become Table-Control. A valid control capability can reveal streets and run guarded dealer operations without card access.
+- A host device may redeem an ordinary Player invitation, then switch within one active document among Host Controls, its credential-filtered My Hand, and card-blind Table View. The switch changes presentation, never authority.
 - Normal route order is direct → deployer private relay → optional deployer cloud relay. The host key is authenticated independently of signaling.
 - Host death may end the game. Same-browser host refresh resumes only after exclusive authority and deterministic replay succeed.
 - Optional completed-hand remote checkpoints exclude never-revealed/mucked cards and active custody material.
@@ -74,6 +76,7 @@ A capable browser creates one table, owns the shuffled deck, and commits an orde
 - Fault every persistence boundary and prove no success/private projection precedes commit.
 - Run direct/private/cloud path, network switch, hostile signaling, replayed invitation, and reconnect tests.
 - Run actual iOS/iPadOS, Android, desktop, tablet, and selected TV matrices.
+- Exercise same-device host-player join, all three host-device views, private-card DOM isolation, refresh recovery, and iOS/iPadOS foreground/background behavior.
 - Airplane acceptance requires WAN removed, `iceServers` empty, 2–10 player seats plus the host and at least one Public Table device, two-way QR, client-isolation failure, refresh recovery, version mismatch, and observed zero external requests.
 - Complete the Phase 1 Card Privacy Red Team before release.
 

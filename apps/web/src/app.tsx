@@ -25,6 +25,7 @@ import {
   normalRelayRequiresOperatorToken,
   parseClientRecovery,
   parseHostRecovery,
+  parseHostPlayerRecovery,
   parseInvitation,
   replaceWithHostRecoveryUrl,
   type ClientRuntimeSnapshot,
@@ -1459,7 +1460,125 @@ function useHostSnapshot(runtime: HostTableRuntime): HostRuntimeSnapshot {
   return snapshot;
 }
 
-function HostLobby({ runtime }: { readonly runtime: HostTableRuntime }) {
+type HostDeviceView = "host" | "player" | "table";
+
+function HostDeviceViewSwitcher({
+  activeView,
+  hasPlayer,
+  onChange,
+  tableReady,
+}: {
+  readonly activeView: HostDeviceView;
+  readonly hasPlayer: boolean;
+  readonly onChange: (view: HostDeviceView) => void;
+  readonly tableReady: boolean;
+}) {
+  return (
+    <nav className="host-device-switcher" aria-label="This device view">
+      <button
+        aria-pressed={activeView === "host"}
+        onClick={() => onChange("host")}
+        type="button"
+      >
+        Host Controls
+      </button>
+      {hasPlayer ? (
+        <button
+          aria-pressed={activeView === "player"}
+          onClick={() => onChange("player")}
+          type="button"
+        >
+          My Hand
+        </button>
+      ) : null}
+      <button
+        aria-pressed={activeView === "table"}
+        disabled={!tableReady}
+        onClick={() => onChange("table")}
+        type="button"
+      >
+        Table View
+      </button>
+    </nav>
+  );
+}
+
+function JoinOwnDeviceCard({
+  onJoin,
+}: {
+  readonly onJoin: (displayName: string) => Promise<void>;
+}) {
+  const [displayName, setDisplayName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+
+  async function join(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true);
+    setError(undefined);
+    try {
+      await onJoin(displayName);
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "This device could not take a player seat.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="join-own-device" aria-labelledby="join-own-title">
+      <p className="section-label">Host also playing</p>
+      <h2 id="join-own-title">Play on this device</h2>
+      <p>
+        Keep the Trusted Host running here and switch privately to your hand
+        without opening another browser tab.
+      </p>
+      <form onSubmit={(event) => void join(event)}>
+        <label>
+          <span>My display name</span>
+          <input
+            autoComplete="nickname"
+            maxLength={40}
+            onChange={(event) => setDisplayName(event.target.value)}
+            value={displayName}
+          />
+        </label>
+        {error ? (
+          <p className="inline-warning" role="alert">
+            {error}
+          </p>
+        ) : null}
+        <button
+          className="button button--primary button--wide"
+          disabled={!displayName.trim() || busy}
+          type="submit"
+        >
+          {busy ? "Taking seat…" : "Join my own table"}
+        </button>
+      </form>
+    </section>
+  );
+}
+
+function HostLobby({
+  activeView,
+  onJoinOwnDevice,
+  onViewChange,
+  playerRuntime,
+  recoveryError,
+  runtime,
+}: {
+  readonly activeView: HostDeviceView;
+  readonly onJoinOwnDevice: (displayName: string) => Promise<void>;
+  readonly onViewChange: (view: HostDeviceView) => void;
+  readonly playerRuntime?: TableClientRuntime;
+  readonly recoveryError?: string;
+  readonly runtime: HostTableRuntime;
+}) {
   const snapshot = useHostSnapshot(runtime);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
@@ -1480,8 +1599,28 @@ function HostLobby({ runtime }: { readonly runtime: HostTableRuntime }) {
     }
   }
 
+  if (activeView === "player" && playerRuntime) {
+    return (
+      <div className="host-device-view">
+        <HostDeviceViewSwitcher
+          activeView={activeView}
+          hasPlayer
+          onChange={onViewChange}
+          tableReady={snapshot.stage === "table"}
+        />
+        <PlayerExperience runtime={playerRuntime} />
+      </div>
+    );
+  }
   if (snapshot.stage === "table" && snapshot.projection) {
-    return <HostTable runtime={runtime} />;
+    return (
+      <HostTable
+        activeView={activeView === "table" ? "table" : "host"}
+        hasPlayer={Boolean(playerRuntime)}
+        onViewChange={onViewChange}
+        runtime={runtime}
+      />
+    );
   }
   return (
     <main className="lobby-shell">
@@ -1493,20 +1632,31 @@ function HostLobby({ runtime }: { readonly runtime: HostTableRuntime }) {
           </div>
         }
       />
+      <HostDeviceViewSwitcher
+        activeView="host"
+        hasPlayer={Boolean(playerRuntime)}
+        onChange={onViewChange}
+        tableReady={false}
+      />
       <header className="lobby-heading">
         <p className="section-label">Join window</p>
         <h1>Waiting for players</h1>
-        <p>Deal when at least two player devices have joined.</p>
+        <p>Deal when at least two player seats have joined.</p>
       </header>
       <div className="lobby-grid">
-        <InvitePanel runtime={runtime} snapshot={snapshot} />
+        <div className="lobby-primary">
+          {!playerRuntime && snapshot.invitations.player ? (
+            <JoinOwnDeviceCard onJoin={onJoinOwnDevice} />
+          ) : null}
+          <InvitePanel runtime={runtime} snapshot={snapshot} />
+        </div>
         <SeatRoster runtime={runtime} snapshot={snapshot} />
       </div>
       <RoleInvitations runtime={runtime} snapshot={snapshot} />
       <RelaySessionCard runtime={runtime} snapshot={snapshot} />
-      {error || snapshot.error ? (
+      {error || snapshot.error || recoveryError ? (
         <p className="inline-warning" role="alert">
-          {error ?? snapshot.error}
+          {error ?? snapshot.error ?? recoveryError}
         </p>
       ) : null}
       <footer className="lobby-footer">
@@ -1579,7 +1729,17 @@ function useDealerActionGuard() {
   return { busy, run } as const;
 }
 
-function HostTable({ runtime }: { readonly runtime: HostTableRuntime }) {
+function HostTable({
+  activeView,
+  hasPlayer,
+  onViewChange,
+  runtime,
+}: {
+  readonly activeView: "host" | "table";
+  readonly hasPlayer: boolean;
+  readonly onViewChange: (view: HostDeviceView) => void;
+  readonly runtime: HostTableRuntime;
+}) {
   const snapshot = useHostSnapshot(runtime);
   const [busy, setBusy] = useState(false);
   const actionGuard = useDealerActionGuard();
@@ -1623,24 +1783,32 @@ function HostTable({ runtime }: { readonly runtime: HostTableRuntime }) {
 
   return (
     <div className="host-table-shell">
-      <nav className="host-tools" aria-label="Table tools">
-        <button
-          aria-expanded={adminOpen}
-          className="tool-button"
-          onClick={() => setAdminOpen(!adminOpen)}
-          type="button"
-        >
-          Players <span>{snapshot.roster.seats.length}</span>
-        </button>
-        <button
-          aria-pressed={developerMode}
-          className="tool-button"
-          onClick={() => setDeveloperMode(!developerMode)}
-          type="button"
-        >
-          Developer
-        </button>
-      </nav>
+      <HostDeviceViewSwitcher
+        activeView={activeView}
+        hasPlayer={hasPlayer}
+        onChange={onViewChange}
+        tableReady
+      />
+      {activeView === "host" ? (
+        <nav className="host-tools" aria-label="Table tools">
+          <button
+            aria-expanded={adminOpen}
+            className="tool-button"
+            onClick={() => setAdminOpen(!adminOpen)}
+            type="button"
+          >
+            Players <span>{snapshot.roster.seats.length}</span>
+          </button>
+          <button
+            aria-pressed={developerMode}
+            className="tool-button"
+            onClick={() => setDeveloperMode(!developerMode)}
+            type="button"
+          >
+            Developer
+          </button>
+        </nav>
+      ) : null}
       <TableSurface
         busy={busy || actionGuard.busy}
         connectionLabel={snapshot.connectionLabel}
@@ -1648,7 +1816,7 @@ function HostTable({ runtime }: { readonly runtime: HostTableRuntime }) {
         {...((error ?? snapshot.error)
           ? { errorMessage: error ?? snapshot.error }
           : {})}
-        mode="host"
+        mode={activeView === "table" ? "tablet" : "host"}
         onDownloadLog={() =>
           downloadText(
             `html-poker-${runtime.tableId}-diagnostics.json`,
@@ -1664,7 +1832,7 @@ function HostTable({ runtime }: { readonly runtime: HostTableRuntime }) {
         }
         projection={projection}
       />
-      {adminOpen ? (
+      {adminOpen && activeView === "host" ? (
         <aside className="admin-drawer" aria-label="Player administration">
           <header>
             <div>
@@ -2249,12 +2417,18 @@ export function App() {
   const initialRoute = useMemo(
     () => ({
       clientRecovery: parseClientRecovery(globalThis.location.hash),
+      hash: globalThis.location.hash,
       hostRecovery: parseHostRecovery(globalThis.location.hash),
       invitation: parseInvitation(globalThis.location.hash),
     }),
     [],
   );
   const [hostRuntime, setHostRuntime] = useState<HostTableRuntime>();
+  const [hostPlayerRuntime, setHostPlayerRuntime] =
+    useState<TableClientRuntime>();
+  const [hostDeviceView, setHostDeviceView] = useState<HostDeviceView>("host");
+  const [hostPlayerRecoveryError, setHostPlayerRecoveryError] =
+    useState<string>();
   const [clientRuntime, setClientRuntime] = useState<
     TableClientRuntime | undefined
   >(() =>
@@ -2278,8 +2452,33 @@ export function App() {
           const runtime = await HostTableRuntime.recover(
             initialRoute.hostRecovery,
           );
-          if (active) setHostRuntime(runtime);
-          else runtime.close();
+          let recoveredPlayer: TableClientRuntime | undefined;
+          let recoveredPlayerError: string | undefined;
+          const playerRecovery = parseHostPlayerRecovery(
+            initialRoute.hash,
+            runtime.binding,
+          );
+          if (playerRecovery) {
+            try {
+              recoveredPlayer = await TableClientRuntime.recover(
+                playerRecovery,
+                { recoveryNavigation: "embedded-host" },
+              );
+            } catch (caught) {
+              recoveredPlayerError =
+                caught instanceof Error
+                  ? `My Hand recovery stopped: ${caught.message} Use Players → Replace device for that seat.`
+                  : "My Hand recovery stopped. Use Players → Replace device for that seat.";
+            }
+          }
+          if (active) {
+            setHostRuntime(runtime);
+            setHostPlayerRuntime(recoveredPlayer);
+            setHostPlayerRecoveryError(recoveredPlayerError);
+          } else {
+            recoveredPlayer?.close();
+            runtime.close();
+          }
         } else if (initialRoute.clientRecovery) {
           const runtime = await TableClientRuntime.recover(
             initialRoute.clientRecovery,
@@ -2312,6 +2511,60 @@ export function App() {
     };
   }, [clientRuntime, hostRuntime]);
 
+  useEffect(() => {
+    return () => hostPlayerRuntime?.close();
+  }, [hostPlayerRuntime]);
+
+  function showHostDeviceView(view: HostDeviceView): void {
+    setHostDeviceView(view);
+    globalThis.requestAnimationFrame(() => {
+      globalThis.scrollTo({ behavior: "auto", left: 0, top: 0 });
+    });
+  }
+
+  async function joinOwnDevice(displayName: string): Promise<void> {
+    if (!hostRuntime) throw new Error("The Trusted Host is not ready.");
+    if (hostPlayerRuntime) {
+      showHostDeviceView("player");
+      return;
+    }
+    const invitation = hostRuntime.snapshot().invitations.player;
+    if (!invitation || invitation.seatId) {
+      throw new Error(
+        "No new-player invitation is available. Open the Join Window and try again.",
+      );
+    }
+    const relayRoutes = hostRuntime.relayRoutes;
+    const runtime = TableClientRuntime.fromInvitation(
+      {
+        binding: { ...hostRuntime.binding },
+        invitationToken: invitation.token,
+        ...(relayRoutes ? { relayRoutes } : {}),
+        role: "player",
+      },
+      { recoveryNavigation: "embedded-host" },
+    );
+    try {
+      await runtime.join(displayName);
+      const snapshot = runtime.snapshot();
+      if (snapshot.status === "rejected") {
+        throw new Error(snapshot.error ?? "The player seat was rejected.");
+      }
+      const recovery = runtime.recoveryDetails();
+      replaceWithHostRecoveryUrl(
+        globalThis.location,
+        hostRuntime.tableId,
+        recovery.slotId,
+      );
+      setHostPlayerRecoveryError(undefined);
+      setHostPlayerRuntime(runtime);
+      showHostDeviceView("player");
+    } catch (caught) {
+      runtime.close();
+      throw caught;
+    }
+  }
+
   if (clientRuntime) {
     return clientRuntime.role === "player" ? (
       <PlayerExperience runtime={clientRuntime} />
@@ -2319,7 +2572,19 @@ export function App() {
       <RoleExperience runtime={clientRuntime} />
     );
   }
-  if (hostRuntime) return <HostLobby runtime={hostRuntime} />;
+  if (hostRuntime)
+    return (
+      <HostLobby
+        activeView={hostDeviceView}
+        onJoinOwnDevice={joinOwnDevice}
+        onViewChange={showHostDeviceView}
+        {...(hostPlayerRuntime ? { playerRuntime: hostPlayerRuntime } : {})}
+        {...(hostPlayerRecoveryError
+          ? { recoveryError: hostPlayerRecoveryError }
+          : {})}
+        runtime={hostRuntime}
+      />
+    );
   if (airplaneJoinOpen) {
     return (
       <AirplaneJoin
@@ -2382,6 +2647,7 @@ export function App() {
           operatorToken ? { operatorToken } : {},
         );
         replaceWithHostRecoveryUrl(globalThis.location, runtime.tableId);
+        showHostDeviceView("host");
         setHostRuntime(runtime);
       }}
       {...(isAirplaneMode()

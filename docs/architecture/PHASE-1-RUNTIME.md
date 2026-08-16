@@ -34,6 +34,7 @@ The diagram is a route map, not a claim that every route is available on every n
 4. The client authenticates its invitation/credential inside sealed messages. The relay observes routing metadata and opaque frames; it does not interpret poker rules or receive card plaintext.
 5. Direct WebRTC is attempted using relay signaling. If it does not open, the client uses the configured private relay, then optional cloud relay. A direct path uses an empty ICE-server list in the current implementation, so it is a local-network optimization rather than a universal NAT traversal guarantee.
 6. An unpaired TV or Public Table creates an ephemeral pairing-request QR. The host scans it, chooses no extra authority, and places one encrypted answer in the Connection Service mailbox. The display can decrypt only that answer and only obtains the originally requested public role.
+7. A host who is also playing redeems an ordinary Player invitation in the same active document. Host authority and the Seat Credential remain separate runtime objects; the UI switches among authority controls, the seat-filtered private projection, and the card-blind table projection without relying on a background browser tab.
 
 ## Airplane Mode
 
@@ -43,26 +44,27 @@ The code gives actionable failures for incompatible builds, stale/mismatched QR 
 
 ## Trust and secret boundaries
 
-| Boundary | Fact in the implementation | Explicit limitation |
-|---|---|---|
-| Trusted Host | Holds card custody, authoritative commands, and local recovery secret. | A malicious host can read or manipulate the deck. |
-| Player | Holds one credential and receives only its seat projection. | Screen capture, browser extensions, and a compromised device remain out of scope. |
-| Public roles | Receive public board/shown information and cannot invoke player/card paths. | Physical display privacy is the table's responsibility. |
+| Boundary           | Fact in the implementation                                                                                                                                       | Explicit limitation                                                                                       |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Trusted Host       | Holds card custody, authoritative commands, and local recovery secret.                                                                                           | A malicious host can read or manipulate the deck.                                                         |
+| Player             | Holds one credential and receives only its seat projection.                                                                                                      | Screen capture, browser extensions, and a compromised device remain out of scope.                         |
+| Public roles       | Receive public board/shown information and cannot invoke player/card paths.                                                                                      | Physical display privacy is the table's responsibility.                                                   |
 | Connection Service | Binds relay registrations to table/host/protocol and rejects cross-table/spoofed frames. It stores only a one-shot encrypted display-pairing envelope in memory. | It can observe IP/timing/size/routing metadata; service restart loses in-memory tickets and pairing mail. |
-| IndexedDB | Stores encrypted host/client recovery state with an exclusive lease. | Browser storage eviction, device compromise, and cross-device host migration are not solved. |
-| Diagnostics | Accepts allowlisted redacted records and exports locally. | Automated canary tests are not a human penetration test. |
+| IndexedDB          | Stores encrypted host/client recovery state with an exclusive lease.                                                                                             | Browser storage eviction, device compromise, and cross-device host migration are not solved.              |
+| Diagnostics        | Accepts allowlisted redacted records and exports locally.                                                                                                        | Automated canary tests are not a human penetration test.                                                  |
 
 ## Recovery behavior
 
 - The host persists its authority/identity state before acknowledgements and recovers only after an exclusive same-browser lease plus deterministic replay validates.
 - A player refreshes from an encrypted local credential. An authenticated projection request marks that seat connected again.
+- When the host document also owns a Player seat, its recovery URL stores only the non-secret player recovery-slot identifier beside the host table identifier. The Seat Credential secret remains in encrypted IndexedDB recovery state.
 - A page that sends the best-effort `pagehide` signal becomes offline; once the current hand ends, it becomes sitting out for subsequent hands. Browsers can terminate a page before an asynchronous signal completes, so the host roster is an advisory presence signal, not a crash-proof heartbeat.
 - A relay ticket lasts four hours by default. The host can renew it by re-entering the operator token; the broker extends the same table-bound ticket, allowing currently connected clients to receive its new expiry through their sealed capability response. Ticket expiry controls new relay registrations; the current in-memory broker does not sever an already-open WebSocket at the deadline. An offline client that misses the refresh may need a fresh replacement link after its saved ticket expires.
 
 ## Evidence classification
 
-**Fact:** Current contract and Chromium journey tests exercise authority replay, invitation revocation, private/public projection isolation, disconnect-to-sit-out, relay table isolation, direct WebRTC, relay fallback, reverse display pairing, standalone Airplane boot, and two-way Airplane pairing.
+**Fact:** Current contract and browser journey tests exercise authority replay, invitation revocation, private/public projection isolation, same-document host-player role switching and reload, disconnect-to-sit-out, relay table isolation, relay restart ticket refresh, direct WebRTC, relay fallback, reverse display pairing, standalone Airplane boot, and two-way Airplane pairing.
 
 **Inference:** The narrow module boundaries and encryption/sealing reduce accidental cross-role exposure compared with a single shared UI state object. This is an engineering judgment supported by tests, not a cryptographic guarantee against a hostile host.
 
-**Unknown:** Physical device compatibility, long-running browser suspension, NAT/TURN behavior, web server/service restart recovery, and mainland-China operation require dated external test evidence before claiming support.
+**Unknown:** Physical device compatibility, long-running browser suspension, survival of already-connected clients across service restart, NAT/TURN behavior, web-server restart recovery, and mainland-China operation require dated external test evidence before claiming support.
