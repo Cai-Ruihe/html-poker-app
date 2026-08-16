@@ -12,7 +12,13 @@ async function joinPlayer(
     .getByLabel("Player invitation link")
     .inputValue();
   const player = await context.newPage();
-  await player.goto(invitationUrl);
+  // The rendered join form below is the SPA readiness signal. WebKit can keep
+  // its full-page `load` event open for non-critical resources when several
+  // role pages share one test context.
+  await player.goto(invitationUrl, { waitUntil: "commit" });
+  await expect(
+    player.getByRole("heading", { name: "Join this table" }),
+  ).toBeVisible();
   await player.getByLabel("Display name").fill(displayName);
   await player.getByRole("button", { name: "Join table" }).click();
   await expect(
@@ -26,7 +32,7 @@ async function createTableWithTwoPlayers(
   host: Page,
   context: BrowserContext,
 ): Promise<{ readonly alice: Page; readonly bob: Page }> {
-  await host.goto("/");
+  await host.goto("/", { waitUntil: "commit" });
   await host.getByRole("button", { name: "Create table" }).click();
   await expect(
     host.getByRole("heading", { name: "Waiting for players" }),
@@ -46,7 +52,7 @@ test("the host device can play and switch to a private hand or public table view
   context,
   page: host,
 }) => {
-  await host.goto("/");
+  await host.goto("/", { waitUntil: "commit" });
   await host.getByRole("button", { name: "Create table" }).click();
   await expect(
     host.getByRole("heading", { name: "Other devices join here" }),
@@ -96,6 +102,14 @@ test("the host device can play and switch to a private hand or public table view
   await expect(host.getByLabel("Dealer controls")).toHaveCount(0);
   await expect(host.locator("[data-table-corner]")).toHaveCount(4);
   await expect(host.locator("[data-private-card]")).toHaveCount(0);
+
+  await host
+    .getByRole("button", { name: "Open table controls from lower right" })
+    .click();
+  await host.getByRole("button", { name: "More table controls" }).click();
+  await host.locator('[data-qa-action="my-hand"]').click();
+  await expect(host.getByRole("region", { name: "Your cards" })).toBeVisible();
+  await expect(host.locator("[data-private-card]")).toHaveCount(2);
 
   await host.reload();
   await expect(host.getByRole("button", { name: "My Hand" })).toBeVisible();
@@ -191,7 +205,7 @@ test("two players complete a digital-chip hand only after host settlement confir
   context,
   page: host,
 }) => {
-  await host.goto("/?experimental=digital-chips");
+  await host.goto("/?experimental=digital-chips", { waitUntil: "commit" });
   await host.getByLabel("Digital chips").check();
   await host.getByRole("button", { name: "Create table" }).click();
   await expect(
@@ -349,7 +363,7 @@ test("a copied recovery URL cannot open the same private seat in two tabs", asyn
   const copiedRecoveryUrl = alice.url();
   const duplicate = await context.newPage();
 
-  await duplicate.goto(copiedRecoveryUrl);
+  await duplicate.goto(copiedRecoveryUrl, { waitUntil: "commit" });
   await expect(
     duplicate.getByRole("heading", {
       name: "This saved table cannot be opened",
@@ -412,7 +426,7 @@ test("closing and reopening the Join Window invalidates the old invitation", asy
   context,
   page: host,
 }) => {
-  await host.goto("/");
+  await host.goto("/", { waitUntil: "commit" });
   await host.getByRole("button", { name: "Create table" }).click();
   const staleInvitation = await host
     .getByLabel("Player invitation link")
@@ -421,7 +435,7 @@ test("closing and reopening the Join Window invalidates the old invitation", asy
   await host.getByRole("button", { name: "Close join window" }).click();
   await expect(host.getByText("New seats are paused")).toBeVisible();
   const stalePlayer = await context.newPage();
-  await stalePlayer.goto(staleInvitation);
+  await stalePlayer.goto(staleInvitation, { waitUntil: "commit" });
   await stalePlayer.getByLabel("Display name").fill("Stale");
   await stalePlayer.getByRole("button", { name: "Join table" }).click();
   await expect(
@@ -451,7 +465,7 @@ test("a one-use player replacement preserves the seat and revokes the old device
     .inputValue();
 
   const replacement = await context.newPage();
-  await replacement.goto(replacementUrl);
+  await replacement.goto(replacementUrl, { waitUntil: "commit" });
   await replacement
     .getByLabel("Display name")
     .fill("Ignored replacement label");
@@ -515,7 +529,10 @@ test("Public Table, TV, and Tablet Control links remain role-safe", async ({
     await host.getByRole("button", { name: createButton }).click();
     const invitationUrl = await host.getByLabel(linkLabel).inputValue();
     const surface = await context.newPage();
-    await surface.goto(invitationUrl);
+    // The app is a client-rendered SPA, so the role assertion below is the
+    // meaningful readiness signal. Waiting for WebKit's full `load` event on
+    // six concurrent pages can stall on non-critical font/resource activity.
+    await surface.goto(invitationUrl, { waitUntil: "commit" });
     await expect(
       surface.getByRole("heading", { name: "Public table" }),
     ).toBeVisible();

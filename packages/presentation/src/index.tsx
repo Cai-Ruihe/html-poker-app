@@ -2,7 +2,8 @@ import {
   useEffect,
   useRef,
   useState,
-  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
 
@@ -35,6 +36,8 @@ export interface TableSurfaceProps {
   readonly onFinalizeFold?: () => void;
   readonly onFold?: () => void;
   readonly onHostControls?: () => void;
+  readonly onLeaveTable?: () => ActionResult;
+  readonly onManageDisplays?: () => void;
   readonly onManagePlayers?: () => void;
   readonly onMyHand?: () => void;
   readonly onPrepareSettlement?: () => ActionResult;
@@ -77,9 +80,13 @@ function cardDetails(card: Card) {
 
 export function PlayingCard({
   card,
+  compact = false,
+  emphasis,
   marker,
 }: {
   readonly card: Card;
+  readonly compact?: boolean;
+  readonly emphasis?: "best" | "unused";
   readonly marker: "board" | "private" | "shown";
 }) {
   const details = cardDetails(card);
@@ -92,8 +99,9 @@ export function PlayingCard({
   return (
     <span
       aria-label={details.accessibleName}
-      className={`card${details.isRed ? " card--red" : ""}`}
+      className={`card${details.isRed ? " card--red" : ""}${compact ? " card--compact" : ""}${emphasis ? ` card--${emphasis}` : ""}`}
       data-card={card}
+      {...(emphasis === "best" ? { "data-best-five-card": "true" } : {})}
       role="img"
       {...markerProps}
     >
@@ -126,7 +134,13 @@ function phaseLabel(phase: HandPhase): string {
   return labels[phase];
 }
 
-function BoardRail({ board }: { readonly board: readonly Card[] }) {
+function BoardRail({
+  bestCards,
+  board,
+}: {
+  readonly bestCards?: ReadonlySet<Card>;
+  readonly board: readonly Card[];
+}) {
   return (
     <section className="dealer-rail" aria-label="Community cards">
       <h2 className="visually-hidden">Community cards</h2>
@@ -134,7 +148,14 @@ function BoardRail({ board }: { readonly board: readonly Card[] }) {
         {Array.from({ length: 5 }, (_, index) => {
           const card = board[index];
           return card ? (
-            <PlayingCard card={card} key={card} marker="board" />
+            <PlayingCard
+              card={card}
+              {...(bestCards?.size
+                ? { emphasis: bestCards.has(card) ? "best" : "unused" }
+                : {})}
+              key={card}
+              marker="board"
+            />
           ) : (
             <span
               className="card-space"
@@ -148,6 +169,17 @@ function BoardRail({ board }: { readonly board: readonly Card[] }) {
       </div>
     </section>
   );
+}
+
+function winningBestCards(
+  projection: PublicProjection | SeatProjection,
+): ReadonlySet<Card> | undefined {
+  if (!projection.showdown) return undefined;
+  const leaders = new Set(projection.showdown.leaders);
+  const cards = projection.seats.flatMap((seat) =>
+    leaders.has(seat.seatId) ? (seat.evaluation?.bestFive ?? []) : [],
+  );
+  return cards.length > 0 ? new Set(cards) : undefined;
 }
 
 function blindSeatIds(projection: PublicProjection | SeatProjection): {
@@ -245,12 +277,35 @@ function QuietSeatGrid({
             className={`seat-edge-status seat-edge-status--${position}`}
             data-seat-edge-status={statusLabel}
             key={seat.seatId}
+            role="img"
           >
             <SeatStateGlyph
               connected={connected}
               status={seat.status}
               winner={winners.has(seat.seatId)}
             />
+            {seat.holeCards ? (
+              <span
+                className="quiet-shown-hand"
+                aria-label={`${seat.displayName}'s shown cards`}
+              >
+                {seat.holeCards.map((card) => (
+                  <PlayingCard
+                    card={card}
+                    compact
+                    {...(winners.has(seat.seatId) && seat.evaluation
+                      ? {
+                          emphasis: seat.evaluation.bestFive.includes(card)
+                            ? "best"
+                            : "unused",
+                        }
+                      : {})}
+                    key={card}
+                    marker="shown"
+                  />
+                ))}
+              </span>
+            ) : null}
             <span className="seat-edge-status__roles" aria-hidden="true">
               {seat.seatId === projection.dealerSeatId ? (
                 <span className="position-token position-token--dealer">D</span>
@@ -281,6 +336,7 @@ function SeatGrid({
   }
   const selfSeatId =
     projection.view === "seat" ? projection.self.seatId : undefined;
+  const winners = new Set(projection.showdown?.leaders ?? []);
   return (
     <section className={`seat-grid seat-grid--${mode}`} aria-label="Seats">
       {projection.seats.map((seat, index) => (
@@ -322,7 +378,19 @@ function SeatGrid({
               aria-label={`${seat.displayName}'s shown cards`}
             >
               {seat.holeCards.map((card) => (
-                <PlayingCard card={card} key={card} marker="shown" />
+                <PlayingCard
+                  card={card}
+                  compact
+                  {...(winners.has(seat.seatId) && seat.evaluation
+                    ? {
+                        emphasis: seat.evaluation.bestFive.includes(card)
+                          ? "best"
+                          : "unused",
+                      }
+                    : {})}
+                  key={card}
+                  marker="shown"
+                />
               ))}
             </div>
           ) : seat.status === "active" ||
@@ -543,10 +611,15 @@ function DealerControls(props: TableSurfaceProps) {
 const tableThemeOptions: readonly {
   readonly id: TableTheme;
   readonly label: string;
+  readonly qaAction: string;
 }[] = [
-  { id: "dark-green", label: "Dark Green" },
-  { id: "black-gold", label: "Black Gold" },
-  { id: "deep-navy", label: "Deep Navy" },
+  {
+    id: "dark-green",
+    label: "Dark Green",
+    qaAction: "theme-dark-green",
+  },
+  { id: "black-gold", label: "Black Gold", qaAction: "theme-black-gold" },
+  { id: "deep-navy", label: "Deep Navy", qaAction: "theme-deep-navy" },
 ];
 
 function TableThemeButtons(props: TableSurfaceProps) {
@@ -557,6 +630,7 @@ function TableThemeButtons(props: TableSurfaceProps) {
         <button
           aria-label={theme.label}
           aria-pressed={props.projection.tableTheme === theme.id}
+          data-qa-action={theme.qaAction}
           data-theme-choice={theme.id}
           disabled={props.busy}
           key={theme.id}
@@ -578,6 +652,7 @@ function ReconnectAction({
   return (
     <button
       className="reconnect-action"
+      data-qa-action="reconnect"
       disabled={!onReconnect}
       onClick={() => void onReconnect?.()}
       type="button"
@@ -591,10 +666,19 @@ type TableCorner = "lower-left" | "lower-right" | "upper-left" | "upper-right";
 
 function TabletControls(props: TableSurfaceProps) {
   const [corner, setCorner] = useState<TableCorner>();
+  const [fullscreenError, setFullscreenError] = useState<string>();
   const [moreOpen, setMoreOpen] = useState(false);
-  const [sliderValue, setSliderValue] = useState(0);
+  const [sliderPosition, setSliderPosition] = useState(0);
+  const sliderDragging = useRef(false);
+  const sliderGrabOffset = useRef(32);
   const sliderCommitting = useRef(false);
+  const sliderTrack = useRef<HTMLDivElement>(null);
   const progression = nextStreetByPhase[props.projection.phase];
+  const nextHandUnavailable =
+    props.busy ||
+    (props.projection.phase === "complete"
+      ? !props.onStartNextHand
+      : !props.onEndHand);
   const corners: readonly {
     readonly id: TableCorner;
     readonly label: string;
@@ -618,20 +702,142 @@ function TabletControls(props: TableSurfaceProps) {
     }
   }
 
-  async function commitNextHand(value: number): Promise<void> {
-    setSliderValue(value);
-    if (value < 92 || sliderCommitting.current) return;
+  async function commitNextHand(): Promise<void> {
+    if (nextHandUnavailable || sliderCommitting.current) return;
     sliderCommitting.current = true;
     const action =
       props.projection.phase === "complete"
         ? props.onStartNextHand
         : props.onEndHand;
     await invoke(action);
-    setSliderValue(0);
+    setSliderPosition(0);
     sliderCommitting.current = false;
   }
 
   const facing = corner?.startsWith("upper") ? "upper" : "lower";
+
+  function orientedPointerPosition(event: ReactPointerEvent): number {
+    const track = sliderTrack.current;
+    if (!track) return 0;
+    const bounds = track.getBoundingClientRect();
+    const pointer =
+      facing === "upper"
+        ? bounds.right - event.clientX
+        : event.clientX - bounds.left;
+    return Math.max(0, Math.min(92, pointer - sliderGrabOffset.current));
+  }
+
+  function beginSliderDrag(event: ReactPointerEvent<HTMLDivElement>): void {
+    if (nextHandUnavailable || sliderCommitting.current) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const pointer =
+      facing === "upper"
+        ? bounds.right - event.clientX
+        : event.clientX - bounds.left;
+    sliderGrabOffset.current =
+      pointer >= sliderPosition && pointer <= sliderPosition + 64
+        ? pointer - sliderPosition
+        : 32;
+    sliderDragging.current = true;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setSliderPosition(orientedPointerPosition(event));
+  }
+
+  function moveSlider(event: ReactPointerEvent<HTMLDivElement>): void {
+    if (!sliderDragging.current) return;
+    setSliderPosition(orientedPointerPosition(event));
+  }
+
+  function finishSlider(event: ReactPointerEvent<HTMLDivElement>): void {
+    if (!sliderDragging.current) return;
+    const position = orientedPointerPosition(event);
+    sliderDragging.current = false;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (position >= 88) void commitNextHand();
+    else setSliderPosition(0);
+  }
+
+  function cancelSlider(event: ReactPointerEvent<HTMLDivElement>): void {
+    if (!sliderDragging.current) return;
+    sliderDragging.current = false;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    setSliderPosition(0);
+  }
+
+  function controlSliderFromKeyboard(
+    event: ReactKeyboardEvent<HTMLDivElement>,
+  ): void {
+    if (nextHandUnavailable || sliderCommitting.current) return;
+    if (event.key === "Home" || event.key === "ArrowLeft") {
+      event.preventDefault();
+      setSliderPosition((value) =>
+        event.key === "Home" ? 0 : Math.max(0, value - 12),
+      );
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      setSliderPosition((value) => Math.min(92, value + 12));
+    } else if (event.key === "End") {
+      event.preventDefault();
+      setSliderPosition(92);
+      void commitNextHand();
+    } else if (
+      (event.key === "Enter" || event.key === " ") &&
+      sliderPosition >= 88
+    ) {
+      event.preventDefault();
+      void commitNextHand();
+    }
+  }
+
+  async function toggleFullscreen(): Promise<void> {
+    setFullscreenError(undefined);
+    const fullscreenDocument = document as Document & {
+      readonly webkitFullscreenElement?: Element;
+      webkitExitFullscreen?: () => Promise<void> | void;
+    };
+    const root = document.documentElement as HTMLElement & {
+      webkitRequestFullscreen?: () => Promise<void> | void;
+    };
+    try {
+      if (
+        document.fullscreenElement ||
+        fullscreenDocument.webkitFullscreenElement
+      ) {
+        if (document.exitFullscreen) await document.exitFullscreen();
+        else await fullscreenDocument.webkitExitFullscreen?.();
+      } else if (root.requestFullscreen) {
+        await root.requestFullscreen({ navigationUI: "hide" });
+      } else if (root.webkitRequestFullscreen) {
+        await root.webkitRequestFullscreen();
+      } else {
+        throw new Error(
+          "This browser does not expose page full screen. Add the table to the Home Screen to remove browser controls.",
+        );
+      }
+    } catch (caught) {
+      setFullscreenError(
+        caught instanceof Error
+          ? caught.message
+          : "Full screen was not accepted by this browser.",
+      );
+    }
+  }
+
+  function closeSecondary(): void {
+    setMoreOpen(false);
+    setCorner(undefined);
+  }
+
+  function openHostAdministration(action?: () => void): void {
+    if (!action) return;
+    action();
+    closeSecondary();
+  }
+
   return (
     <>
       {corners.map(({ id, label }) => (
@@ -656,73 +862,118 @@ function TabletControls(props: TableSurfaceProps) {
           className={`tablet-quick-panel tablet-quick-panel--${corner}`}
           data-control-facing={facing}
         >
-          <div className="tablet-quick-panel__utilities">
-            <button
-              aria-label="More table controls"
-              className="icon-action icon-action--more"
-              onClick={() => setMoreOpen(true)}
-              type="button"
-            >
-              <span aria-hidden="true">•••</span>
-            </button>
-            <button
-              aria-label="Close table controls"
-              className="icon-action icon-action--close"
-              onClick={() => setCorner(undefined)}
-              type="button"
-            >
-              <span aria-hidden="true">×</span>
-            </button>
-          </div>
-          <div className="tablet-quick-panel__actions">
-            <button
-              className="next-card-action"
-              disabled={!progression || props.busy || !props.onRevealStreet}
-              onClick={() =>
-                void invoke(
-                  progression
-                    ? () => props.onRevealStreet?.(progression.street)
-                    : undefined,
-                )
-              }
-              type="button"
-            >
-              <span>Next card</span>
-              <small>{progression?.label ?? "Board complete"}</small>
-              <b aria-hidden="true">→</b>
-            </button>
-            <label className="next-hand-control">
-              <input
-                aria-label="Slide to deal next hand"
-                disabled={
-                  props.busy ||
-                  (props.projection.phase === "complete"
-                    ? !props.onStartNextHand
-                    : !props.onEndHand)
+          <svg
+            aria-hidden="true"
+            className="tablet-quick-panel__gold-thread"
+            preserveAspectRatio="none"
+            viewBox="0 0 650 244"
+          >
+            <path
+              className="thread-lower-right"
+              d="M2 62V46C2 21.7 21.7 2 46 2H650"
+            />
+            <path
+              className="thread-lower-left"
+              d="M648 62V46C648 21.7 628.3 2 604 2H0"
+            />
+            <path
+              className="thread-upper-right"
+              d="M2 182V198C2 222.3 21.7 242 46 242H650"
+            />
+            <path
+              className="thread-upper-left"
+              d="M648 182V198C648 222.3 628.3 242 604 242H0"
+            />
+          </svg>
+          <div className="tablet-quick-panel__content">
+            <div className="tablet-quick-panel__utilities">
+              <button
+                aria-label="More table controls"
+                className="icon-action icon-action--more"
+                onClick={() => {
+                  setCorner(undefined);
+                  setMoreOpen(true);
+                }}
+                type="button"
+              >
+                <span className="dot-glyph" aria-hidden="true">
+                  <i />
+                  <i />
+                  <i />
+                </span>
+              </button>
+              <button
+                aria-label="Close table controls"
+                className="icon-action icon-action--close"
+                onClick={() => setCorner(undefined)}
+                type="button"
+              >
+                <span aria-hidden="true">×</span>
+              </button>
+            </div>
+            <div className="tablet-quick-panel__actions">
+              <button
+                className="next-card-action"
+                disabled={!progression || props.busy || !props.onRevealStreet}
+                onClick={() =>
+                  void invoke(
+                    progression
+                      ? () => props.onRevealStreet?.(progression.street)
+                      : undefined,
+                  )
                 }
-                max="100"
-                min="0"
-                onChange={(event) =>
-                  void commitNextHand(event.currentTarget.valueAsNumber)
-                }
-                style={
-                  {
-                    "--slider-progress": `${sliderValue}%`,
-                  } as CSSProperties
-                }
-                type="range"
-                value={sliderValue}
-              />
-              <span>
-                <strong>Next hand</strong>
-                <small>
-                  {props.projection.phase === "complete"
-                    ? "Slide · deal now"
-                    : "Slide · end this hand now"}
-                </small>
-              </span>
-              <b aria-hidden="true">→</b>
-            </label>
+                type="button"
+              >
+                <span>Next card</span>
+                <small>{progression?.label ?? "Board complete"}</small>
+                <b className="arrow-glyph" aria-hidden="true" />
+              </button>
+              <div className="next-hand-control">
+                <div
+                  aria-disabled={nextHandUnavailable}
+                  aria-label="Slide to deal next hand"
+                  aria-valuemax={92}
+                  aria-valuemin={0}
+                  aria-valuenow={Math.round(sliderPosition)}
+                  aria-valuetext={
+                    sliderPosition >= 88
+                      ? "Release to confirm"
+                      : "Drag the gold handle to the arrow"
+                  }
+                  className="next-hand-slider"
+                  data-slider-travel="92"
+                  onDoubleClick={() => void commitNextHand()}
+                  onKeyDown={controlSliderFromKeyboard}
+                  onPointerCancel={cancelSlider}
+                  onPointerDown={beginSliderDrag}
+                  onPointerMove={moveSlider}
+                  onPointerUp={finishSlider}
+                  ref={sliderTrack}
+                  role="slider"
+                  tabIndex={0}
+                >
+                  <span
+                    className="next-hand-slider__handle"
+                    style={{ transform: `translateX(${sliderPosition}px)` }}
+                  >
+                    <span className="slider-grip" aria-hidden="true">
+                      <i />
+                      <i />
+                      <i />
+                    </span>
+                  </span>
+                  <b className="arrow-glyph" aria-hidden="true" />
+                </div>
+                <span className="next-hand-control__copy">
+                  <strong>Next hand</strong>
+                  <small>
+                    {props.projection.phase === "complete"
+                      ? "Slide · deal now"
+                      : "Slide · end now"}
+                  </small>
+                </span>
+              </div>
+            </div>
           </div>
         </section>
       ) : null}
@@ -735,54 +986,177 @@ function TabletControls(props: TableSurfaceProps) {
           >
             <header>
               <div>
-                <span className="section-label">Table settings</span>
-                <h2 id="secondary-controls-title">More controls</h2>
+                <span className="section-label">Host · this device</span>
+                <h2 id="secondary-controls-title">Table controls</h2>
               </div>
+              <span className="secondary-controls__health">
+                {props.connectionLabel}
+              </span>
               <button
                 aria-label="Close more controls"
                 className="icon-action icon-action--close"
+                data-qa-action="close-secondary"
                 onClick={() => setMoreOpen(false)}
                 type="button"
               >
                 <span aria-hidden="true">×</span>
               </button>
             </header>
-            {props.onTableThemeChange ? (
-              <div className="secondary-control-row">
-                <div>
-                  <strong>Table style</strong>
-                  <small>Synced to every screen</small>
-                </div>
-                <TableThemeButtons {...props} />
-              </div>
-            ) : null}
-            {props.onReconnect ? (
-              <div className="secondary-control-row">
-                <div>
-                  <strong>Connection</strong>
-                  <small>{props.connectionLabel}</small>
-                </div>
-                <ReconnectAction onReconnect={props.onReconnect} />
-              </div>
-            ) : null}
-            {props.onHostControls ? (
-              <div className="secondary-control-row">
-                <div>
-                  <strong>This device</strong>
-                  <small>Change the foreground view</small>
-                </div>
+            <div className="secondary-controls__rule" />
+            <div className="secondary-controls__grid">
+              <button
+                className="secondary-control-card"
+                data-qa-action="manage-players"
+                disabled={!props.onManagePlayers}
+                onClick={() => openHostAdministration(props.onManagePlayers)}
+                type="button"
+              >
+                <span
+                  className="secondary-control-card__icon"
+                  aria-hidden="true"
+                >
+                  ◎
+                </span>
+                <strong>Players &amp; seats</strong>
+                <small>Invites, seat order, dealer, replacement</small>
+                <em>
+                  {props.onManagePlayers
+                    ? `${props.hostPlayerCount ?? props.projection.seats.length} players`
+                    : "Trusted Host only"}
+                </em>
+                <b aria-hidden="true">›</b>
+              </button>
+              <section className="secondary-control-card secondary-control-card--appearance">
+                <span
+                  className="secondary-control-card__icon"
+                  aria-hidden="true"
+                >
+                  ◐
+                </span>
+                <strong>Appearance</strong>
+                <small>One table colour on every screen</small>
+                {props.onTableThemeChange ? (
+                  <TableThemeButtons {...props} />
+                ) : (
+                  <em>Selected by the Trusted Host</em>
+                )}
+              </section>
+              <button
+                className="secondary-control-card"
+                data-qa-action="manage-displays"
+                disabled={!props.onManageDisplays}
+                onClick={() => openHostAdministration(props.onManageDisplays)}
+                type="button"
+              >
+                <span
+                  className="secondary-control-card__icon"
+                  aria-hidden="true"
+                >
+                  ▣
+                </span>
+                <strong>Displays &amp; pairing</strong>
+                <small>Tablet, TV and public table screens</small>
+                <em>
+                  {props.onManageDisplays
+                    ? "Manage on this host"
+                    : "Trusted Host only"}
+                </em>
+                <b aria-hidden="true">›</b>
+              </button>
+              <section className="secondary-control-card secondary-control-card--device">
+                <span
+                  className="secondary-control-card__icon"
+                  aria-hidden="true"
+                >
+                  ▯
+                </span>
+                <strong>This device</strong>
+                <small>Views and browser presentation</small>
                 <div className="secondary-device-actions">
                   {props.onMyHand ? (
-                    <button onClick={props.onMyHand} type="button">
+                    <button
+                      data-qa-action="my-hand"
+                      onClick={() => {
+                        props.onMyHand?.();
+                        closeSecondary();
+                      }}
+                      type="button"
+                    >
                       My Hand
                     </button>
                   ) : null}
-                  <button onClick={props.onHostControls} type="button">
-                    Host Controls
+                  {props.onHostControls ? (
+                    <button
+                      data-qa-action="host-controls"
+                      onClick={() => {
+                        props.onHostControls?.();
+                        closeSecondary();
+                      }}
+                      type="button"
+                    >
+                      Host Controls
+                    </button>
+                  ) : null}
+                  <button
+                    data-qa-action="fullscreen"
+                    onClick={() => void toggleFullscreen()}
+                    type="button"
+                  >
+                    Full screen
                   </button>
                 </div>
-              </div>
+              </section>
+              <section className="secondary-control-card">
+                <span
+                  className="secondary-control-card__icon"
+                  aria-hidden="true"
+                >
+                  ↻
+                </span>
+                <strong>Connection &amp; recovery</strong>
+                <small>Catch up with the Trusted Host now</small>
+                {props.onReconnect ? (
+                  <ReconnectAction onReconnect={props.onReconnect} />
+                ) : (
+                  <em>Local host active</em>
+                )}
+              </section>
+              <section className="secondary-control-card">
+                <span
+                  className="secondary-control-card__icon"
+                  aria-hidden="true"
+                >
+                  ⌁
+                </span>
+                <strong>Diagnostics &amp; history</strong>
+                <small>Privacy-filtered support evidence</small>
+                {props.onDownloadLog ? (
+                  <button
+                    className="secondary-inline-action"
+                    data-qa-action="save-log"
+                    onClick={() => props.onDownloadLog?.()}
+                    type="button"
+                  >
+                    Save log
+                  </button>
+                ) : (
+                  <em>Trusted Host only</em>
+                )}
+              </section>
+            </div>
+            {fullscreenError ? (
+              <p className="secondary-controls__error" role="alert">
+                {fullscreenError}
+              </p>
             ) : null}
+            <button
+              className="secondary-controls__return"
+              data-qa-action="return-table"
+              onClick={closeSecondary}
+              type="button"
+            >
+              Return to table
+            </button>
           </section>
         </div>
       ) : null}
@@ -913,6 +1287,12 @@ function PrivateHand(
   const status = props.projection.self.status;
   const handId = props.projection.handId;
   const privateCards = props.projection.self.holeCards.join(",");
+  const selfEvaluation = props.projection.seats.find(
+    (seat) => seat.seatId === props.projection.self.seatId,
+  )?.evaluation;
+  const selfIsLeader =
+    props.projection.showdown?.leaders.includes(props.projection.self.seatId) ??
+    false;
 
   useEffect(() => {
     setCardsVisibleOnDevice(false);
@@ -942,7 +1322,18 @@ function PrivateHand(
       </div>
       <div className="private-hand__cards">
         {props.projection.self.holeCards.map((card) => (
-          <PlayingCard card={card} key={card} marker="private" />
+          <PlayingCard
+            card={card}
+            {...(selfIsLeader && selfEvaluation
+              ? {
+                  emphasis: selfEvaluation.bestFive.includes(card)
+                    ? "best"
+                    : "unused",
+                }
+              : {})}
+            key={card}
+            marker="private"
+          />
         ))}
         {!cardsVisibleOnDevice ? (
           <button
@@ -1014,6 +1405,16 @@ function PrivateHand(
         />
         <span>Sit out next hand</span>
       </label>
+      {props.onLeaveTable ? (
+        <button
+          className="leave-table-action"
+          disabled={props.busy}
+          onClick={() => void props.onLeaveTable?.()}
+          type="button"
+        >
+          Leave table permanently
+        </button>
+      ) : null}
     </section>
   );
 }
@@ -1022,6 +1423,7 @@ export function TableSurface(props: TableSurfaceProps) {
   const isPlayer = props.mode === "player" && props.projection.view === "seat";
   const isQuietPublic = ["public", "tablet", "tv"].includes(props.mode);
   const tableTheme = props.projection.tableTheme ?? "dark-green";
+  const bestCards = winningBestCards(props.projection);
   return (
     <main
       className={`table-surface table-surface--${props.mode}`}
@@ -1083,7 +1485,10 @@ export function TableSurface(props: TableSurfaceProps) {
         >
           <h1 className="visually-hidden">Public table</h1>
           <ChipRail projection={props.projection} />
-          <BoardRail board={props.projection.board} />
+          <BoardRail
+            {...(bestCards ? { bestCards } : {})}
+            board={props.projection.board}
+          />
           <SeatGrid mode={props.mode} projection={props.projection} />
           <SettlementPanel projection={props.projection} />
           {props.projection.showdown ? (
@@ -1099,7 +1504,10 @@ export function TableSurface(props: TableSurfaceProps) {
       {isPlayer ? (
         <section className="player-board">
           <ChipRail projection={props.projection} />
-          <BoardRail board={props.projection.board} />
+          <BoardRail
+            {...(bestCards ? { bestCards } : {})}
+            board={props.projection.board}
+          />
           <SeatGrid mode="player" projection={props.projection} />
         </section>
       ) : null}

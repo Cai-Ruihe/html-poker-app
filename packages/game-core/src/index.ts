@@ -257,6 +257,7 @@ export type HandCategory =
   | "straight-flush";
 
 export interface HandEvaluation {
+  readonly bestFive: readonly Card[];
   readonly category: HandCategory;
   readonly label: string;
   readonly score: readonly number[];
@@ -525,14 +526,23 @@ export function evaluateTexasHoldem(
 ): HandEvaluation | undefined {
   if (cards.length < 5 || cards.length > 7) return undefined;
   let best: readonly number[] | undefined;
+  let bestFive: readonly Card[] | undefined;
   for (const candidate of combinations(cards, 5)) {
     const score = fiveCardScore(candidate);
-    if (!best || compareScores(score, best) > 0) best = score;
+    if (!best || compareScores(score, best) > 0) {
+      best = score;
+      bestFive = candidate;
+    }
   }
-  if (!best) return undefined;
+  if (!best || !bestFive) return undefined;
   const details = categoryDetails[best[0] ?? 0] ?? categoryDetails[0];
   if (!details) return undefined;
-  return { category: details[0], label: details[1], score: [...best] };
+  return {
+    bestFive: [...bestFive],
+    category: details[0],
+    label: details[1],
+    score: [...best],
+  };
 }
 
 function finalizeProvisionalSeats(seats: readonly SeatState[]): {

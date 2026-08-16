@@ -7,7 +7,7 @@
 Use this route when internet is available for the initial page load and the goal is one consistent build across iPhones:
 
 1. On the laptop and every phone, open **https://cai-ruihe.github.io/html-poker-app/**. On iPhone, prefer a normal Safari tab over opening an HTML attachment from Files or a file-manager browser.
-2. Confirm every start screen says **Build 0.1.3-phase1**. Do not reuse an older saved table or mix this URL with a copied HTML file.
+2. Confirm every start screen says **Build 0.1.4-phase1**. Do not reuse an older saved table or mix this URL with a copied HTML file.
 3. Keep every device on the same non-isolating Wi-Fi. The laptop does not need an inbound port, public server, router forwarding, or the home's static public IP.
 4. Create a new table on the laptop and complete the two-QR pairing flow for each player. Use **Enlarge QR** before a phone scans the laptop's dense WebRTC offer.
 5. On a player phone, choose **Reveal my cards privately** to view the hand. This changes only that phone. **Show cards to table** is the separate public action.
@@ -58,7 +58,7 @@ The Airplane QR contains local pairing data, not a website address. The phone's 
 - **QR unreadable:** on the host choose **Enlarge QR**, raise screen brightness, keep the whole white border visible, and move the camera until the QR sits inside the four-corner guide. Avoid re-compressing screenshots. Live video has two bundled local decoders; a saved QR image remains the fallback.
 - **Wrong or old file:** update every device to the same generated artifact and create a fresh offer.
 - **Phone locked or tab closed:** reopen the current build and ask the host to use **Players → Replace device** for that seat. Complete a fresh two-QR pairing; do not try to reuse the dead direct channel.
-- **`revision-conflict` banner:** do not continue with an older build. Build `0.1.3-phase1` includes serialized overlapping recovery commits, including the `pagehide` race reproduced from the field report.
+- **`revision-conflict` banner:** do not continue with an older build. Build `0.1.4-phase1` includes serialized overlapping recovery commits, including the `pagehide` race reproduced from the field report, plus the corrected sit-out/return transition.
 - **Channel does not open:** treat client isolation or unsupported local WebRTC as the likely cause; use a different private Wi-Fi network or return to Normal Mode when connectivity is available.
 - **Host loss:** Phase 1 permits permanent host loss to end the game. Same-browser local recovery is the only supported authority recovery path; do not copy active custody state between devices.
 

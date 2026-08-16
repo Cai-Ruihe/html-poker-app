@@ -1,6 +1,6 @@
 # Quality gates
 
-**Status:** Normative baseline under [ADR-0007](../adr/0007-typescript-browser-monorepo-toolchain.md). The local Phase 1 implementation has automated evidence, but no official release gate is marked complete without the dated external receipt it requires.
+**Status:** Normative baseline under [ADR-0007](../adr/0007-typescript-browser-monorepo-toolchain.md) and the traceable QA authority in [ADR-0008](../adr/0008-traceable-release-blocking-qa.md). The local Phase 1 implementation has automated evidence, but no official release gate is marked complete without the dated external receipt it requires.
 
 Quality claims require evidence on the affected surface. A passing unit suite alone cannot establish card privacy, browser compatibility, Airplane support, China readiness, or release integrity.
 
@@ -10,6 +10,7 @@ Quality claims require evidence on the affected surface. A passing unit suite al
 - Formatting, static analysis, and relevant automated tests pass once tooling exists.
 - Public contracts and event/schema changes include compatibility tests and documentation.
 - Visible changes include keyboard/touch/accessibility checks and evidence at affected viewport modes.
+- Interactive menus maintain a complete stable action inventory; each available action is invoked and its resulting state is asserted. Label presence is not functional evidence.
 - Security/privacy impact is stated; affected trust boundaries have negative tests.
 - No credentials, hidden cards, deck order, personal data, generated support bundles, or unreviewed binary assets enter version control.
 - Documentation links, IDs, manifest/schema entries, phase-module links, bidirectional decision ownership, and word budgets remain valid.
@@ -23,11 +24,11 @@ pnpm install --frozen-lockfile
 pnpm check
 ```
 
-`pnpm check` covers formatting, architecture lint rules, strict type checks, documentation validation, workspace peer dependencies, Vitest contract tests, and the production build. For changes to presentation, browser behavior, or a browser-facing trust boundary, also run:
+`pnpm check` covers formatting, architecture lint rules, strict type checks, documentation validation, the PRD/decision/feedback registry, workspace peer dependencies, Vitest contract tests, production builds, and artifact-size budgets. For changes to presentation, browser behavior, or a browser-facing trust boundary, also run:
 
 ```sh
 pnpm exec playwright install chromium webkit
-pnpm test:e2e
+pnpm qa:browser
 ```
 
 Run `pnpm test:coverage` for authority, custody, persistence, and projection-policy changes. These commands are contribution gates; the physical device, network, security, and release gates below remain separate evidence requirements.
@@ -47,7 +48,7 @@ For a committed candidate, run `pnpm release:reproducibility`, then create and v
 | Identity/Capabilities | expired/replayed/revoked credential tests, authority non-escalation, replacement behavior |
 | Connectivity | direct/private/cloud route matrix, encryption/authentication, reconnect and service-compromise tests |
 | Airplane | real-device no-internet journey, two-way QR replay/expiry, hotspot isolation detection |
-| Presentation | Player/Tablet/TV mode tests, touch/keyboard/screen-reader checks, privacy screenshots |
+| Presentation | deterministic full-resolution screenshots, exact geometry and negative-design assertions, complete action inventory/result tests, Player/Tablet/TV mode tests, touch/keyboard/screen-reader checks, privacy screenshots |
 | Persistence | persist-before-ack, crash/duplicate/race/quota tests, digest and recovery tests |
 | Diagnostics | schema allowlist, secret canaries, retention deletion, export inspection |
 | Accounting | legal actions, property-based chip conservation, side pots, ties, odd chips, correction replay |

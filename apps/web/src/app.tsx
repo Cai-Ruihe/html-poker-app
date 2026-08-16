@@ -138,10 +138,12 @@ function BrandBar({ aside }: { readonly aside?: ReactNode }) {
 function Home({
   onCreate,
   onJoinAirplane,
+  onJoinSession,
   onPairDisplay,
 }: {
   readonly onCreate: (options: HostRuntimeCreateOptions) => Promise<void>;
   readonly onJoinAirplane?: () => void;
+  readonly onJoinSession: (url: string) => void;
   readonly onPairDisplay?: () => void;
 }) {
   const digitalChipsEnabled =
@@ -152,6 +154,9 @@ function Home({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const [operatorToken, setOperatorToken] = useState("");
+  const [joinError, setJoinError] = useState<string>();
+  const [joinScannerOpen, setJoinScannerOpen] = useState(false);
+  const [joinUrl, setJoinUrl] = useState("");
   const [chipMode, setChipMode] = useState<"digital" | "physical">("physical");
   const [startingStack, setStartingStack] = useState(100);
   const [smallBlind, setSmallBlind] = useState(1);
@@ -192,6 +197,28 @@ function Home({
       );
     } finally {
       setBusy(false);
+    }
+  }
+
+  function openInvitation(rawValue: string): void {
+    setJoinError(undefined);
+    try {
+      const url = new URL(rawValue.trim(), globalThis.location.href);
+      if (!parseInvitation(url.hash)) {
+        throw new Error(
+          "This is not a complete HTML Poker invitation URL. Ask the host for the current player link.",
+        );
+      }
+      if (!["http:", "https:"].includes(url.protocol)) {
+        throw new Error("Invitation links must use HTTP or HTTPS.");
+      }
+      onJoinSession(url.toString());
+    } catch (caught) {
+      setJoinError(
+        caught instanceof Error
+          ? caught.message
+          : "The invitation URL could not be opened.",
+      );
     }
   }
 
@@ -377,8 +404,64 @@ function Home({
               Pair this display
             </button>
           ) : null}
+          <section
+            className="join-session-card"
+            aria-labelledby="join-session-title"
+          >
+            <div>
+              <p className="section-label">Joining friends</p>
+              <h3 id="join-session-title">Join another session</h3>
+              <p>
+                Paste the current invitation URL or scan its QR in this page.
+              </p>
+            </div>
+            <label>
+              <span>Invitation URL</span>
+              <input
+                autoCapitalize="none"
+                autoComplete="off"
+                inputMode="url"
+                onChange={(event) => setJoinUrl(event.currentTarget.value)}
+                placeholder="https://…#join=…"
+                value={joinUrl}
+              />
+            </label>
+            {joinError ? (
+              <p className="inline-warning" role="alert">
+                {joinError}
+              </p>
+            ) : null}
+            <div className="button-row">
+              <button
+                className="button button--primary"
+                disabled={!joinUrl.trim()}
+                onClick={() => openInvitation(joinUrl)}
+                type="button"
+              >
+                Open invitation
+              </button>
+              <button
+                className="button button--quiet"
+                onClick={() => setJoinScannerOpen(true)}
+                type="button"
+              >
+                Scan invitation QR
+              </button>
+            </div>
+          </section>
         </section>
       </div>
+      {joinScannerOpen ? (
+        <QrCameraScanner
+          label="Scan player invitation QR"
+          onClose={() => setJoinScannerOpen(false)}
+          onCode={(code) => {
+            setJoinScannerOpen(false);
+            setJoinUrl(code);
+            openInvitation(code);
+          }}
+        />
+      ) : null}
     </main>
   );
 }
@@ -1903,6 +1986,9 @@ function HostTable({
   const actionGuard = useDealerActionGuard();
   const [error, setError] = useState<string>();
   const [adminOpen, setAdminOpen] = useState(false);
+  const [adminFocus, setAdminFocus] = useState<"displays" | "players">(
+    "players",
+  );
   const [developerMode, setDeveloperMode] = useState(false);
   useScreenWakeLock(true);
   const projection = snapshot.projection;
@@ -1972,7 +2058,20 @@ function HostTable({
           )
         }
         onEndHand={() => performDealerAction(() => runtime.endHand())}
-        onManagePlayers={() => setAdminOpen(!adminOpen)}
+        onManageDisplays={() => {
+          setAdminFocus("displays");
+          setAdminOpen(true);
+          onViewChange("host");
+        }}
+        onManagePlayers={() => {
+          setAdminFocus("players");
+          if (activeView === "table") {
+            setAdminOpen(true);
+            onViewChange("host");
+          } else {
+            setAdminOpen(adminFocus === "players" ? !adminOpen : true);
+          }
+        }}
         onConfirmSettlement={() =>
           performDealerAction(() => runtime.confirmSettlement())
         }
@@ -1982,6 +2081,9 @@ function HostTable({
         onRevealStreet={(street) =>
           performDealerAction(() => runtime.revealStreet(street))
         }
+        {...(activeView === "table"
+          ? { onReconnect: () => runtime.resumeConnectivity() }
+          : {})}
         onStartNextHand={() =>
           performDealerAction(() => runtime.startNextHand())
         }
@@ -1992,7 +2094,11 @@ function HostTable({
         projection={projection}
       />
       {adminOpen && activeView === "host" ? (
-        <aside className="admin-drawer" aria-label="Player administration">
+        <aside
+          aria-label="Player administration"
+          className="admin-drawer"
+          data-admin-focus={adminFocus}
+        >
           <header>
             <div>
               <p className="section-label">Off-table controls</p>
@@ -2100,6 +2206,59 @@ function useClientSnapshot(runtime: TableClientRuntime): ClientRuntimeSnapshot {
   return snapshot;
 }
 
+function LeaveTableDialog({
+  busy,
+  onCancel,
+  onConfirm,
+  tableTheme,
+}: {
+  readonly busy: boolean;
+  readonly onCancel: () => void;
+  readonly onConfirm: () => void;
+  readonly tableTheme: TableTheme;
+}) {
+  return (
+    <div
+      className="confirm-backdrop"
+      data-theme={tableTheme}
+      role="presentation"
+    >
+      <section
+        aria-labelledby="leave-table-title"
+        aria-modal="true"
+        className="confirm-dialog"
+        role="dialog"
+      >
+        <p className="section-label">Permanent on this seat</p>
+        <h2 id="leave-table-title">Leave this table?</h2>
+        <p>
+          This seat credential will be revoked and cannot reconnect. The host
+          can keep the empty seat for history or replace its device.
+        </p>
+        <div className="button-row">
+          <button
+            autoFocus
+            className="button button--quiet"
+            disabled={busy}
+            onClick={onCancel}
+            type="button"
+          >
+            Stay at table
+          </button>
+          <button
+            className="button button--danger"
+            disabled={busy}
+            onClick={onConfirm}
+            type="button"
+          >
+            {busy ? "Leaving…" : "Leave permanently"}
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function PlayerExperience({
   manageLifecycle = true,
   runtime,
@@ -2113,6 +2272,7 @@ function PlayerExperience({
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   useScreenWakeLock(snapshot.status === "playing");
 
   useEffect(() => {
@@ -2149,15 +2309,19 @@ function PlayerExperience({
       if (document.visibilityState === "hidden") hide();
       else show();
     };
+    const poll = globalThis.setInterval(show, 4_000);
     globalThis.addEventListener("pagehide", hide);
     globalThis.addEventListener("pageshow", show);
+    globalThis.addEventListener("focus", show);
     globalThis.addEventListener("online", show);
     document.addEventListener("visibilitychange", visibilityChanged);
     return () => {
       globalThis.removeEventListener("pagehide", hide);
       globalThis.removeEventListener("pageshow", show);
+      globalThis.removeEventListener("focus", show);
       globalThis.removeEventListener("online", show);
       document.removeEventListener("visibilitychange", visibilityChanged);
+      globalThis.clearInterval(poll);
     };
   }, [manageLifecycle, runtime]);
 
@@ -2221,6 +2385,28 @@ function PlayerExperience({
     }
   }
 
+  async function leaveTable(): Promise<void> {
+    if (busy) return;
+    setBusy(true);
+    setError(undefined);
+    try {
+      await runtime.performPlayer({ type: "leave" });
+      runtime.close();
+      const home = new URL(globalThis.location.href);
+      home.hash = "";
+      globalThis.history.replaceState(null, "", home);
+      globalThis.location.reload();
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "The seat could not be left safely.",
+      );
+      setLeaveConfirmOpen(false);
+      setBusy(false);
+    }
+  }
+
   if (!snapshot.seat && snapshot.status !== "rejected") {
     return (
       <main className="join-shell">
@@ -2275,9 +2461,15 @@ function PlayerExperience({
   }
 
   if (snapshot.status === "waiting" || !playerProjection) {
+    const sittingOutNow = snapshot.seat?.state === "sitting-out";
+    const stayingOutNextHand = snapshot.futureSittingOut;
+    const returningNextHand = sittingOutNow && !stayingOutNextHand;
     return (
-      <main className="message-shell">
-        <section>
+      <main
+        className="message-shell message-shell--player-waiting"
+        data-theme={snapshot.tableTheme}
+      >
+        <section className="waiting-seat-card">
           <p className="section-label">
             Seat{" "}
             {snapshot.seat?.displayPosition !== undefined
@@ -2286,37 +2478,101 @@ function PlayerExperience({
           </p>
           <h1>You have a seat</h1>
           <p>
-            {snapshot.seat?.displayName}, keep this page open. Your cards arrive
-            when the Trusted Host deals the next hand.
+            {stayingOutNextHand
+              ? `${snapshot.seat?.displayName}, you are sitting out. Return now to be eligible for the next hand.`
+              : returningNextHand
+                ? `${snapshot.seat?.displayName}, you are ready and will receive cards when the next hand begins.`
+                : `${snapshot.seat?.displayName}, your cards arrive when the Trusted Host deals the next hand.`}
           </p>
           <span className="waiting-line">
-            <i /> Waiting for the deal
+            <i />{" "}
+            {stayingOutNextHand
+              ? "Sitting out"
+              : returningNextHand
+                ? "Ready for next hand"
+                : "Waiting for the deal"}
           </span>
+          {(error ?? snapshot.error) ? (
+            <p className="inline-warning" role="alert">
+              {error ?? snapshot.error}
+            </p>
+          ) : null}
+          <div className="waiting-seat-actions">
+            {stayingOutNextHand ? (
+              <button
+                className="button button--primary"
+                disabled={busy}
+                onClick={() =>
+                  perform({ sittingOut: false, type: "set-sitting-out" })
+                }
+                type="button"
+              >
+                Return for next hand
+              </button>
+            ) : null}
+            <button
+              className="button button--quiet"
+              disabled={busy}
+              onClick={() => void reconnect()}
+              type="button"
+            >
+              Refresh table status
+            </button>
+            <button
+              className="waiting-seat-leave"
+              disabled={busy}
+              onClick={() => setLeaveConfirmOpen(true)}
+              type="button"
+            >
+              Leave table permanently
+            </button>
+          </div>
         </section>
+        {leaveConfirmOpen ? (
+          <LeaveTableDialog
+            busy={busy}
+            onCancel={() => setLeaveConfirmOpen(false)}
+            onConfirm={() => void leaveTable()}
+            tableTheme={snapshot.tableTheme}
+          />
+        ) : null}
       </main>
     );
   }
 
   return (
-    <TableSurface
-      busy={busy}
-      connectionLabel={snapshot.connectionLabel}
-      {...((error ?? snapshot.error)
-        ? { errorMessage: error ?? snapshot.error }
-        : {})}
-      futureSittingOut={snapshot.futureSittingOut}
-      mode="player"
-      onBettingAction={(action) => perform({ action, type: "betting" })}
-      onFinalizeFold={() => perform({ type: "finalize-fold" })}
-      onFold={() => perform({ type: "fold" })}
-      onReconnect={reconnect}
-      onShowCards={() => perform({ type: "show" })}
-      onToggleSittingOut={(sittingOut) =>
-        perform({ sittingOut, type: "set-sitting-out" })
-      }
-      onUndoFold={() => perform({ type: "undo-fold" })}
-      projection={playerProjection}
-    />
+    <>
+      <TableSurface
+        busy={busy}
+        connectionLabel={snapshot.connectionLabel}
+        {...((error ?? snapshot.error)
+          ? { errorMessage: error ?? snapshot.error }
+          : {})}
+        futureSittingOut={snapshot.futureSittingOut}
+        mode="player"
+        onBettingAction={(action) => perform({ action, type: "betting" })}
+        onFinalizeFold={() => perform({ type: "finalize-fold" })}
+        onFold={() => perform({ type: "fold" })}
+        {...(manageLifecycle
+          ? { onLeaveTable: () => setLeaveConfirmOpen(true) }
+          : {})}
+        onReconnect={reconnect}
+        onShowCards={() => perform({ type: "show" })}
+        onToggleSittingOut={(sittingOut) =>
+          perform({ sittingOut, type: "set-sitting-out" })
+        }
+        onUndoFold={() => perform({ type: "undo-fold" })}
+        projection={playerProjection}
+      />
+      {leaveConfirmOpen ? (
+        <LeaveTableDialog
+          busy={busy}
+          onCancel={() => setLeaveConfirmOpen(false)}
+          onConfirm={() => void leaveTable()}
+          tableTheme={snapshot.tableTheme}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -2360,13 +2616,17 @@ function RoleExperience({ runtime }: { readonly runtime: TableClientRuntime }) {
     const visibilityChanged = () => {
       if (document.visibilityState === "visible") resume();
     };
+    const poll = globalThis.setInterval(resume, 4_000);
     globalThis.addEventListener("pageshow", resume);
+    globalThis.addEventListener("focus", resume);
     globalThis.addEventListener("online", resume);
     document.addEventListener("visibilitychange", visibilityChanged);
     return () => {
       globalThis.removeEventListener("pageshow", resume);
+      globalThis.removeEventListener("focus", resume);
       globalThis.removeEventListener("online", resume);
       document.removeEventListener("visibilitychange", visibilityChanged);
+      globalThis.clearInterval(poll);
     };
   }, [runtime]);
 
@@ -2852,15 +3112,19 @@ export function App() {
       if (document.visibilityState === "hidden") pauseEmbeddedPlayer();
       else resume();
     };
+    const poll = globalThis.setInterval(resume, 4_000);
     globalThis.addEventListener("pagehide", pauseEmbeddedPlayer);
     globalThis.addEventListener("pageshow", resume);
+    globalThis.addEventListener("focus", resume);
     globalThis.addEventListener("online", resume);
     document.addEventListener("visibilitychange", visibilityChanged);
     return () => {
       globalThis.removeEventListener("pagehide", pauseEmbeddedPlayer);
       globalThis.removeEventListener("pageshow", resume);
+      globalThis.removeEventListener("focus", resume);
       globalThis.removeEventListener("online", resume);
       document.removeEventListener("visibilitychange", visibilityChanged);
+      globalThis.clearInterval(poll);
     };
   }, [hostPlayerRuntime, hostRuntime]);
 
@@ -2996,6 +3260,18 @@ export function App() {
         replaceWithHostRecoveryUrl(globalThis.location, runtime.tableId);
         showHostDeviceView("host");
         setHostRuntime(runtime);
+      }}
+      onJoinSession={(rawUrl) => {
+        const url = new URL(rawUrl);
+        const invitation = parseInvitation(url.hash);
+        if (!invitation) {
+          throw new Error("The invitation URL is incomplete.");
+        }
+        const current = new URL(globalThis.location.href);
+        current.search = "";
+        current.hash = url.hash;
+        globalThis.history.replaceState(null, "", current);
+        setClientRuntime(TableClientRuntime.fromInvitation(invitation));
       }}
       {...(isAirplaneMode()
         ? { onJoinAirplane: () => setAirplaneJoinOpen(true) }

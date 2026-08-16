@@ -45,11 +45,11 @@ pnpm install --frozen-lockfile
 pnpm check
 ```
 
-`pnpm check` verifies formatting, lint rules, strict types, documentation contracts, module/contract tests, and a clean production build. Changes to visible behavior or browser trust boundaries must also run the affected Playwright journey:
+`pnpm check` verifies formatting, lint rules, strict types, documentation contracts, the product QA registry, module/contract tests, production builds, and artifact performance budgets. Changes to visible behavior or browser trust boundaries must also run the complete release-blocking browser suite:
 
 ```sh
 pnpm exec playwright install chromium webkit
-pnpm test:e2e
+pnpm qa:browser
 ```
 
 Use `pnpm test:coverage` when changing authority, custody, persistence, or projection policy. A passing emulated-browser journey is development evidence, not a substitute for the physical-device and network matrix required for release.

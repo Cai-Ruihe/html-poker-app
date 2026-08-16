@@ -33,12 +33,14 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Verify repository
         run: pnpm check
+      - name: Verify measured source coverage
+        run: pnpm test:coverage
       - name: Audit production dependencies
         run: pnpm audit:prod
       - name: Install browser engines for journey tests
         run: pnpm exec playwright install --with-deps chromium webkit
       - name: Verify browser journeys
-        run: pnpm test:e2e
+        run: pnpm qa:browser
 
   deploy-party-build:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'

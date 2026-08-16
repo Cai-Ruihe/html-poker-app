@@ -44,7 +44,7 @@ import {
   type HostAirplanePairing,
 } from "./airplane";
 
-export const BUILD_VERSION = "0.1.3-phase1";
+export const BUILD_VERSION = "0.1.4-phase1";
 export const PROTOCOL_VERSION = 2;
 
 const requestTimeoutMs = 7_500;
@@ -57,6 +57,7 @@ export type PlayerAction =
   | { readonly type: "finalize-fold" }
   | { readonly type: "show" }
   | { readonly sittingOut: boolean; readonly type: "set-sitting-out" }
+  | { readonly type: "leave" }
   | { readonly type: "disconnect" };
 
 export type DealerAction =
@@ -84,6 +85,7 @@ function isPlayerAction(value: unknown): value is PlayerAction {
     "undo-fold",
     "finalize-fold",
     "show",
+    "leave",
     "muck",
     "disconnect",
   ].includes(String(candidate.type));
@@ -281,10 +283,12 @@ type CapabilityResponsePayload =
       readonly status: "projection";
     }
   | {
+      readonly futureSittingOut?: boolean;
       readonly role: CapabilityRole;
       readonly relayRoutes?: RelayRouteConfiguration;
       readonly seat?: RoomSeat;
       readonly status: "waiting";
+      readonly tableTheme: TableTheme;
     }
   | { readonly code: string; readonly status: "rejected" };
 
@@ -2483,6 +2487,7 @@ export class HostTableRuntime {
       if (request.type === "player-action" && authenticated.seatId) {
         await this.applyPlayerAction(
           authenticated.seatId,
+          authenticated.capabilityId,
           request.credentialToken,
           request.action,
         );
@@ -2513,6 +2518,9 @@ export class HostTableRuntime {
     role: CapabilityRole,
     seatId?: string,
   ): CapabilityResponsePayload {
+    const tableTheme = this.authority
+      ? this.authority.project({ kind: "public" }).tableTheme
+      : "dark-green";
     if (role === "player") {
       const seat = this.identity
         .roster()
@@ -2522,12 +2530,14 @@ export class HostTableRuntime {
       }
       if (!this.authority) {
         return {
+          futureSittingOut: seat.futureSittingOut,
           ...(this.relayRouteConfiguration
             ? { relayRoutes: this.relayRouteConfiguration }
             : {}),
           role,
           seat,
           status: "waiting",
+          tableTheme,
         };
       }
       try {
@@ -2548,12 +2558,14 @@ export class HostTableRuntime {
         };
       } catch {
         return {
+          futureSittingOut: seat.futureSittingOut,
           ...(this.relayRouteConfiguration
             ? { relayRoutes: this.relayRouteConfiguration }
             : {}),
           role,
           seat,
           status: "waiting",
+          tableTheme,
         };
       }
     }
@@ -2564,6 +2576,7 @@ export class HostTableRuntime {
           : {}),
         role,
         status: "waiting",
+        tableTheme,
       };
     }
     const projection = this.orderProjection(
@@ -2627,6 +2640,7 @@ export class HostTableRuntime {
 
   private async applyPlayerAction(
     seatId: string,
+    capabilityId: string,
     credentialToken: string,
     action: PlayerAction,
   ): Promise<void> {
@@ -2641,11 +2655,36 @@ export class HostTableRuntime {
         sittingOut: action.sittingOut,
       });
       if (this.authority) {
-        await this.submitPlayerInternal(seatId, {
+        const receipt = await this.submitPlayerInternal(seatId, {
           seatId,
           sittingOut: action.sittingOut,
           type: "SetSeatParticipation",
         });
+        if (receipt.status === "rejected") {
+          throw new Error(`Seat participation rejected: ${receipt.code}`);
+        }
+      }
+      return;
+    }
+    if (action.type === "leave") {
+      this.identity.setFutureParticipation({
+        credentialToken,
+        sittingOut: true,
+      });
+      if (this.authority) {
+        const receipt = await this.submitPlayerInternal(seatId, {
+          seatId,
+          sittingOut: true,
+          type: "SetSeatParticipation",
+        });
+        if (receipt.status === "rejected") {
+          throw new Error(`Leave participation rejected: ${receipt.code}`);
+        }
+      }
+      this.identity.setConnected({ connected: false, credentialToken });
+      const revoked = this.identity.revoke(capabilityId);
+      if (revoked.status === "rejected") {
+        throw new Error(`Leave rejected: ${revoked.code}`);
       }
       return;
     }
@@ -2836,6 +2875,11 @@ export class HostTableRuntime {
       payload,
       tableId: this.tableId,
     });
+    this.recordDiagnostic(
+      "command",
+      receipt.status === "accepted" ? "accepted" : "rejected",
+      receipt.status === "rejected" ? receipt.code : undefined,
+    );
     if (receipt.status === "accepted") {
       this.refreshProjection();
       this.broadcastChange();
@@ -2848,7 +2892,11 @@ export class HostTableRuntime {
     for (const seat of this.identity.roster().seats) {
       await this.submitHostInternal({
         seatId: seat.seatId,
-        sittingOut: seat.state === "sitting-out" || seat.futureSittingOut,
+        // The authority flag describes the *next* hand. A seat can be sitting
+        // out of the current hand while having already opted back in. Folding
+        // the current state into this value would silently undo that choice at
+        // hand end and strand the player for another hand.
+        sittingOut: seat.futureSittingOut,
         type: "SetSeatParticipation",
       });
     }
@@ -2863,6 +2911,7 @@ export interface ClientRuntimeSnapshot {
   readonly role: CapabilityRole;
   readonly seat?: RoomSeat;
   readonly status: "joining" | "waiting" | "playing" | "rejected";
+  readonly tableTheme: TableTheme;
 }
 
 export interface InvitationDetails {
@@ -2923,6 +2972,7 @@ export class TableClientRuntime {
   private seat: RoomSeat | undefined;
   private readonly slotId: string;
   private status: ClientRuntimeSnapshot["status"] = "joining";
+  private tableTheme: TableTheme = "dark-green";
 
   private constructor(options: ClientRuntimeOptions) {
     this.airplanePairing = options.airplanePairing;
@@ -3199,6 +3249,7 @@ export class TableClientRuntime {
       role: this.role,
       ...(this.seat ? { seat: { ...this.seat } } : {}),
       status: this.status,
+      tableTheme: this.tableTheme,
     };
   }
 
@@ -3241,6 +3292,7 @@ export class TableClientRuntime {
       this.error = response.code;
       this.status = "rejected";
     } else {
+      this.error = undefined;
       if (response.role !== this.role) {
         this.error = "role-mismatch";
         this.status = "rejected";
@@ -3250,9 +3302,17 @@ export class TableClientRuntime {
       if (response.relayRoutes) this.updateRelayRoutes(response.relayRoutes);
       if (response.status === "waiting") {
         this.seat = response.seat;
+        this.tableTheme = response.tableTheme;
+        this.futureSittingOut =
+          response.role === "player"
+            ? (response.futureSittingOut ??
+              response.seat?.futureSittingOut ??
+              false)
+            : false;
         this.projection = undefined;
         this.status = "waiting";
       } else {
+        this.tableTheme = response.projection.tableTheme;
         this.futureSittingOut =
           response.role === "player" ? response.futureSittingOut : false;
         this.projection = response.projection;

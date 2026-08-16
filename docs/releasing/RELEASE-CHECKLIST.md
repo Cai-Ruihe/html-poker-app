@@ -7,6 +7,7 @@ Use this checklist for a release candidate; do not mark an item complete without
 - [ ] Release owner and approvers are named.
 - [ ] Target commit is reviewed, protected, and corresponds to the intended phase/scope.
 - [ ] PRD decision register, ADR index, roadmap, changelog, and user documentation are reconciled.
+- [ ] `pnpm qa:registry` imports every PRD story/testing decision and every stable product, Tablet, and field-feedback ID without an untracked requirement.
 - [ ] No unapproved feature, experiment, telemetry, provider, or third-party runtime appears in the artifact.
 
 ## Build and supply chain
@@ -21,6 +22,9 @@ Use this checklist for a release candidate; do not mark an item complete without
 ## Correctness and compatibility
 
 - [ ] Contract, journey, fault, accessibility, performance, and compatibility suites pass.
+- [ ] Every available secondary/menu action is present in the stable action inventory, invoked through the built app, and verified by resulting state—not label presence alone.
+- [ ] Deterministic visual baselines for every affected role/state/theme were inspected at full resolution; exact geometry, orientation, touch targets, rejected symbols, clipping, and overflow assertions pass in Chromium and Mobile WebKit.
+- [ ] Bundle budgets pass, and unmeasured initial-load, battery, memory, camera, and network performance remains explicitly Unknown.
 - [ ] Real supported devices cover Player, Tablet, TV, and host journeys as applicable.
 - [ ] Refresh, reconnect, network change, player power loss, storage pressure, and host recovery outcomes match the PRD.
 - [ ] Airplane Mode runs with internet unavailable on every claimed supported platform.

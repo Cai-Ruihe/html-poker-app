@@ -1,0 +1,240 @@
+schema_version: 1
+active_release: phase-1
+governing_adr: docs/adr/0008-traceable-release-blocking-qa.md
+
+requirement_imports:
+  master:
+    file: docs/prd/MASTER-PRD.md
+    lifecycle: active
+    evidence: [tests/contract, tests/journey, tests/security]
+  P1:
+    file: docs/prd/phases/P1-TRUSTED-HOST-DEALER.md
+    lifecycle: active
+    evidence: [tests/contract, tests/journey, tests/security]
+  P2:
+    file: docs/prd/phases/P2-DIGITAL-ACCOUNTING.md
+    lifecycle: tracer
+    evidence:
+      [
+        tests/contract/digital-accounting-heads-up.test.ts,
+        tests/contract/digital-accounting-authority.test.ts,
+      ]
+  P3:
+    file: docs/prd/phases/P3-SKINS-AND-AI.md
+    lifecycle: deferred
+    evidence: [docs/prd/phases/P3-SKINS-AND-AI.md]
+  M01:
+    file: docs/prd/modules/M01-GAME-CORE.md
+    lifecycle: active
+    evidence:
+      [
+        tests/contract/phase1-hand-lifecycle.test.ts,
+        tests/contract/authority-idempotency.test.ts,
+      ]
+  M02:
+    file: docs/prd/modules/M02-CARD-CUSTODY-PRIVACY.md
+    lifecycle: active
+    evidence:
+      [
+        tests/contract/card-custody.test.ts,
+        tests/security/privacy-boundary.spec.ts,
+      ]
+  M03:
+    file: docs/prd/modules/M03-IDENTITY-SEATS-CAPABILITIES.md
+    lifecycle: active
+    evidence:
+      [
+        tests/contract/identity-capabilities.test.ts,
+        tests/journey/local-deal.spec.ts,
+      ]
+  M04:
+    file: docs/prd/modules/M04-CONNECTIVITY-SERVICE.md
+    lifecycle: active
+    evidence:
+      [
+        tests/contract/connection-service.test.ts,
+        tests/journey/normal-relay.spec.ts,
+        tests/journey/relay-restart.spec.ts,
+      ]
+  M05:
+    file: docs/prd/modules/M05-AIRPLANE-MODE.md
+    lifecycle: active
+    evidence:
+      [tests/journey/airplane.spec.ts, docs/quality/PHYSICAL-DEVICE-MATRIX.md]
+  M06:
+    file: docs/prd/modules/M06-PRESENTATION-INTERACTION.md
+    lifecycle: active
+    evidence:
+      [
+        tests/journey/approved-interface.spec.ts,
+        tests/journey/visual-conformance.spec.ts,
+      ]
+  M07:
+    file: docs/prd/modules/M07-PERSISTENCE-RECOVERY-HISTORY.md
+    lifecycle: active
+    evidence:
+      [
+        tests/contract/persistence.test.ts,
+        tests/contract/authority-recovery.test.ts,
+        tests/journey/relay-restart.spec.ts,
+      ]
+  M08:
+    file: docs/prd/modules/M08-DIAGNOSTICS-RED-TEAM.md
+    lifecycle: active
+    evidence:
+      [
+        tests/contract/diagnostics.test.ts,
+        tests/security/privacy-boundary.spec.ts,
+      ]
+  M09:
+    file: docs/prd/modules/M09-RELEASE-DISTRIBUTION.md
+    lifecycle: active
+    evidence: [tools/release, docs/releasing/RELEASE-CHECKLIST.md]
+  M10:
+    file: docs/prd/modules/M10-DIGITAL-ACCOUNTING.md
+    lifecycle: tracer
+    evidence:
+      [
+        tests/contract/digital-accounting-heads-up.test.ts,
+        tests/contract/digital-accounting-authority.test.ts,
+      ]
+  M11:
+    file: docs/prd/modules/M11-COMMUNITY-SKINS.md
+    lifecycle: deferred
+    evidence: [docs/prd/modules/M11-COMMUNITY-SKINS.md]
+  M12:
+    file: docs/prd/modules/M12-AI-PLAYERS.md
+    lifecycle: deferred
+    evidence: [docs/prd/modules/M12-AI-PLAYERS.md]
+
+stable_id_sources:
+  decisions:
+    file: docs/prd/reference/DECISION-REGISTER.md
+    pattern: "^[|] ([A-Z][A-Z0-9-]+)"
+    evidence: docs/prd/reference/DECISION-REGISTER.md
+  tablet_ui:
+    file: docs/design/TABLET-UI-FEEDBACK-2026-08-16.md
+    pattern: "TUI-[0-9]{3}"
+    evidence: tests/journey/visual-conformance.spec.ts
+  field_feedback:
+    file: docs/quality/FIELD-FEEDBACK-LEDGER.md
+    pattern: "^[|] `([A-Z][A-Z0-9-]+-[0-9]{3})`"
+    evidence: tests/journey/feedback-regressions.spec.ts
+
+visual_contract:
+  reference_viewport: { width: 1366, height: 1024 }
+  viewports:
+    - { id: phone-small, width: 360, height: 780 }
+    - { id: phone-ios, width: 393, height: 852 }
+    - { id: tablet-landscape, width: 1366, height: 1024 }
+    - { id: desktop, width: 1440, height: 1000 }
+    - { id: tv, width: 1920, height: 1080 }
+  themes: [dark-green, black-gold, deep-navy]
+  tablet_states: [quiet, lower-quick, upper-quick, secondary, manage-players]
+  geometry:
+    quick_panel: { width: 650, height: 244, tolerance: 2 }
+    utility_target: { width: 52, height: 52, tolerance: 1 }
+    utility_gap: { value: 20, tolerance: 1 }
+    action_gap: { value: 18, tolerance: 1 }
+    next_card: { width: 190, height: 102, tolerance: 2 }
+    next_hand: { width: 374, height: 102, tolerance: 2 }
+    slider_track: { width: 156, height: 64, tolerance: 1 }
+    slider_handle: { width: 64, height: 64, tolerance: 1 }
+    slider_travel: { value: 92, tolerance: 1 }
+    slider_radius: { value: 32, tolerance: 1 }
+    gold_thread: { value: 4, tolerance: 0.5 }
+  rejected_text: [Board, END, More, Unlock]
+  rejected_symbols: [native-range, lock, pause-bars, broken-ring]
+
+visual_baselines:
+  platforms: [darwin, linux]
+  project: chromium
+  required:
+    - { name: phone-home, test: tests/journey/feedback-regressions.spec.ts }
+    - { name: phone-join, test: tests/journey/feedback-regressions.spec.ts }
+    - {
+        name: phone-player-active-covered,
+        test: tests/journey/feedback-regressions.spec.ts,
+      }
+    - {
+        name: phone-player-sitting-out,
+        test: tests/journey/feedback-regressions.spec.ts,
+      }
+    - {
+        name: phone-host-showdown,
+        test: tests/journey/feedback-regressions.spec.ts,
+      }
+    - {
+        name: tablet-quiet-dark-green,
+        test: tests/journey/visual-conformance.spec.ts,
+      }
+    - {
+        name: tablet-quick-upper-right,
+        test: tests/journey/visual-conformance.spec.ts,
+      }
+    - {
+        name: tablet-quick-lower-right,
+        test: tests/journey/visual-conformance.spec.ts,
+      }
+    - {
+        name: tablet-secondary-dark-green,
+        test: tests/journey/visual-conformance.spec.ts,
+      }
+    - {
+        name: tablet-manage-players,
+        test: tests/journey/visual-conformance.spec.ts,
+      }
+    - {
+        name: tablet-quiet-black-gold,
+        test: tests/journey/visual-conformance.spec.ts,
+      }
+    - {
+        name: tablet-quiet-deep-navy,
+        test: tests/journey/visual-conformance.spec.ts,
+      }
+
+tablet_secondary_actions:
+  source: packages/presentation/src/index.tsx
+  evidence:
+    - tests/journey/visual-conformance.spec.ts
+    - tests/journey/local-deal.spec.ts
+  required:
+    - close-secondary
+    - fullscreen
+    - host-controls
+    - manage-displays
+    - manage-players
+    - my-hand
+    - reconnect
+    - return-table
+    - save-log
+    - theme-black-gold
+    - theme-dark-green
+    - theme-deep-navy
+
+performance_contract:
+  artifacts:
+    normal_javascript_raw_bytes: 1100000
+    normal_javascript_gzip_bytes: 330000
+    normal_css_raw_bytes: 80000
+    airplane_html_raw_bytes: 1350000
+  browser_interaction_timeout_ms: 5000
+
+manual_evidence:
+  file: docs/quality/PHYSICAL-DEVICE-MATRIX.md
+  required_for_claims:
+    [
+      ios-suspension,
+      camera,
+      airplane-no-wan,
+      local-network,
+      tv-browser,
+      china-network,
+    ]
+
+release_blocking_commands:
+  - pnpm qa:registry
+  - pnpm check
+  - pnpm test:coverage
+  - pnpm qa:browser
+  - pnpm audit:prod

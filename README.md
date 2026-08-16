@@ -34,7 +34,7 @@ diagnostics, Normal Mode direct WebRTC with card-blind relay fallback, reverse
 display pairing, and a standalone two-way-QR Airplane artifact with in-page
 camera scanning and saved-image fallback.
 
-**Fact — automated evidence.** Contract suites cover authority, identity, persistence, diagnostics, and relay isolation. Chromium and Mobile WebKit journeys cover a host joining its own table, switching among host/private/tablet views, player refresh/recovery, and disconnect-to-sit-out. Chromium additionally covers Normal direct/relay routes, reverse display pairing, stale-link diagnosis and ticket refresh after a service restart, plus standalone Airplane boot and pairing.
+**Fact — automated evidence.** Contract suites cover authority, identity, persistence, diagnostics, and relay isolation. Chromium and Mobile WebKit journeys cover a host joining its own table; switching among host/private/tablet views; live next-hand catch-up; sit-out, return, and permanent leave; complete Tablet secondary-action execution including a real seat-order mutation; exact approved slider/panel geometry; responsive overflow; and deterministic full-resolution visual baselines. Chromium additionally covers Normal direct/relay routes, reverse display pairing, stale-link diagnosis and ticket refresh after a service restart, plus standalone Airplane boot and pairing.
 
 **Unknown — not a public release claim.** This local release candidate has not passed the required physical iOS/iPadOS, Android, TV, WAN-removal, hostile-network, already-connected-client survival across a Connection Service restart, or representative mainland-China matrices. Public source, Private Vulnerability Reporting, and a CI-gated field build do not replace protected branch rules, release signing, or the remaining device/network evidence. Those are explicit release gates, not omissions hidden by a passing local suite.
 
@@ -47,7 +47,7 @@ The owner-authorized field build is published from `main` only after the configu
 **https://cai-ruihe.github.io/html-poker-app/**
 
 Open that exact HTTPS address on the host and every iPhone, confirm **Build
-0.1.3-phase1**, and create a fresh table. This removes copied-file version drift
+0.1.4-phase1**, and create a fresh table. This removes copied-file version drift
 and gives the in-page QR scanner a normal secure web origin. Use **Enlarge QR**
 before each phone scans the laptop's offer. The page still uses Airplane Mode's
 local, serverless WebRTC path after it loads; GitHub Pages does not receive cards
@@ -108,7 +108,7 @@ For actual multi-device Normal Mode and Airplane Mode instructions, see [Normal 
 ```sh
 pnpm check
 pnpm test:coverage
-pnpm test:e2e
+pnpm qa:browser
 pnpm audit:prod
 pnpm licenses:prod
 ```
@@ -141,6 +141,7 @@ The manifest is generated under ignored `dist/release/`; it is a local receipt, 
 - [Repository layout](docs/architecture/REPOSITORY-LAYOUT.md)
 - [Shared visual system](docs/design/SHARED-VISUAL-SYSTEM.md)
 - [Quality gates](docs/quality/QUALITY-GATES.md)
+- [Traceable product QA system](docs/quality/QA-SYSTEM.md) and [machine-readable registry](docs/quality/qa-registry.yaml)
 - [Card Privacy automated red-team record](docs/security/PHASE-1-CARD-PRIVACY-RED-TEAM.md)
 - [Release checklist](docs/releasing/RELEASE-CHECKLIST.md)
 - [Contributing](CONTRIBUTING.md), [Security](SECURITY.md), and [Governance](GOVERNANCE.md)

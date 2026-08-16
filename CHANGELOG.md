@@ -6,6 +6,11 @@ All notable project changes will be documented here. The format follows [Keep a 
 
 ### Fixed
 
+- Rebuilt the approved Tablet quick controls with the exact short custom slider, continuous four-pixel gold thread, equal four-corner orientation, and centered complete secondary panel; removed the native-range artifact and incomplete strip that escaped the earlier interaction-only gate.
+- Connected Tablet **Players & seats** and **Displays & pairing** to the real host administration surface and added a machine-enforced action inventory whose journeys invoke every available secondary action and assert its result.
+- Added automatic player catch-up for new hands, an explicit refresh fallback, return-from-sit-out, and permanent credential-revoking leave; corrected the hand-end synchronization bug that could silently cancel a player's return choice.
+- Prevented compact shown cards from overlapping on phones and marked the exact winning best five while unused cards recede.
+
 - Reconnected configured host relay sockets and authenticated Player, Tablet,
   TV, and Public Table projections on foreground/online return; retained an
   explicit **Reconnect to table** fallback without claiming iOS background
@@ -21,6 +26,8 @@ All notable project changes will be documented here. The format follows [Keep a 
 - Made the enlarged Airplane QR explicitly direct phones to the poker app's in-page scanner and reject the standalone Camera path that cannot interpret encrypted WebRTC offers.
 
 ### Changed
+
+- Bumped the visible Phase 1 build identity to `0.1.4-phase1` for the corrective UI, lifecycle, and QA release.
 
 - Applied the approved dark-first visual system across Player, Host, Tablet,
   TV, and Public Table surfaces: synchronized Dark Green, Black Gold, and Deep
@@ -39,6 +46,8 @@ All notable project changes will be documented here. The format follows [Keep a 
 - Added a CI-packaged `/normal/` field build whose deploy-time configuration requires one exact WSS service origin and narrows browser connections to that origin.
 
 ### Added
+
+- Added the repository-owned QA registry, feedback ledger, corrective specification, physical-device matrix, deterministic visual baselines, exact geometry checks, responsive/text-size checks, artifact performance budgets, and release-blocking Chromium/Mobile WebKit journeys.
 
 - Added four equal Tablet corner entries, orientation-correct upper controls, a
   large Next card action, short guarded Next hand slider, and centered secondary
