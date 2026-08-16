@@ -12,6 +12,7 @@ import {
 
 const relayPort = 18_787;
 const relayToken = "phase-1-test-operator-token";
+const appOrigin = `http://127.0.0.1:${process.env.HTML_POKER_TEST_PORT ?? "4173"}`;
 let relay: ChildProcess | undefined;
 
 test.describe.configure({ mode: "serial" });
@@ -68,7 +69,7 @@ async function preflightMethods(): Promise<string | undefined> {
       headers: {
         "access-control-request-headers": "authorization, content-type",
         "access-control-request-method": "POST",
-        origin: "http://127.0.0.1:4173",
+        origin: appOrigin,
       },
       host: "127.0.0.1",
       method: "OPTIONS",
@@ -154,7 +155,7 @@ test.beforeAll(async ({ browserName }, testInfo) => {
       env: {
         ...process.env,
         POKER_CONNECTION_ACCESS_TOKEN: relayToken,
-        POKER_CONNECTION_ALLOWED_ORIGIN: "http://127.0.0.1:4173",
+        POKER_CONNECTION_ALLOWED_ORIGIN: appOrigin,
         POKER_CONNECTION_HOST: "127.0.0.1",
         POKER_CONNECTION_PORT: String(relayPort),
       },
@@ -251,11 +252,9 @@ test("isolated devices prefer a direct WebRTC channel after private signaling", 
 
     await host.getByRole("button", { name: "Deal first hand" }).click();
     await expect(
-      alice.getByRole("heading", { name: "Your cards" }),
+      alice.getByRole("region", { name: "Your cards" }),
     ).toBeVisible();
-    await expect(
-      bob.getByRole("heading", { name: "Your cards" }),
-    ).toBeVisible();
+    await expect(bob.getByRole("region", { name: "Your cards" })).toBeVisible();
     await expect(
       alice.getByText("Direct WebRTC", { exact: true }),
     ).toBeVisible();
@@ -291,11 +290,9 @@ test("isolated devices fall back to the operator private relay when direct WebRT
 
     await host.getByRole("button", { name: "Deal first hand" }).click();
     await expect(
-      alice.getByRole("heading", { name: "Your cards" }),
+      alice.getByRole("region", { name: "Your cards" }),
     ).toBeVisible();
-    await expect(
-      bob.getByRole("heading", { name: "Your cards" }),
-    ).toBeVisible();
+    await expect(bob.getByRole("region", { name: "Your cards" })).toBeVisible();
     await expect(
       alice.getByText("Private relay", { exact: true }),
     ).toBeVisible();
@@ -305,6 +302,58 @@ test("isolated devices fall back to the operator private relay when direct WebRT
       hostContext.close(),
       aliceContext.close(),
       bobContext.close(),
+    ]);
+  }
+});
+
+test("a Tablet surface catches up automatically after its browser returns online", async ({
+  browser,
+}, testInfo) => {
+  skipInsecureLocalRelayOnMobileWebKit(testInfo);
+  const hostContext = await configuredContext(browser, true);
+  const aliceContext = await configuredContext(browser, true);
+  const bobContext = await configuredContext(browser, true);
+  const tabletContext = await configuredContext(browser, true);
+  try {
+    const host = await hostContext.newPage();
+    await createConfiguredTable(host);
+    await joinPlayer(host, aliceContext, "Alice");
+    await joinPlayer(host, bobContext, "Bob");
+    await host.getByRole("button", { name: "Deal first hand" }).click();
+    await host.getByRole("button", { name: /^Players/ }).click();
+    await host
+      .getByRole("button", { name: "Create Tablet Control link" })
+      .click();
+    const tabletInvitation = await host
+      .getByLabel("Tablet Control invitation link")
+      .inputValue();
+    const tablet = await tabletContext.newPage();
+    await tablet.goto(tabletInvitation);
+    await expect(tablet.locator("[data-table-corner]")).toHaveCount(4);
+    await expect(tablet.locator(".table-surface")).toHaveAttribute(
+      "data-theme",
+      "dark-green",
+    );
+
+    await tabletContext.setOffline(true);
+    await tablet.waitForTimeout(150);
+    await host.getByRole("button", { name: "Black Gold" }).click();
+    await tabletContext.setOffline(false);
+    await tablet.evaluate(() => {
+      globalThis.dispatchEvent(new Event("online"));
+      globalThis.dispatchEvent(new Event("pageshow"));
+    });
+
+    await expect(tablet.locator(".table-surface")).toHaveAttribute(
+      "data-theme",
+      "black-gold",
+    );
+  } finally {
+    await Promise.all([
+      hostContext.close(),
+      aliceContext.close(),
+      bobContext.close(),
+      tabletContext.close(),
     ]);
   }
 });

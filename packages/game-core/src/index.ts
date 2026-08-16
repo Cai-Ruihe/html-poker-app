@@ -5,6 +5,14 @@ import type {
   Rank,
   Street,
 } from "@html-poker/card-custody";
+import {
+  createDigitalAccounting,
+  type AccountingCommand,
+  type AccountingProjection,
+  type AccountingState,
+  type DigitalAccounting,
+  type LegalAction,
+} from "@html-poker/accounting";
 import type { AtomicTableStore, CommitResult } from "@html-poker/persistence";
 
 export interface SeatDefinition {
@@ -16,9 +24,73 @@ type HostActor = { readonly actorId: string; readonly kind: "trusted-host" };
 type SeatActor = { readonly kind: "seat"; readonly seatId: string };
 export type Actor = HostActor | SeatActor;
 
+export interface DealOnlyRulesProfile {
+  readonly id: "deal-only-v1";
+}
+
+export interface DigitalRulesProfile {
+  readonly bigBlind: number;
+  readonly housePolicyId: "p2-house-1";
+  readonly id: "nlhe-home-v1";
+  readonly smallBlind: number;
+  readonly startingStack: number;
+}
+
+export type RulesProfile = DealOnlyRulesProfile | DigitalRulesProfile;
+
+export type TableTheme = "dark-green" | "black-gold" | "deep-navy";
+
+export function isTableTheme(value: unknown): value is TableTheme {
+  return ["dark-green", "black-gold", "deep-navy"].includes(String(value));
+}
+
+export type BettingActionIntent =
+  | { readonly type: "all-in" | "call" | "check" | "fold" }
+  | { readonly to: number; readonly type: "bet-or-raise-to" };
+
+export function isBettingActionIntent(
+  value: unknown,
+): value is BettingActionIntent {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as { readonly to?: unknown; readonly type?: unknown };
+  return ["all-in", "call", "check", "fold"].includes(String(candidate.type))
+    ? true
+    : candidate.type === "bet-or-raise-to" &&
+        Number.isSafeInteger(candidate.to) &&
+        Number(candidate.to) > 0;
+}
+
+export function isRulesProfile(value: unknown): value is RulesProfile {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as {
+    readonly bigBlind?: unknown;
+    readonly housePolicyId?: unknown;
+    readonly id?: unknown;
+    readonly smallBlind?: unknown;
+    readonly startingStack?: unknown;
+  };
+  if (candidate.id === "deal-only-v1") {
+    return Object.keys(value).length === 1;
+  }
+  return (
+    candidate.id === "nlhe-home-v1" &&
+    candidate.housePolicyId === "p2-house-1" &&
+    typeof candidate.startingStack === "number" &&
+    Number.isSafeInteger(candidate.startingStack) &&
+    typeof candidate.smallBlind === "number" &&
+    typeof candidate.bigBlind === "number" &&
+    candidate.startingStack > candidate.bigBlind &&
+    Number.isSafeInteger(candidate.smallBlind) &&
+    candidate.smallBlind > 0 &&
+    Number.isSafeInteger(candidate.bigBlind) &&
+    candidate.bigBlind > candidate.smallBlind
+  );
+}
+
 export type CommandPayload =
   | {
       readonly dealerSeatId: string;
+      readonly rulesProfile?: RulesProfile;
       readonly seats: readonly SeatDefinition[];
       readonly type: "CreateTable";
     }
@@ -43,7 +115,14 @@ export type CommandPayload =
       readonly correctedEventIds: readonly string[];
       readonly reason: string;
       readonly type: "RecordCorrection";
-    };
+    }
+  | {
+      readonly action: BettingActionIntent;
+      readonly type: "SubmitBettingAction";
+    }
+  | { readonly type: "PrepareSettlement" }
+  | { readonly type: "ConfirmSettlement" }
+  | { readonly tableTheme: TableTheme; readonly type: "SetTableTheme" };
 
 export interface CommandEnvelope {
   readonly actor: Actor;
@@ -78,7 +157,17 @@ export type EventType =
   | "HandVoided"
   | "CorrectionRecorded"
   | "SeatRegistered"
-  | "SeatParticipationChanged";
+  | "SeatParticipationChanged"
+  | "AccountingSessionCreated"
+  | "AccountingHandStarted"
+  | "ForcedBetPosted"
+  | "BettingActionCommitted"
+  | "BettingRoundClosed"
+  | "AccountingStreetStarted"
+  | "ShowdownStarted"
+  | "SettlementProposed"
+  | "SettlementConfirmed"
+  | "TableThemeChanged";
 
 export interface EventSummary {
   readonly type: EventType;
@@ -111,7 +200,14 @@ export interface RejectedReceipt {
 
 export type CommandReceipt = AcceptedReceipt | RejectedReceipt;
 export type HandPhase =
-  "lobby" | "preflop" | "flop" | "turn" | "river" | "complete";
+  | "lobby"
+  | "preflop"
+  | "flop"
+  | "turn"
+  | "river"
+  | "showdown"
+  | "settlement-pending"
+  | "complete";
 
 export type SeatHandStatus =
   | "active"
@@ -133,6 +229,7 @@ interface AcceptedCommand {
 }
 
 export interface PersistedAuthorityState {
+  readonly accounting?: AccountingState;
   readonly acceptedCommands: Readonly<Record<string, AcceptedCommand>>;
   readonly authorityEpoch: string;
   readonly custody?: CustodyState;
@@ -141,8 +238,10 @@ export interface PersistedAuthorityState {
   readonly history: readonly TableEvent[];
   readonly phase: HandPhase;
   readonly revision: number;
+  readonly rulesProfile?: RulesProfile;
   readonly schemaVersion: 1;
   readonly seats: readonly SeatState[];
+  readonly tableTheme?: TableTheme;
   readonly tableId: string;
 }
 
@@ -164,6 +263,7 @@ export interface HandEvaluation {
 }
 
 export interface ProjectedSeat {
+  readonly connected?: boolean;
   readonly displayName: string;
   readonly evaluation?: HandEvaluation;
   readonly holeCards?: readonly Card[];
@@ -178,13 +278,16 @@ export interface ShowdownProjection {
 }
 
 export interface PublicProjection {
+  readonly accounting?: AccountingProjection;
   readonly board: readonly Card[];
   readonly dealerSeatId: string;
   readonly handId?: string;
   readonly phase: HandPhase;
   readonly revision: number;
+  readonly rulesProfileId: RulesProfile["id"];
   readonly seats: readonly ProjectedSeat[];
   readonly showdown?: ShowdownProjection;
+  readonly tableTheme: TableTheme;
   readonly tableId: string;
   readonly view: "public";
 }
@@ -192,6 +295,7 @@ export interface PublicProjection {
 export interface SeatProjection extends Omit<PublicProjection, "view"> {
   readonly self: {
     readonly holeCards: readonly Card[];
+    readonly legalActions?: readonly LegalAction[];
     readonly seatId: string;
     readonly status: SeatHandStatus;
   };
@@ -255,6 +359,12 @@ const categoryDetails: ReadonlyArray<
   ["straight-flush", "Straight flush"],
 ];
 
+const defaultTableTheme: TableTheme = "dark-green";
+
+function tableThemeOf(state: PersistedAuthorityState): TableTheme {
+  return isTableTheme(state.tableTheme) ? state.tableTheme : defaultTableTheme;
+}
+
 function isHost(actor: Actor): actor is HostActor {
   return actor.kind === "trusted-host";
 }
@@ -268,6 +378,40 @@ function expectedStreet(phase: HandPhase): Street | undefined {
   if (phase === "flop") return "turn";
   if (phase === "turn") return "river";
   return undefined;
+}
+
+const dealOnlyRulesProfile: DealOnlyRulesProfile = { id: "deal-only-v1" };
+
+function rulesProfileOf(state: PersistedAuthorityState): RulesProfile {
+  return state.rulesProfile ?? dealOnlyRulesProfile;
+}
+
+function accountingFor(profile: RulesProfile): DigitalAccounting | undefined {
+  if (profile.id !== "nlhe-home-v1") return undefined;
+  return createDigitalAccounting({
+    bigBlind: profile.bigBlind,
+    housePolicyId: profile.housePolicyId,
+    smallBlind: profile.smallBlind,
+  });
+}
+
+function toAccountingCommand(
+  action: BettingActionIntent,
+  seatId: string,
+): AccountingCommand | undefined {
+  if (!isBettingActionIntent(action)) return undefined;
+  switch (action.type) {
+    case "all-in":
+      return { seatId, type: "AllIn" };
+    case "bet-or-raise-to":
+      return { seatId, to: action.to, type: "BetOrRaiseTo" };
+    case "call":
+      return { seatId, type: "Call" };
+    case "check":
+      return { seatId, type: "Check" };
+    case "fold":
+      return { seatId, type: "Fold" };
+  }
 }
 
 function commandFingerprint(command: CommandEnvelope): string {
@@ -471,11 +615,23 @@ export function createTrustedHostAuthority(
     }
     if (!loaded) return { status: "empty" };
     const state = loaded.state;
+    const profile = rulesProfileOf(state);
+    let accountingMatchesProfile = false;
+    if (isRulesProfile(profile)) {
+      if (profile.id === "deal-only-v1") {
+        accountingMatchesProfile = state.accounting === undefined;
+      } else if (state.accounting) {
+        accountingMatchesProfile =
+          accountingFor(profile)?.validate(state.accounting) ?? false;
+      }
+    }
     const valid =
       loaded.revision === state.revision &&
       state.schemaVersion === 1 &&
       state.tableId === options.tableId &&
       state.authorityEpoch === options.authorityEpoch &&
+      (state.tableTheme === undefined || isTableTheme(state.tableTheme)) &&
+      accountingMatchesProfile &&
       state.seats.length >= 2 &&
       state.seats.length <= 10 &&
       state.history.every(
@@ -493,6 +649,12 @@ export function createTrustedHostAuthority(
     target: ProjectionTarget,
   ): PublicProjection | SeatProjection {
     if (!current) throw new Error("The table has not been created.");
+    const rulesProfile = rulesProfileOf(current);
+    const accounting = accountingFor(rulesProfile);
+    const accountingProjection =
+      accounting && current.accounting
+        ? accounting.project(current.accounting)
+        : undefined;
     const shownCards = current.custody
       ? options.custody.shownCards(current.custody)
       : {};
@@ -541,13 +703,16 @@ export function createTrustedHostAuthority(
       };
     }
     const publicProjection: PublicProjection = {
+      ...(accountingProjection ? { accounting: accountingProjection } : {}),
       board: [...board],
       dealerSeatId: current.dealerSeatId,
       ...(current.handId ? { handId: current.handId } : {}),
       phase: current.phase,
       revision: current.revision,
+      rulesProfileId: rulesProfile.id,
       seats: projectedSeats,
       ...(showdown ? { showdown } : {}),
+      tableTheme: tableThemeOf(current),
       tableId: options.tableId,
       view: "public",
     };
@@ -564,6 +729,14 @@ export function createTrustedHostAuthority(
       ...publicProjection,
       self: {
         holeCards: [...holeCards],
+        ...(accounting && current.accounting
+          ? {
+              legalActions: accounting.legalActions(
+                current.accounting,
+                target.seatId,
+              ),
+            }
+          : {}),
         seatId: target.seatId,
         status: seat.status,
       },
@@ -595,6 +768,9 @@ export function createTrustedHostAuthority(
       "MuckCards",
       "EndHand",
       "VoidHand",
+      "SubmitBettingAction",
+      "PrepareSettlement",
+      "ConfirmSettlement",
     ].includes(command.payload.type);
     if (isHandScoped && current?.handId !== command.handId) {
       return rejected("hand-mismatch", revision);
@@ -618,22 +794,66 @@ export function createTrustedHostAuthority(
         ) {
           return rejected("command-not-allowed", revision);
         }
+        const rulesProfileCandidate =
+          command.payload.rulesProfile ?? dealOnlyRulesProfile;
+        if (!isRulesProfile(rulesProfileCandidate)) {
+          return rejected("command-not-allowed", revision);
+        }
+        const rulesProfile = rulesProfileCandidate;
+        let accountingState: AccountingState | undefined;
+        if (rulesProfile.id === "nlhe-home-v1") {
+          if (
+            !Number.isSafeInteger(rulesProfile.startingStack) ||
+            rulesProfile.startingStack <= 0
+          ) {
+            return rejected("command-not-allowed", revision);
+          }
+          let accounting: DigitalAccounting;
+          try {
+            accounting = createDigitalAccounting({
+              bigBlind: rulesProfile.bigBlind,
+              housePolicyId: rulesProfile.housePolicyId,
+              smallBlind: rulesProfile.smallBlind,
+            });
+          } catch {
+            return rejected("command-not-allowed", revision);
+          }
+          const created = accounting.submit(undefined, {
+            seats: command.payload.seats.map((seat) => ({
+              seatId: seat.seatId,
+              stack: rulesProfile.startingStack,
+            })),
+            type: "CreateSession",
+          });
+          if (created.status === "rejected") {
+            return rejected("command-not-allowed", revision);
+          }
+          accountingState = created.state;
+        }
         next = {
+          ...(accountingState ? { accounting: accountingState } : {}),
           acceptedCommands: {},
           authorityEpoch: options.authorityEpoch,
           dealerSeatId: command.payload.dealerSeatId,
           history: [],
           phase: "lobby",
           revision: revision + 1,
+          rulesProfile,
           schemaVersion: 1,
           seats: command.payload.seats.map((seat) => ({
             ...seat,
             sittingOutNextHand: false,
             status: "waiting",
           })),
+          tableTheme: defaultTableTheme,
           tableId: options.tableId,
         };
-        events = [{ type: "TableCreated" }];
+        events = [
+          { type: "TableCreated" },
+          ...(accountingState
+            ? [{ type: "AccountingSessionCreated" as const }]
+            : []),
+        ];
         break;
       }
       case "StartHand": {
@@ -644,14 +864,42 @@ export function createTrustedHostAuthority(
         ) {
           return rejected("command-not-allowed", revision);
         }
+        const rulesProfile = rulesProfileOf(current);
+        if (
+          rulesProfile.id === "nlhe-home-v1" &&
+          current.phase === "complete"
+        ) {
+          return rejected("command-not-allowed", revision);
+        }
         const playingSeats = current.seats.filter(
           (seat) => !seat.sittingOutNextHand,
         );
         if (playingSeats.length < 2)
           return rejected("command-not-allowed", revision);
         const handId = options.handIdFactory();
+        const accounting = accountingFor(rulesProfile);
+        let accountingState = current.accounting;
+        let accountingEvents: readonly EventSummary[] = [];
+        if (accounting) {
+          if (!accountingState)
+            return rejected("command-not-allowed", revision);
+          const started = accounting.submit(accountingState, {
+            activeSeatIds: playingSeats.map((seat) => seat.seatId),
+            dealerSeatId: current.dealerSeatId,
+            handId,
+            type: "StartHand",
+          });
+          if (started.status === "rejected") {
+            return rejected("command-not-allowed", revision);
+          }
+          accountingState = started.state;
+          accountingEvents = started.events.map((event) => ({
+            type: event.type,
+          }));
+        }
         next = {
           ...current,
+          ...(accountingState ? { accounting: accountingState } : {}),
           custody: options.custody.startHand(
             playingSeats.map((seat) => seat.seatId),
           ),
@@ -663,12 +911,13 @@ export function createTrustedHostAuthority(
             status: seat.sittingOutNextHand ? "sitting-out" : "active",
           })),
         };
-        events = [{ type: "HandStarted" }];
+        events = [{ type: "HandStarted" }, ...accountingEvents];
         break;
       }
       case "RevealStreet": {
         if (
           !current?.custody ||
+          accountingFor(rulesProfileOf(current)) ||
           !isHost(command.actor) ||
           expectedStreet(current.phase) !== command.payload.street
         ) {
@@ -691,8 +940,200 @@ export function createTrustedHostAuthority(
         ];
         break;
       }
+      case "SubmitBettingAction": {
+        if (
+          !current?.custody ||
+          !current.accounting ||
+          command.actor.kind !== "seat"
+        ) {
+          return rejected("command-not-allowed", revision);
+        }
+        const accounting = accountingFor(rulesProfileOf(current));
+        if (!accounting) return rejected("command-not-allowed", revision);
+        const accountingCommand = toAccountingCommand(
+          command.payload.action,
+          command.actor.seatId,
+        );
+        if (!accountingCommand) {
+          return rejected("command-not-allowed", revision);
+        }
+        const transition = accounting.submit(
+          current.accounting,
+          accountingCommand,
+        );
+        if (transition.status === "rejected") {
+          return rejected("command-not-allowed", revision);
+        }
+        let custody = current.custody;
+        let phase = current.phase;
+        for (const event of transition.events) {
+          if (event.type === "AccountingStreetStarted") {
+            if (event.street !== "preflop") {
+              custody = options.custody.revealStreet(custody, event.street);
+              phase = event.street;
+            }
+          }
+        }
+        if (transition.state.phase === "showdown") phase = "showdown";
+        next = {
+          ...current,
+          accounting: transition.state,
+          custody,
+          phase,
+          revision: revision + 1,
+          seats: current.seats.map((seat) => {
+            const accountingSeat = transition.state.seats.find(
+              (candidate) => candidate.seatId === seat.seatId,
+            );
+            return accountingSeat?.status === "folded"
+              ? { ...seat, status: "folded" as const }
+              : seat;
+          }),
+        };
+        events = transition.events.map((event) => ({ type: event.type }));
+        break;
+      }
+      case "PrepareSettlement": {
+        if (
+          !current?.custody ||
+          !current.accounting ||
+          !isHost(command.actor)
+        ) {
+          return rejected("command-not-allowed", revision);
+        }
+        const accounting = accountingFor(rulesProfileOf(current));
+        if (!accounting) return rejected("command-not-allowed", revision);
+        const accountingProjection = accounting.project(current.accounting);
+        const pots = accountingProjection.pots;
+        if (accountingProjection.phase !== "showdown" || !pots?.length) {
+          return rejected("command-not-allowed", revision);
+        }
+        const settlingCustody = current.custody;
+        const settlingSeats = current.seats;
+        const board = options.custody.boardCards(settlingCustody);
+        const winnersByPot: string[][] = [];
+        const explanations: string[] = [];
+        const contestedWinnerIds = new Set<string>();
+        for (const pot of pots) {
+          if (pot.eligibleSeatIds.length === 1) {
+            const winnerSeatId = pot.eligibleSeatIds[0];
+            if (!winnerSeatId) return rejected("command-not-allowed", revision);
+            const displayName =
+              settlingSeats.find((seat) => seat.seatId === winnerSeatId)
+                ?.displayName ?? winnerSeatId;
+            winnersByPot.push([winnerSeatId]);
+            explanations.push(`${displayName} wins ${pot.amount} uncontested.`);
+            continue;
+          }
+          const evaluated = pot.eligibleSeatIds.flatMap((seatId) => {
+            const holeCards = options.custody.seatCards(
+              settlingCustody,
+              seatId,
+            );
+            const evaluation = holeCards
+              ? evaluateTexasHoldem([...board, ...holeCards])
+              : undefined;
+            return evaluation ? [{ evaluation, seatId }] : [];
+          });
+          if (evaluated.length !== pot.eligibleSeatIds.length) {
+            return rejected("command-not-allowed", revision);
+          }
+          let leadingScore: readonly number[] | undefined;
+          let winners: typeof evaluated = [];
+          for (const entry of evaluated) {
+            if (
+              !leadingScore ||
+              compareScores(entry.evaluation.score, leadingScore) > 0
+            ) {
+              leadingScore = entry.evaluation.score;
+              winners = [entry];
+            } else if (
+              compareScores(entry.evaluation.score, leadingScore) === 0
+            ) {
+              winners.push(entry);
+            }
+          }
+          if (winners.length === 0)
+            return rejected("command-not-allowed", revision);
+          const winnerSeatIds = winners.map((winner) => winner.seatId);
+          for (const seatId of winnerSeatIds) contestedWinnerIds.add(seatId);
+          const winnerNames = winnerSeatIds.map(
+            (seatId) =>
+              settlingSeats.find((seat) => seat.seatId === seatId)
+                ?.displayName ?? seatId,
+          );
+          winnersByPot.push(winnerSeatIds);
+          explanations.push(
+            winnerSeatIds.length === 1
+              ? `${winnerNames[0]} wins ${pot.amount} with ${winners[0]?.evaluation.label}.`
+              : `${winnerNames.join(" and ")} split ${pot.amount} with ${winners[0]?.evaluation.label}.`,
+          );
+        }
+        const transition = accounting.submit(current.accounting, {
+          explanations,
+          type: "ProposeSettlement",
+          winnersByPot,
+        });
+        if (transition.status === "rejected") {
+          return rejected("command-not-allowed", revision);
+        }
+        let custody = current.custody;
+        for (const seatId of contestedWinnerIds) {
+          custody = options.custody.showSeat(custody, seatId);
+        }
+        next = {
+          ...current,
+          accounting: transition.state,
+          custody,
+          phase: "settlement-pending",
+          revision: revision + 1,
+          seats: current.seats.map((seat) => {
+            const accountingSeat = transition.state.seats.find(
+              (candidate) => candidate.seatId === seat.seatId,
+            );
+            if (accountingSeat?.status === "folded") {
+              return { ...seat, status: "folded" as const };
+            }
+            if (contestedWinnerIds.has(seat.seatId)) {
+              return { ...seat, status: "shown" as const };
+            }
+            return { ...seat, status: "mucked" as const };
+          }),
+        };
+        events = transition.events.map((event) => ({ type: event.type }));
+        break;
+      }
+      case "ConfirmSettlement": {
+        if (
+          !current?.accounting ||
+          !isHost(command.actor) ||
+          current.phase !== "settlement-pending"
+        ) {
+          return rejected("command-not-allowed", revision);
+        }
+        const accounting = accountingFor(rulesProfileOf(current));
+        if (!accounting) return rejected("command-not-allowed", revision);
+        const transition = accounting.submit(current.accounting, {
+          type: "ConfirmSettlement",
+        });
+        if (transition.status === "rejected") {
+          return rejected("command-not-allowed", revision);
+        }
+        next = {
+          ...current,
+          accounting: transition.state,
+          phase: "complete",
+          revision: revision + 1,
+        };
+        events = transition.events.map((event) => ({ type: event.type }));
+        break;
+      }
       case "FoldCards": {
-        if (!current?.custody || command.actor.kind !== "seat")
+        if (
+          !current?.custody ||
+          accountingFor(rulesProfileOf(current)) ||
+          command.actor.kind !== "seat"
+        )
           return rejected("command-not-allowed", revision);
         const actingSeatId = command.actor.seatId;
         const seat = current.seats.find(
@@ -713,7 +1154,11 @@ export function createTrustedHostAuthority(
         break;
       }
       case "RetractFold": {
-        if (!current?.custody || command.actor.kind !== "seat")
+        if (
+          !current?.custody ||
+          accountingFor(rulesProfileOf(current)) ||
+          command.actor.kind !== "seat"
+        )
           return rejected("command-not-allowed", revision);
         const actingSeatId = command.actor.seatId;
         const seat = current.seats.find(
@@ -734,7 +1179,11 @@ export function createTrustedHostAuthority(
         break;
       }
       case "FinalizeFold": {
-        if (!current?.custody || command.actor.kind !== "seat")
+        if (
+          !current?.custody ||
+          accountingFor(rulesProfileOf(current)) ||
+          command.actor.kind !== "seat"
+        )
           return rejected("command-not-allowed", revision);
         const actingSeatId = command.actor.seatId;
         const seat = current.seats.find(
@@ -755,7 +1204,11 @@ export function createTrustedHostAuthority(
         break;
       }
       case "ShowCards": {
-        if (!current?.custody || command.actor.kind !== "seat") {
+        if (
+          !current?.custody ||
+          accountingFor(rulesProfileOf(current)) ||
+          command.actor.kind !== "seat"
+        ) {
           return rejected("command-not-allowed", revision);
         }
         const actingSeatId = command.actor.seatId;
@@ -782,7 +1235,11 @@ export function createTrustedHostAuthority(
         break;
       }
       case "MuckCards": {
-        if (!current?.custody || command.actor.kind !== "seat")
+        if (
+          !current?.custody ||
+          accountingFor(rulesProfileOf(current)) ||
+          command.actor.kind !== "seat"
+        )
           return rejected("command-not-allowed", revision);
         const actingSeatId = command.actor.seatId;
         const seat = current.seats.find(
@@ -810,6 +1267,7 @@ export function createTrustedHostAuthority(
       case "EndHand": {
         if (
           !current?.custody ||
+          accountingFor(rulesProfileOf(current)) ||
           !isHost(command.actor) ||
           current.phase === "complete"
         ) {
@@ -849,6 +1307,7 @@ export function createTrustedHostAuthority(
       case "VoidHand": {
         if (
           !current?.custody ||
+          accountingFor(rulesProfileOf(current)) ||
           !isHost(command.actor) ||
           current.phase === "complete" ||
           command.payload.reason.trim().length === 0
@@ -892,6 +1351,7 @@ export function createTrustedHostAuthority(
         const seatDefinition = command.payload.seat;
         if (
           !current ||
+          accountingFor(rulesProfileOf(current)) ||
           !isHost(command.actor) ||
           current.seats.length >= 10 ||
           seatDefinition.displayName.trim().length === 0 ||
@@ -945,6 +1405,22 @@ export function createTrustedHostAuthority(
           ),
         };
         events = [{ type: "SeatParticipationChanged" }];
+        break;
+      }
+      case "SetTableTheme": {
+        if (
+          !current ||
+          !isHost(command.actor) ||
+          !isTableTheme(command.payload.tableTheme)
+        ) {
+          return rejected("command-not-allowed", revision);
+        }
+        next = {
+          ...current,
+          revision: revision + 1,
+          tableTheme: command.payload.tableTheme,
+        };
+        events = [{ type: "TableThemeChanged" }];
         break;
       }
     }

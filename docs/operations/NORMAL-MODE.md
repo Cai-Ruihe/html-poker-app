@@ -68,7 +68,14 @@ Do not put an operator token, table ticket, invitation secret, or personal endpo
 6. Pair a TV/Public Table by opening **Pair this display** on the display, choosing the requested public role, then scanning its QR from the host. The display obtains nothing until that host scan completes.
 7. Use the off-table **Connection Service** card to renew a relay ticket before a long interruption or after a recovered host reports expiry. The operator token is not persisted. Ticket expiry stops a new relay registration; it does not forcibly close an already-open in-memory WebSocket.
 
-Keep the combined host page in the foreground on iPhone and iPad. Do not depend on separate host and player tabs: iOS may suspend the background document and therefore its host networking tasks.
+Use the combined host page rather than separate host and player tabs. iOS may
+suspend JavaScript and networking while Safari is backgrounded, so dependent
+screens cannot deal while the host is suspended. When the host returns, it
+re-registers configured relay routes and refreshes its embedded Player seat;
+Player, Tablet, TV, and Public Table clients also refresh their authenticated
+projection on `pageshow`, visible `visibilitychange`, or `online`. If automatic
+recovery fails, choose **Reconnect to table**. This is foreground recovery, not
+a claim that a web page keeps running in the iOS background.
 
 ## Recover after a Connection Service restart
 
@@ -86,8 +93,17 @@ If the host browser itself no longer recovers the table, create a new table. Nev
 
 **Fact:** Chromium and Mobile WebKit journeys demonstrate that one active host document can redeem an ordinary Player invitation, switch among Host Controls, My Hand, and Table View, keep private cards out of Table View, and recover the same host/player roles after reload.
 
+**Fact:** A Chromium isolated-device journey disconnects a Tablet's relay,
+changes authoritative table state while it is offline, returns it online, and
+verifies that foreground recovery catches up to the current projection without
+minting a new capability.
+
 **Fact:** The Connection Service deliberately keeps tickets, peer registrations, and display mailboxes in process memory. Restarting it drops them; it is not a durable session database.
 
 **Inference:** A deployer-owned service with TLS, an exact origin policy, and ingress controls is a more reviewable boundary than a hard-coded shared public relay. It does not make the host trustworthy or erase network metadata.
 
-**Unknown / release gate:** Already-connected clients surviving a service restart, NAT traversal beyond local candidates, TURN deployment, relay failure under load, physical iPhone/iPad backgrounding, and regional/China reachability have not been validated by the local automated suite. Do not advertise them as supported.
+**Unknown / release gate:** Actual iPhone/iPad suspension duration and process
+discard, already-connected clients surviving a service restart, NAT traversal
+beyond local candidates, TURN deployment, relay failure under load, and
+regional/China reachability have not been validated by the local automated
+suite. Do not advertise them as supported.

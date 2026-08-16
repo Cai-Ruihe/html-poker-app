@@ -1,6 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const isCI = Boolean(process.env.CI);
+const testPort = Number(process.env.HTML_POKER_TEST_PORT ?? 4173);
+const baseURL = `http://127.0.0.1:${testPort}`;
 
 export default defineConfig({
   expect: { timeout: 5_000 },
@@ -10,18 +12,17 @@ export default defineConfig({
   testDir: "tests",
   testMatch: ["journey/**/*.spec.ts", "security/**/*.spec.ts"],
   use: {
-    baseURL: "http://127.0.0.1:4173",
+    baseURL,
     screenshot: "only-on-failure",
     trace: "retain-on-failure",
   },
   webServer: {
-    command:
-      "pnpm build && pnpm --filter @html-poker/web preview --host 127.0.0.1 --port 4173",
+    command: `pnpm build && pnpm --filter @html-poker/web preview --host 127.0.0.1 --port ${testPort}`,
     reuseExistingServer: !process.env.CI,
     stderr: "pipe",
     stdout: "pipe",
     timeout: 30_000,
-    url: "http://127.0.0.1:4173",
+    url: baseURL,
   },
   // Serialize hardware-sensitive WebRTC/QR journeys and revision assertions.
   // The suite is small enough that deterministic scheduling is preferable to

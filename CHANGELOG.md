@@ -6,6 +6,12 @@ All notable project changes will be documented here. The format follows [Keep a 
 
 ### Fixed
 
+- Reconnected configured host relay sockets and authenticated Player, Tablet,
+  TV, and Public Table projections on foreground/online return; retained an
+  explicit **Reconnect to table** fallback without claiming iOS background
+  execution.
+- Removed Host toolbar and administration-drawer overlaps that blocked dealer
+  and close actions on iPhone-sized WebKit viewports.
 - Replaced the generic Normal Mode route failure with restart-aware instructions, and added a regression that refreshes the host's relay ticket and joins through the regenerated invitation after an in-memory Connection Service restart.
 - Replaced the iPhone-only slide-to-peek gesture—which could accidentally publish a hand—with a one-tap **Reveal my cards privately** control, automatic cover on visibility loss, and a separate **Show cards to table** action.
 - Serialized client recovery commits so overlapping table updates and `pagehide` cannot race into `Client recovery commit failed: revision-conflict`.
@@ -16,6 +22,15 @@ All notable project changes will be documented here. The format follows [Keep a 
 
 ### Changed
 
+- Applied the approved dark-first visual system across Player, Host, Tablet,
+  TV, and Public Table surfaces: synchronized Dark Green, Black Gold, and Deep
+  Navy themes; dimensional old-school cards; quiet seat-state markers; and
+  compact in-header Host tools.
+- Kept the incomplete Digital Chips tracer behind the explicit
+  `?experimental=digital-chips` development route so the default party path
+  remains Phase 1 physical chips.
+- Bumped the visible Phase 1 build identity to `0.1.3-phase1` and protocol 2 for
+  synchronized theme state and incompatible-invitation rejection.
 - Simplified the player decision surface to **Fold** or **Show cards to table**. The legacy Muck event remains replayable for older encrypted recovery state but is no longer emitted by current clients.
 - Made the same-device host path explicit with **Join my own table on this device** and labeled ordinary player invitations for other devices only.
 - Bumped the visible Phase 1 build identity to `0.1.2-phase1` so older table invitations fail compatibility checks instead of silently mixing the two player-decision interfaces.
@@ -25,7 +40,14 @@ All notable project changes will be documented here. The format follows [Keep a 
 
 ### Added
 
+- Added four equal Tablet corner entries, orientation-correct upper controls, a
+  large Next card action, short guarded Next hand slider, and centered secondary
+  controls that auto-dismiss after acknowledged play actions.
+- Added repeatable cross-mode render capture hooks and Chromium/Mobile WebKit
+  journeys for theme synchronization, dimensional cards, Tablet equality,
+  touch-target access, and foreground Tablet catch-up.
 - Added a single-page host-device flow: **Join my own table on this device** redeems an ordinary Player credential, then **Host Controls**, **My Hand**, and **Table View** switch among authority, private, and public projections without relying on a background iOS tab.
+- Began Phase 2 with an optional Digital Chips profile: a deep accounting module, exact seat-private actions, betting-driven street progression, derived settlement proposals, host-confirmed balance updates, encrypted recovery, and a two-player browser tracer. This is development scope, not a Phase 2 release claim.
 - Complete Phase 1 trusted-host dealer slice: two-to-ten seat capabilities, one-use/revocable invitations, Player/TV/Public Table/Tablet projections, hand lifecycle controls, seat replacement/reorder/dealer relocation, void/correction records, encrypted recovery, and redacted diagnostics.
 - Normal Mode route implementation with local browser channel, direct WebRTC after private signaling, card-blind private relay fallback, table-scoped four-hour relay tickets, host-side ticket renewal, and host-approved reverse display pairing.
 - Standalone Airplane Mode artifact with fully bundled assets, restrictive offline CSP, two-way QR offer/answer pairing, local `iceServers: []` WebRTC, native saved-image detection plus bundled ZXing/jsQR fallbacks, and artifact request regression coverage.

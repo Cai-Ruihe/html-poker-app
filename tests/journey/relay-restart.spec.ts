@@ -4,6 +4,7 @@ import { expect, test, type Browser, type TestInfo } from "@playwright/test";
 
 const relayPort = 18_788;
 const relayToken = "phase-1-restart-probe-token";
+const appOrigin = `http://127.0.0.1:${process.env.HTML_POKER_TEST_PORT ?? "4173"}`;
 let relay: ChildProcess | undefined;
 
 test.use({ screenshot: "off", trace: "off", video: "off" });
@@ -38,7 +39,7 @@ async function startRelay(): Promise<void> {
       env: {
         ...process.env,
         POKER_CONNECTION_ACCESS_TOKEN: relayToken,
-        POKER_CONNECTION_ALLOWED_ORIGIN: "http://127.0.0.1:4173",
+        POKER_CONNECTION_ALLOWED_ORIGIN: appOrigin,
         POKER_CONNECTION_HOST: "127.0.0.1",
         POKER_CONNECTION_PORT: String(relayPort),
       },

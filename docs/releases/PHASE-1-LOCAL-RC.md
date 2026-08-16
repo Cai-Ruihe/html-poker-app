@@ -4,7 +4,14 @@
 
 ## Candidate scope
 
-This candidate implements the Phase 1 trusted-host digital-dealer slice: physical chips only; two to ten player seats; card/privacy projections; QR/link capabilities; Normal direct/relay connectivity; reverse public-display pairing; standalone Airplane pairing; local encrypted recovery; diagnostics; and off-table administration. It excludes digital accounting, real money, remote-first human play, automatic host migration, skins, and AI seats.
+This candidate implements the Phase 1 trusted-host digital-dealer slice:
+physical chips only; two to ten player seats; card/privacy projections; QR/link
+capabilities; Normal direct/relay connectivity; reverse public-display pairing;
+standalone Airplane pairing; local encrypted recovery; diagnostics; and
+off-table administration. The repository contains a separately labelled,
+explicit-query Digital Chips development tracer, but it is not part of the
+Phase 1 party path or release claim. Real money, remote-first human play,
+automatic host migration, skins, and AI seats remain excluded.
 
 ## Local evidence to run and record
 
@@ -34,7 +41,7 @@ The manifest contains the source revision, package-manager/Node metadata, lockfi
 | Physical device/browser matrix | Open | Local browser emulation and a synthetic camera QR stream are not actual iOS/iPadOS, Android, TV, camera, file-opening, backgrounding, or storage evidence. Headless Mobile WebKit and GitHub-hosted Linux Chromium expose no usable local ICE interface, so real direct-pairing remains a local Chromium test plus a physical-device gate rather than a fabricated hosted-CI pass. |
 | WAN-removed Airplane matrix | Open | A desktop `file://` journey does not prove hotspot behavior, client-isolation detection, or two-to-ten real devices plus public display. |
 | Normal network/TURN/reconnect matrix | Open | Direct local candidates and local relay fallback do not establish NAT, TURN, network switch, long suspend, service restart, or throughput behavior. |
-| Initial-load performance | Open | The current Normal JavaScript bundle is about 962 KB before compression (about 280 KB gzip) and emits the bundler's large-chunk warning. The increase supplies the independent camera-frame decoder used by the QR robustness fallback. No device/network performance budget has been measured, so it is not a supported performance claim. |
+| Initial-load performance | Open | The current Normal JavaScript bundle is about 1,007 KB before compression (about 290 KB gzip) and emits the bundler's large-chunk warning. The increase supplies the independent camera-frame decoder used by the QR robustness fallback. No device/network performance budget has been measured, so it is not a supported performance claim. |
 | China readiness | Open | No dated representative mainland network measurements exist. |
 | Independent Card Privacy Red Team | Open | Automated regressions exist; an independent frozen-candidate review does not. |
 | Supply-chain release approval | Open | Audit/licence commands are local evidence only; no release signing identity, SBOM/provenance attestation, or owner approval is configured. |

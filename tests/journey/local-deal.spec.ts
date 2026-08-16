@@ -1,6 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 
+const appOrigin = `http://127.0.0.1:${process.env.HTML_POKER_TEST_PORT ?? "4173"}`;
+
 async function joinPlayer(
   host: Page,
   context: BrowserContext,
@@ -35,10 +37,8 @@ async function createTableWithTwoPlayers(
   await expect(
     host.getByText("Pre-flop", { exact: true }).first(),
   ).toBeVisible();
-  await expect(
-    alice.getByRole("heading", { name: "Your cards" }),
-  ).toBeVisible();
-  await expect(bob.getByRole("heading", { name: "Your cards" })).toBeVisible();
+  await expect(alice.getByRole("region", { name: "Your cards" })).toBeVisible();
+  await expect(bob.getByRole("region", { name: "Your cards" })).toBeVisible();
   return { alice, bob };
 }
 
@@ -79,7 +79,7 @@ test("the host device can play and switch to a private hand or public table view
   await expect(bob.locator("[data-private-card]")).toHaveCount(2);
 
   await host.getByRole("button", { name: "My Hand" }).click();
-  await expect(host.getByRole("heading", { name: "Your cards" })).toBeVisible();
+  await expect(host.getByRole("region", { name: "Your cards" })).toBeVisible();
   await expect(host.locator("[data-private-card]")).toHaveCount(2);
   const cardsBeforeRefresh = await host
     .locator("[data-private-card]")
@@ -87,8 +87,14 @@ test("the host device can play and switch to a private hand or public table view
       cards.map((card) => card.getAttribute("data-card")),
     );
 
+  await host.evaluate(() => globalThis.dispatchEvent(new Event("pagehide")));
+  await host.evaluate(() => globalThis.dispatchEvent(new Event("pageshow")));
+  await expect(host.getByRole("region", { name: "Your cards" })).toBeVisible();
+  await expect(host.getByText(/My Hand did not reconnect/u)).toHaveCount(0);
+
   await host.getByRole("button", { name: "Table View" }).click();
-  await expect(host.getByLabel("Dealer controls")).toBeVisible();
+  await expect(host.getByLabel("Dealer controls")).toHaveCount(0);
+  await expect(host.locator("[data-table-corner]")).toHaveCount(4);
   await expect(host.locator("[data-private-card]")).toHaveCount(0);
 
   await host.reload();
@@ -119,14 +125,14 @@ test("host and two player devices complete a private deal-only hand without exte
   context.on("page", (page) => {
     page.on("request", (request) => {
       const requestUrl = new URL(request.url());
-      if (requestUrl.origin !== "http://127.0.0.1:4173") {
+      if (requestUrl.origin !== appOrigin) {
         unexpectedRequests.push(request.url());
       }
     });
   });
   host.on("request", (request) => {
     const requestUrl = new URL(request.url());
-    if (requestUrl.origin !== "http://127.0.0.1:4173") {
+    if (requestUrl.origin !== appOrigin) {
       unexpectedRequests.push(request.url());
     }
   });
@@ -179,6 +185,83 @@ test("host and two player devices complete a private deal-only hand without exte
   expect(hostAccessibility.violations).toEqual([]);
   expect(playerAccessibility.violations).toEqual([]);
   expect(unexpectedRequests).toEqual([]);
+});
+
+test("two players complete a digital-chip hand only after host settlement confirmation", async ({
+  context,
+  page: host,
+}) => {
+  await host.goto("/?experimental=digital-chips");
+  await host.getByLabel("Digital chips").check();
+  await host.getByRole("button", { name: "Create table" }).click();
+  await expect(
+    host.getByRole("heading", { name: "Waiting for players" }),
+  ).toBeVisible();
+
+  const alice = await joinPlayer(host, context, "Alice");
+  const bob = await joinPlayer(host, context, "Bob");
+  await host.getByRole("button", { name: "Deal first hand" }).click();
+
+  await expect(host.getByText("Pot 3", { exact: true })).toBeVisible();
+  await host.getByRole("button", { name: /^Players/ }).click();
+  await expect(host.getByText("New seats are paused")).toBeVisible();
+  await expect(host.getByText(/does not admit late seats/u)).toBeVisible();
+  await expect(
+    host.getByRole("button", { name: "Open join window" }),
+  ).toHaveCount(0);
+  await host
+    .getByRole("button", { name: "Close player administration" })
+    .click();
+  await alice.getByRole("button", { name: "Call 1" }).click();
+  await bob.getByRole("button", { name: "Check" }).click();
+  await expect(host.locator("[data-board-card]")).toHaveCount(3);
+  await expect(host.getByText("Pot 4", { exact: true })).toBeVisible();
+
+  await host.reload();
+  await expect(host.locator("[data-board-card]")).toHaveCount(3);
+  await expect(host.getByText("Pot 4", { exact: true })).toBeVisible();
+
+  for (const player of [bob, alice, bob, alice, bob, alice]) {
+    await player.getByRole("button", { name: "Check" }).click();
+  }
+  await expect(host.locator("[data-board-card]")).toHaveCount(5);
+  await expect(
+    host.getByText("Showdown", { exact: true }).first(),
+  ).toBeVisible();
+
+  await host.getByRole("button", { name: "Review settlement" }).click();
+  await expect(
+    host.getByText("Settlement review", { exact: true }).first(),
+  ).toBeVisible();
+  await expect(host.getByText("Total pot 4", { exact: true })).toBeVisible();
+  await expect(
+    host.getByText("Stacks update only after confirmation."),
+  ).toBeVisible();
+
+  const stacksBefore = await host
+    .locator("[data-stack]")
+    .evaluateAll((nodes) =>
+      nodes.map((node) => Number(node.getAttribute("data-stack"))),
+    );
+  expect(stacksBefore).toEqual([98, 98]);
+
+  await host.getByRole("button", { name: "Confirm settlement" }).click();
+  await expect(
+    host.getByText("Hand complete", { exact: true }).first(),
+  ).toBeVisible();
+  await expect(
+    host.getByText("This Phase 2 tracer ends after one hand."),
+  ).toBeVisible();
+  await expect(
+    host.getByRole("button", { name: "Deal next hand" }),
+  ).toHaveCount(0);
+  const stacksAfter = await host
+    .locator("[data-stack]")
+    .evaluateAll((nodes) =>
+      nodes.map((node) => Number(node.getAttribute("data-stack"))),
+    );
+  expect(stacksAfter.reduce((total, stack) => total + stack, 0)).toBe(200);
+  expect(stacksAfter).not.toEqual(stacksBefore);
 });
 
 test("rapid repeated dealer input commits only one transition", async ({
@@ -242,9 +325,7 @@ test("host and player refresh recover the same active hand and private seat", as
   await expect(host.getByText("r3", { exact: true })).toBeVisible();
 
   await alice.reload();
-  await expect(
-    alice.getByRole("heading", { name: "Your cards" }),
-  ).toBeVisible();
+  await expect(alice.getByRole("region", { name: "Your cards" })).toBeVisible();
   await expect(alice.locator("[data-private-card]")).toHaveCount(2);
   await expect
     .poll(() =>
@@ -376,7 +457,7 @@ test("a one-use player replacement preserves the seat and revokes the old device
     .fill("Ignored replacement label");
   await replacement.getByRole("button", { name: "Join table" }).click();
   await expect(
-    replacement.getByRole("heading", { name: "Your cards" }),
+    replacement.getByRole("region", { name: "Your cards" }),
   ).toBeVisible();
   await expect(replacement.locator("[data-private-card]")).toHaveCount(2);
 
@@ -456,9 +537,13 @@ test("Public Table, TV, and Tablet Control links remain role-safe", async ({
   await expect(tablet.locator("[data-private-card]")).toHaveCount(0);
   await expect(publicTable.getByLabel("Dealer controls")).toHaveCount(0);
   await expect(tv.getByLabel("Dealer controls")).toHaveCount(0);
-  await expect(tablet.getByLabel("Dealer controls")).toBeVisible();
+  await expect(tablet.getByLabel("Dealer controls")).toHaveCount(0);
+  await expect(tablet.locator("[data-table-corner]")).toHaveCount(4);
 
-  await tablet.getByRole("button", { name: "Deal the flop" }).click();
+  await tablet
+    .getByRole("button", { name: "Open table controls from lower right" })
+    .click();
+  await tablet.getByRole("button", { name: "Next card" }).click();
   await expect(host.getByText("Flop", { exact: true }).first()).toBeVisible();
   await expect(publicTable.locator("[data-board-card]")).toHaveCount(3);
   await expect(tv.locator("[data-board-card]")).toHaveCount(3);

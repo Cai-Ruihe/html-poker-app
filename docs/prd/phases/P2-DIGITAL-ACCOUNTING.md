@@ -1,13 +1,14 @@
 ---
 id: PRD-P2
 kind: phase
-status: deferred
-last_reconciled: 2026-08-14
+status: current
+last_reconciled: 2026-08-15
 decision_ids:
   - SCOPE-PLAY-MONEY
   - ARCH-SHARED-CORE
   - ACCOUNTING-PHASE-2
   - PHASE2-NLHE-HOME-SESSION
+  - PHASE2-HOUSE-POLICY-V1
   - REMOTE-PUBLIC-TABLE-P2
   - REMOTE-HUMAN-PLAY
   - AI-PLAYER-PHASE-3
@@ -52,7 +53,7 @@ At table creation, the host selects either the Phase 1 Deal-Only Profile or the 
 - `PHASE2-NLHE-HOME-SESSION` is the initial profile; other betting structures and tournaments remain deferred behind Rules Profile seams.
 - Accounting is event-derived. Corrections append adjustments/approvals; they never overwrite earlier actions.
 - Street advance in digital mode requires `BettingRoundClosed`; Phase 1 continues to use an explicit dealer command.
-- Settlement and chip mutation are separate states. Exact confirmation authority, odd-chip policy, straddles, antes, and missed-blind policy remain Phase 2 specification decisions.
+- Settlement and chip mutation are separate states. `p2-house-1` requires explicit host confirmation, allocates odd chips clockwise beginning left of the dealer, uses blinds without antes/straddles, permits top-ups only between hands, and makes a returning player wait for the big blind.
 - The ledger contains chips only—never currency, payment, cash-out, rake, or transferable value.
 - Remote Public Table View is read-only and privacy-filtered. Supporting fully remote human play requires new target-user, latency, moderation, and recovery research.
 
@@ -71,4 +72,14 @@ Money, payment, rake, clubs, public matchmaking, tournament clocks/elimination/r
 
 ## Further Notes
 
-This phase is intentionally not fully specified on house-policy timing yet. Those decisions should be researched and admitted when Phase 2 begins; they must not be guessed during Phase 1 implementation.
+Phase 2 is active as development work as of 2026-08-15. Its selector is absent
+from the default Phase 1 party path and is exposed only by the explicit
+`?experimental=digital-chips` query. The first implemented tracer covers one
+heads-up Digital Chips hand through settlement confirmation and deliberately
+rejects late new seats or a second hand. Multi-hand sessions,
+multiway/short-all-in hardening, top-up/re-entry, corrections,
+histories/exports, Remote Public Table qualification, recovery fault coverage,
+and release evidence remain incomplete. It is not party-ready and is not a
+Phase 2 release candidate. See the [Phase 2 accounting
+foundation](../../research/PHASE-2-ACCOUNTING-FOUNDATION.md) and [current
+architecture](../../architecture/PHASE-2-ACCOUNTING.md).

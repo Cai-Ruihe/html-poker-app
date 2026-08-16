@@ -37,6 +37,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {
+    "@html-poker/accounting": "workspace:*",
     "@html-poker/card-custody": "workspace:*",
     "@html-poker/connection-service": "workspace:*",
     "@html-poker/diagnostics": "workspace:*",

@@ -13,11 +13,16 @@ decision_ids:
   - DEALER-RELOCATION
   - FOLD-UNDO
   - FOLD-SIT-OUT
+  - RECOVERY-FOREGROUND-AUTO
   - SHOW-IRREVERSIBLE
   - HAND-END-EXPLICIT
   - UI-MINIMAL-RUNNING
   - UI-AESTHETIC
   - UI-BUTTON-ARRANGEMENT
+  - UI-THEME-SYNC
+  - UI-CARD-RENDERING
+  - UI-QUIET-STATUS
+  - UI-DARK-FIRST
   - REMOTE-PUBLIC-TABLE-P2
   - TEST-TV-BROWSERS
 router: ../manifest.yaml
@@ -53,7 +58,7 @@ Each mode has its own renderer over a shared semantic design system. Renderers c
 
 ## User Stories
 
-1. As a player, I want to cover and drag to peek without lifting my phone for everyone to see.
+1. As a player, I want a deliberate private reveal that covers itself whenever the page is hidden.
 2. As a player, I want a simple fold gesture and a visible five-second undo when still safe.
 3. As a player, I want full Show to be deliberate and irreversible, while local flip-down tidies my phone.
 4. As a group, we want shown cards to remain on the Public Table until next hand.
@@ -71,9 +76,14 @@ Each mode has its own renderer over a shared semantic design system. Renderers c
 
 - A Public Table can visually switch to Tablet Mode only when the device already holds/redeems Table-Control.
 - A Trusted Host device keeps one active document and offers Host Controls, My Hand only after an ordinary Player credential is present, and Table View only after the table starts. Each view renders its own projection; opening a background host/player tab is not the primary interaction.
+- Host, Player, Tablet, TV, and Public Table runtimes attempt authenticated projection/relay recovery when the browser returns on `pageshow`, visible `visibilitychange`, or `online`. iOS may suspend JavaScript while backgrounded; dependent screens wait, then catch up from the host projection after foreground return. A visible `Reconnect to table` action remains available when automatic recovery fails.
 - An unpaired Normal Mode TV/Public display may render its ephemeral reverse-pairing QR and plain-language status; it receives no table projection until an authorized scanner completes pairing.
-- The Player cover-and-drag interaction peeks progressively; deliberately dragging through the full-show threshold commits irreversible Show. Afterward, only that player's local screen may flip the cards face-down again.
-- Exact button placement and press-hold versus Dealer double-action remain prototype decisions; the outcome—guarded explicit End Hand—is locked.
+- Player private reveal and irreversible public Show remain separate actions. Hiding cards locally or backgrounding the page never reverses a public Show.
+- The Tablet quiet surface gives all four physical sides equal, orientation-correct corner entry points. Its quick panel contains a large Next card action beside a short horizontal Next hand slider and closes after an acknowledged action.
+- Theme selection, player management, recovery, diagnostics, and other exceptional controls use the centered second layer rather than the Tablet quick panel.
+- Dark Green, Black Gold, and Deep Navy share identical geometry and synchronize to every role-filtered projection. Device-local accessibility overrides remain local.
+- Cards use the built-in warm-ivory old-school renderer with dimensional shading. Future skins may replace assets only as complete validated packs; Airplane Mode always retains the built-in fallback.
+- Quiet Tablet, TV, and Public Table surfaces omit the application header, Board label/counter, table oval, permanent player tiles, and dealer toolbar. They retain low-key seat state plus distinct D, SB, and BB tokens.
 - Fold is provisional until its safe boundary. Show has no secrecy undo.
 - Visual seat movement never changes logical action/dealer/blind order.
 - The default style uses original assets and interaction principles inspired by Bold Poker, not copied layouts/artwork.
@@ -82,7 +92,7 @@ Each mode has its own renderer over a shared semantic design system. Renderers c
 
 ## Testing Decisions
 
-Use rendered interaction tests at each mode's public interface plus browser/device tests. Cover common one-hand flow, same-device host-player join and view switching, private-card DOM isolation, refresh recovery, accidental gesture, multi-touch/scroll conflict, background/resume, tablet orientation, TV distance/input, ten seats, long names, controller revoke, capability denial, VoiceOver/screen readers, headphones, reduced motion, contrast, text scaling, and skin fallback. Measure button count/attention in prototypes before locking layout.
+Use rendered interaction tests at each mode's public interface plus browser/device tests. Cover common one-hand flow, synchronized theme recovery, same-device host-player join and view switching, private-card DOM isolation, refresh recovery, explicit reconnect, accidental gesture, multi-touch/scroll conflict, all four Tablet control orientations, TV distance/input, ten seats, long names, controller revoke, capability denial, VoiceOver/screen readers, headphones, reduced motion, contrast, text scaling, and offline card fallback.
 
 ## Out of Scope
 

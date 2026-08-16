@@ -12,6 +12,7 @@ import { DecodeHintType } from "@zxing/library";
 import jsQR from "jsqr";
 
 import type { CapabilityRole } from "@html-poker/identity-capabilities";
+import type { TableTheme } from "@html-poker/game-core";
 import { TableSurface } from "@html-poker/presentation";
 
 import {
@@ -31,6 +32,7 @@ import {
   type ClientRuntimeSnapshot,
   type AirplaneOfferDetails,
   type HostRuntimeSnapshot,
+  type HostRuntimeCreateOptions,
   type NormalDisplayPairingRequest,
   type PlayerAction,
 } from "./runtime";
@@ -125,7 +127,7 @@ function BrandBar({ aside }: { readonly aside?: ReactNode }) {
         </span>
         <div>
           <strong>HTML Poker</strong>
-          <span>Digital dealer · physical chips</span>
+          <span>Private cards · chips your choice</span>
         </div>
       </div>
       {aside}
@@ -138,22 +140,50 @@ function Home({
   onJoinAirplane,
   onPairDisplay,
 }: {
-  readonly onCreate: (operatorToken?: string) => Promise<void>;
+  readonly onCreate: (options: HostRuntimeCreateOptions) => Promise<void>;
   readonly onJoinAirplane?: () => void;
   readonly onPairDisplay?: () => void;
 }) {
+  const digitalChipsEnabled =
+    new URLSearchParams(globalThis.location.search).get("experimental") ===
+    "digital-chips";
   const checks = useMemo(capabilityChecks, []);
   const ready = checks.every((check) => check.available);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const [operatorToken, setOperatorToken] = useState("");
+  const [chipMode, setChipMode] = useState<"digital" | "physical">("physical");
+  const [startingStack, setStartingStack] = useState(100);
+  const [smallBlind, setSmallBlind] = useState(1);
+  const [bigBlind, setBigBlind] = useState(2);
   const relayRequiresOperatorToken = normalRelayRequiresOperatorToken();
+  const digitalRulesValid =
+    Number.isSafeInteger(startingStack) &&
+    Number.isSafeInteger(smallBlind) &&
+    Number.isSafeInteger(bigBlind) &&
+    smallBlind > 0 &&
+    bigBlind > smallBlind &&
+    startingStack > bigBlind;
 
   async function create() {
     setBusy(true);
     setError(undefined);
     try {
-      await onCreate(operatorToken);
+      await onCreate({
+        ...(operatorToken.trim()
+          ? { operatorToken: operatorToken.trim() }
+          : {}),
+        rulesProfile:
+          chipMode === "physical"
+            ? { id: "deal-only-v1" }
+            : {
+                bigBlind,
+                housePolicyId: "p2-house-1",
+                id: "nlhe-home-v1",
+                smallBlind,
+                startingStack,
+              },
+      });
     } catch (caught) {
       setError(
         caught instanceof Error
@@ -173,10 +203,10 @@ function Home({
       <div className="home-layout">
         <section className="home-intro" aria-labelledby="home-title">
           <p className="section-label">For the table already in front of you</p>
-          <h1 id="home-title">Deal cards. Keep poker physical.</h1>
+          <h1 id="home-title">Deal cards. Keep poker yours.</h1>
           <p className="home-intro__copy">
-            Phones hold private cards. A tablet or TV shows the board. Bets,
-            chips, and conversation stay on the table.
+            Phones hold private cards. A tablet or TV shows the board. Chips and
+            conversation stay on the physical table.
           </p>
           <div className="deck-statement" aria-hidden="true">
             <span>52</span>
@@ -210,6 +240,89 @@ function Home({
               preview in a current browser.
             </p>
           ) : null}
+          {digitalChipsEnabled ? (
+            <fieldset className="chip-mode-picker">
+              <legend>Experimental chip mode</legend>
+              <label>
+                <input
+                  checked={chipMode === "physical"}
+                  name="chip-mode"
+                  onChange={() => setChipMode("physical")}
+                  type="radio"
+                />
+                <span>
+                  <strong>Physical chips</strong>
+                  <small>
+                    Deal-only mode. Players move chips on the table.
+                  </small>
+                </span>
+              </label>
+              <label>
+                <input
+                  checked={chipMode === "digital"}
+                  name="chip-mode"
+                  onChange={() => setChipMode("digital")}
+                  type="radio"
+                />
+                <span>
+                  <strong>Digital chips · development tracer</strong>
+                  <small>Two players and one hand only; not party-ready.</small>
+                </span>
+              </label>
+            </fieldset>
+          ) : null}
+          {digitalChipsEnabled && chipMode === "digital" ? (
+            <div
+              className="digital-chip-settings"
+              aria-label="Digital chip settings"
+            >
+              <label>
+                <span>Starting stack</span>
+                <input
+                  inputMode="numeric"
+                  min={1}
+                  onChange={(event) =>
+                    setStartingStack(event.currentTarget.valueAsNumber)
+                  }
+                  step="1"
+                  type="number"
+                  value={startingStack}
+                />
+              </label>
+              <label>
+                <span>Small blind</span>
+                <input
+                  inputMode="numeric"
+                  min={1}
+                  onChange={(event) =>
+                    setSmallBlind(event.currentTarget.valueAsNumber)
+                  }
+                  step="1"
+                  type="number"
+                  value={smallBlind}
+                />
+              </label>
+              <label>
+                <span>Big blind</span>
+                <input
+                  inputMode="numeric"
+                  min={2}
+                  onChange={(event) =>
+                    setBigBlind(event.currentTarget.valueAsNumber)
+                  }
+                  step="1"
+                  type="number"
+                  value={bigBlind}
+                />
+              </label>
+              {!digitalRulesValid ? (
+                <p className="inline-warning" role="alert">
+                  Use whole chips with 0 &lt; small blind &lt; big blind &lt;
+                  starting stack.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
           {error ? (
             <p className="inline-warning" role="alert">
               {error}
@@ -235,6 +348,7 @@ function Home({
             disabled={
               !ready ||
               busy ||
+              (chipMode === "digital" && !digitalRulesValid) ||
               (relayRequiresOperatorToken && !operatorToken.trim())
             }
             onClick={() => void create()}
@@ -243,7 +357,7 @@ function Home({
             {busy ? "Preparing table…" : "Create table"}
           </button>
           <p className="privacy-line">
-            No account · no analytics · no digital chip values
+            No account · no analytics · play chips only
           </p>
           {onJoinAirplane ? (
             <button
@@ -818,6 +932,8 @@ function InvitePanel({
   const replacementSeat = invitation?.seatId
     ? snapshot.roster.seats.find((seat) => seat.seatId === invitation.seatId)
     : undefined;
+  const digitalJoinLocked =
+    runtime.rulesProfile.id === "nlhe-home-v1" && snapshot.stage === "table";
   if (!snapshot.roster.joinWindowOpen && !replacementSeat) {
     return (
       <section
@@ -826,14 +942,20 @@ function InvitePanel({
         <div className="invite-panel__content">
           <p className="section-label">Join window</p>
           <h2>New seats are paused</h2>
-          <p>Existing seat recovery and device replacement still work.</p>
-          <button
-            className="button button--quiet"
-            onClick={() => void runtime.setJoinWindow(true)}
-            type="button"
-          >
-            Open join window
-          </button>
+          <p>
+            {digitalJoinLocked
+              ? "This one-hand Digital Chips tracer does not admit late seats. Existing seat recovery and device replacement still work."
+              : "Existing seat recovery and device replacement still work."}
+          </p>
+          {!digitalJoinLocked ? (
+            <button
+              className="button button--quiet"
+              onClick={() => void runtime.setJoinWindow(true)}
+              type="button"
+            >
+              Open join window
+            </button>
+          ) : null}
         </div>
       </section>
     );
@@ -1232,6 +1354,8 @@ function SeatRoster({
   const orderedSeats = [...snapshot.roster.seats].sort(
     (left, right) => left.displayPosition - right.displayPosition,
   );
+  const digitalJoinLocked =
+    runtime?.rulesProfile.id === "nlhe-home-v1" && snapshot.stage === "table";
   return (
     <section className="roster" aria-labelledby="roster-title">
       <header>
@@ -1244,7 +1368,7 @@ function SeatRoster({
             <i aria-hidden="true" /> Join window{" "}
             {snapshot.roster.joinWindowOpen ? "open" : "closed"}
           </span>
-          {runtime ? (
+          {runtime && !digitalJoinLocked ? (
             <button
               className="text-button"
               onClick={() =>
@@ -1366,10 +1490,12 @@ function CapabilityAdministration({
 }
 
 function RecoveryAdministration({
+  allowVoid,
   onCorrect,
   onVoid,
   snapshot,
 }: {
+  readonly allowVoid: boolean;
   readonly onCorrect: (eventId: string, reason: string) => void;
   readonly onVoid: (reason: string) => void;
   readonly snapshot: HostRuntimeSnapshot;
@@ -1380,7 +1506,9 @@ function RecoveryAdministration({
   const [correctionReason, setCorrectionReason] = useState("");
   const [voidReason, setVoidReason] = useState("");
   const handActive = Boolean(
-    snapshot.projection && snapshot.projection.phase !== "complete",
+    allowVoid &&
+    snapshot.projection &&
+    snapshot.projection.phase !== "complete",
   );
 
   return (
@@ -1389,6 +1517,12 @@ function RecoveryAdministration({
         <p className="section-label">Append-only repair</p>
         <h3 id="recovery-title">Void and correction</h3>
       </header>
+      {!allowVoid && snapshot.projection?.phase !== "complete" ? (
+        <p className="admin-section__empty">
+          Digital Chips void/rollback policy is not part of this tracer; the
+          authority fails that command closed.
+        </p>
+      ) : null}
       {handActive ? (
         <form
           className="admin-form"
@@ -1596,6 +1730,9 @@ function HostLobby({
     setError(undefined);
     try {
       await runtime.startTable();
+      globalThis.requestAnimationFrame(() => {
+        globalThis.scrollTo({ behavior: "auto", left: 0, top: 0 });
+      });
     } catch (caught) {
       setError(
         caught instanceof Error
@@ -1616,7 +1753,7 @@ function HostLobby({
           onChange={onViewChange}
           tableReady={snapshot.stage === "table"}
         />
-        <PlayerExperience runtime={playerRuntime} />
+        <PlayerExperience manageLifecycle={false} runtime={playerRuntime} />
       </div>
     );
   }
@@ -1649,7 +1786,12 @@ function HostLobby({
       <header className="lobby-heading">
         <p className="section-label">Join window</p>
         <h1>Waiting for players</h1>
-        <p>Deal when at least two player seats have joined.</p>
+        <p>
+          {runtime.rulesProfile.id === "nlhe-home-v1"
+            ? `Digital Chips · ${runtime.rulesProfile.startingStack} starting stack · blinds ${runtime.rulesProfile.smallBlind}/${runtime.rulesProfile.bigBlind}. `
+            : "Physical Chips · deal-only mode. "}
+          Deal when at least two player seats have joined.
+        </p>
       </header>
       <div className="lobby-grid">
         <div className="lobby-primary">
@@ -1714,29 +1856,37 @@ function useDealerActionGuard() {
     [],
   );
 
-  function run(action: () => Promise<void>, onError: (error: unknown) => void) {
-    if (locked.current) return;
+  async function run(
+    action: () => Promise<void>,
+    onError: (error: unknown) => void,
+  ): Promise<boolean> {
+    if (locked.current) return false;
     locked.current = true;
     setBusy(true);
     const startedAt = globalThis.performance.now();
-    void Promise.resolve()
-      .then(action)
-      .catch(onError)
-      .finally(() => {
-        const elapsed = globalThis.performance.now() - startedAt;
-        releaseTimer.current = globalThis.setTimeout(
-          () => {
-            locked.current = false;
-            setBusy(false);
-          },
-          Math.max(0, dealerInputGuardMs - elapsed),
-        );
-      });
+    let accepted = true;
+    try {
+      await action();
+    } catch (error) {
+      accepted = false;
+      onError(error);
+    }
+    const elapsed = globalThis.performance.now() - startedAt;
+    await new Promise<void>((resolve) => {
+      releaseTimer.current = globalThis.setTimeout(
+        () => {
+          locked.current = false;
+          setBusy(false);
+          resolve();
+        },
+        Math.max(0, dealerInputGuardMs - elapsed),
+      );
+    });
+    return accepted;
   }
 
   return { busy, run } as const;
 }
-
 function HostTable({
   activeView,
   hasPlayer,
@@ -1773,8 +1923,8 @@ function HostTable({
       .finally(() => setBusy(false));
   }
 
-  function performDealerAction(action: () => Promise<void>) {
-    actionGuard.run(
+  function performDealerAction(action: () => Promise<void>): Promise<boolean> {
+    return actionGuard.run(
       () => {
         setError(undefined);
         return action();
@@ -1790,32 +1940,14 @@ function HostTable({
   }
 
   return (
-    <div className="host-table-shell">
-      <HostDeviceViewSwitcher
-        activeView={activeView}
-        hasPlayer={hasPlayer}
-        onChange={onViewChange}
-        tableReady
-      />
+    <div className="host-table-shell" data-theme={projection.tableTheme}>
       {activeView === "host" ? (
-        <nav className="host-tools" aria-label="Table tools">
-          <button
-            aria-expanded={adminOpen}
-            className="tool-button"
-            onClick={() => setAdminOpen(!adminOpen)}
-            type="button"
-          >
-            Players <span>{snapshot.roster.seats.length}</span>
-          </button>
-          <button
-            aria-pressed={developerMode}
-            className="tool-button"
-            onClick={() => setDeveloperMode(!developerMode)}
-            type="button"
-          >
-            Developer
-          </button>
-        </nav>
+        <HostDeviceViewSwitcher
+          activeView={activeView}
+          hasPlayer={hasPlayer}
+          onChange={onViewChange}
+          tableReady
+        />
       ) : null}
       <TableSurface
         busy={busy || actionGuard.busy}
@@ -1824,7 +1956,15 @@ function HostTable({
         {...((error ?? snapshot.error)
           ? { errorMessage: error ?? snapshot.error }
           : {})}
+        hostPlayerAdministrationOpen={adminOpen}
+        hostPlayerCount={snapshot.roster.seats.length}
         mode={activeView === "table" ? "tablet" : "host"}
+        {...(activeView === "table"
+          ? {
+              onHostControls: () => onViewChange("host"),
+              ...(hasPlayer ? { onMyHand: () => onViewChange("player") } : {}),
+            }
+          : {})}
         onDownloadLog={() =>
           downloadText(
             `html-poker-${runtime.tableId}-diagnostics.json`,
@@ -1832,12 +1972,23 @@ function HostTable({
           )
         }
         onEndHand={() => performDealerAction(() => runtime.endHand())}
+        onManagePlayers={() => setAdminOpen(!adminOpen)}
+        onConfirmSettlement={() =>
+          performDealerAction(() => runtime.confirmSettlement())
+        }
+        onPrepareSettlement={() =>
+          performDealerAction(() => runtime.prepareSettlement())
+        }
         onRevealStreet={(street) =>
           performDealerAction(() => runtime.revealStreet(street))
         }
         onStartNextHand={() =>
           performDealerAction(() => runtime.startNextHand())
         }
+        onTableThemeChange={(tableTheme) =>
+          performDealerAction(() => runtime.setTableTheme(tableTheme))
+        }
+        onToggleDeveloperMode={() => setDeveloperMode(!developerMode)}
         projection={projection}
       />
       {adminOpen && activeView === "host" ? (
@@ -1858,6 +2009,13 @@ function HostTable({
           <InvitePanel compact runtime={runtime} snapshot={snapshot} />
           <RoleInvitations runtime={runtime} snapshot={snapshot} />
           <RelaySessionCard runtime={runtime} snapshot={snapshot} />
+          <TableThemePicker
+            busy={busy || actionGuard.busy}
+            onChange={(tableTheme) =>
+              void performDealerAction(() => runtime.setTableTheme(tableTheme))
+            }
+            value={projection.tableTheme}
+          />
           <SeatRoster
             onMove={(seatId, position) =>
               perform(() => runtime.setDisplayPosition(seatId, position))
@@ -1878,6 +2036,7 @@ function HostTable({
             snapshot={snapshot}
           />
           <RecoveryAdministration
+            allowVoid={!projection.accounting}
             onCorrect={(eventId, reason) =>
               perform(() => runtime.recordCorrection(eventId, reason))
             }
@@ -1887,6 +2046,48 @@ function HostTable({
         </aside>
       ) : null}
     </div>
+  );
+}
+
+function TableThemePicker({
+  busy,
+  onChange,
+  value,
+}: {
+  readonly busy: boolean;
+  readonly onChange: (theme: TableTheme) => void;
+  readonly value: TableTheme;
+}) {
+  const themes: readonly { readonly id: TableTheme; readonly label: string }[] =
+    [
+      { id: "dark-green", label: "Dark Green" },
+      { id: "black-gold", label: "Black Gold" },
+      { id: "deep-navy", label: "Deep Navy" },
+    ];
+  return (
+    <section
+      className="admin-section theme-picker"
+      aria-labelledby="theme-title"
+    >
+      <p className="section-label">Appearance</p>
+      <h3 id="theme-title">Table theme</h3>
+      <p>Synced to every phone and display at this table.</p>
+      <div className="theme-picker__options">
+        {themes.map((theme) => (
+          <button
+            aria-pressed={value === theme.id}
+            data-theme-option={theme.id}
+            disabled={busy}
+            key={theme.id}
+            onClick={() => onChange(theme.id)}
+            type="button"
+          >
+            <span aria-hidden="true" />
+            {theme.label}
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -1900,8 +2101,10 @@ function useClientSnapshot(runtime: TableClientRuntime): ClientRuntimeSnapshot {
 }
 
 function PlayerExperience({
+  manageLifecycle = true,
   runtime,
 }: {
+  readonly manageLifecycle?: boolean;
   readonly runtime: TableClientRuntime;
 }) {
   const snapshot = useClientSnapshot(runtime);
@@ -1913,7 +2116,9 @@ function PlayerExperience({
   useScreenWakeLock(snapshot.status === "playing");
 
   useEffect(() => {
+    if (!manageLifecycle) return;
     let hidden = false;
+    let resuming = false;
     const hide = () => {
       if (hidden) return;
       hidden = true;
@@ -1923,24 +2128,38 @@ function PlayerExperience({
       void runtime.setPresence(false).catch(() => undefined);
     };
     const show = () => {
-      if (!hidden) return;
+      if (document.visibilityState === "hidden" || resuming) return;
       hidden = false;
+      resuming = true;
       setError(undefined);
-      void runtime.setPresence(true).catch(() => {
-        setError(
-          isAirplaneMode()
-            ? "Connection did not resume. Ask the host to replace this device from Players."
-            : "Connection did not resume. Check the network and try the saved table again.",
-        );
-      });
+      void runtime
+        .setPresence(true)
+        .catch(() => {
+          setError(
+            isAirplaneMode()
+              ? "Connection did not resume. Ask the host to replace this device from Players."
+              : "Connection did not resume. Check the network and choose Reconnect to table.",
+          );
+        })
+        .finally(() => {
+          resuming = false;
+        });
+    };
+    const visibilityChanged = () => {
+      if (document.visibilityState === "hidden") hide();
+      else show();
     };
     globalThis.addEventListener("pagehide", hide);
     globalThis.addEventListener("pageshow", show);
+    globalThis.addEventListener("online", show);
+    document.addEventListener("visibilitychange", visibilityChanged);
     return () => {
       globalThis.removeEventListener("pagehide", hide);
       globalThis.removeEventListener("pageshow", show);
+      globalThis.removeEventListener("online", show);
+      document.removeEventListener("visibilitychange", visibilityChanged);
     };
-  }, [runtime]);
+  }, [manageLifecycle, runtime]);
 
   useEffect(() => {
     if (playerProjection?.self.status !== "folded-provisional") return;
@@ -1981,6 +2200,25 @@ function PlayerExperience({
         );
       })
       .finally(() => setBusy(false));
+  }
+
+  async function reconnect(): Promise<boolean> {
+    if (busy) return false;
+    setBusy(true);
+    setError(undefined);
+    try {
+      await runtime.setPresence(true);
+      return true;
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Connection did not resume. Check the network and try again.",
+      );
+      return false;
+    } finally {
+      setBusy(false);
+    }
   }
 
   if (!snapshot.seat && snapshot.status !== "rejected") {
@@ -2068,8 +2306,10 @@ function PlayerExperience({
         : {})}
       futureSittingOut={snapshot.futureSittingOut}
       mode="player"
+      onBettingAction={(action) => perform({ action, type: "betting" })}
       onFinalizeFold={() => perform({ type: "finalize-fold" })}
       onFold={() => perform({ type: "fold" })}
+      onReconnect={reconnect}
       onShowCards={() => perform({ type: "show" })}
       onToggleSittingOut={(sittingOut) =>
         perform({ sittingOut, type: "set-sitting-out" })
@@ -2098,6 +2338,38 @@ function RoleExperience({ runtime }: { readonly runtime: TableClientRuntime }) {
     });
   }, [runtime, snapshot.status]);
 
+  useEffect(() => {
+    let resuming = false;
+    const resume = () => {
+      if (document.visibilityState === "hidden" || resuming) return;
+      resuming = true;
+      setError(undefined);
+      void runtime
+        .reconnect()
+        .catch((caught: unknown) => {
+          setError(
+            caught instanceof Error
+              ? caught.message
+              : "The table did not respond.",
+          );
+        })
+        .finally(() => {
+          resuming = false;
+        });
+    };
+    const visibilityChanged = () => {
+      if (document.visibilityState === "visible") resume();
+    };
+    globalThis.addEventListener("pageshow", resume);
+    globalThis.addEventListener("online", resume);
+    document.addEventListener("visibilitychange", visibilityChanged);
+    return () => {
+      globalThis.removeEventListener("pageshow", resume);
+      globalThis.removeEventListener("online", resume);
+      document.removeEventListener("visibilitychange", visibilityChanged);
+    };
+  }, [runtime]);
+
   const label =
     runtime.role === "public-table"
       ? "Public Table"
@@ -2112,6 +2384,22 @@ function RoleExperience({ runtime }: { readonly runtime: TableClientRuntime }) {
           <p className="section-label">{label}</p>
           <h1>This room surface could not be opened</h1>
           <p>{error ?? snapshot.error ?? "Ask the host for a fresh link."}</p>
+          <button
+            className="button button--primary"
+            onClick={() => {
+              setError(undefined);
+              void runtime.reconnect().catch((caught: unknown) => {
+                setError(
+                  caught instanceof Error
+                    ? caught.message
+                    : "The table did not respond.",
+                );
+              });
+            }}
+            type="button"
+          >
+            Reconnect to table
+          </button>
         </section>
       </main>
     );
@@ -2132,8 +2420,10 @@ function RoleExperience({ runtime }: { readonly runtime: TableClientRuntime }) {
     );
   }
 
-  function perform(action: Parameters<TableClientRuntime["performDealer"]>[0]) {
-    actionGuard.run(
+  function perform(
+    action: Parameters<TableClientRuntime["performDealer"]>[0],
+  ): Promise<boolean> {
+    return actionGuard.run(
       () => {
         setError(undefined);
         return runtime.performDealer(action);
@@ -2163,8 +2453,11 @@ function RoleExperience({ runtime }: { readonly runtime: TableClientRuntime }) {
             : "tablet"
       }
       onEndHand={() => perform({ type: "end-hand" })}
+      onConfirmSettlement={() => perform({ type: "confirm-settlement" })}
+      onPrepareSettlement={() => perform({ type: "prepare-settlement" })}
       onRevealStreet={(street) => perform({ street, type: "reveal-street" })}
       onStartNextHand={() => perform({ type: "start-next-hand" })}
+      onReconnect={() => runtime.reconnect()}
       projection={snapshot.projection}
     />
   );
@@ -2522,6 +2815,55 @@ export function App() {
     return () => hostPlayerRuntime?.close();
   }, [hostPlayerRuntime]);
 
+  useEffect(() => {
+    if (!hostRuntime) return;
+    let backgrounded = false;
+    let resuming = false;
+    const pauseEmbeddedPlayer = () => {
+      if (backgrounded) return;
+      backgrounded = true;
+      void hostPlayerRuntime?.setPresence(false).catch(() => undefined);
+    };
+    const resume = () => {
+      if (document.visibilityState === "hidden" || resuming) return;
+      backgrounded = false;
+      resuming = true;
+      void (async () => {
+        // Re-register the Trusted Host first. The embedded Player uses the
+        // same phone and can otherwise race its first authenticated refresh
+        // against a relay that has not seen the host return yet.
+        await hostRuntime.resumeConnectivity().catch(() => undefined);
+        if (!hostPlayerRuntime) return;
+        try {
+          await hostPlayerRuntime.setPresence(true);
+          setHostPlayerRecoveryError(undefined);
+        } catch (caught) {
+          setHostPlayerRecoveryError(
+            caught instanceof Error
+              ? `My Hand did not reconnect: ${caught.message}`
+              : "My Hand did not reconnect. Choose My Hand and reconnect.",
+          );
+        }
+      })().finally(() => {
+        resuming = false;
+      });
+    };
+    const visibilityChanged = () => {
+      if (document.visibilityState === "hidden") pauseEmbeddedPlayer();
+      else resume();
+    };
+    globalThis.addEventListener("pagehide", pauseEmbeddedPlayer);
+    globalThis.addEventListener("pageshow", resume);
+    globalThis.addEventListener("online", resume);
+    document.addEventListener("visibilitychange", visibilityChanged);
+    return () => {
+      globalThis.removeEventListener("pagehide", pauseEmbeddedPlayer);
+      globalThis.removeEventListener("pageshow", resume);
+      globalThis.removeEventListener("online", resume);
+      document.removeEventListener("visibilitychange", visibilityChanged);
+    };
+  }, [hostPlayerRuntime, hostRuntime]);
+
   function showHostDeviceView(view: HostDeviceView): void {
     setHostDeviceView(view);
     globalThis.requestAnimationFrame(() => {
@@ -2649,10 +2991,8 @@ export function App() {
   }
   return (
     <Home
-      onCreate={async (operatorToken) => {
-        const runtime = await HostTableRuntime.createNew(
-          operatorToken ? { operatorToken } : {},
-        );
+      onCreate={async (options) => {
+        const runtime = await HostTableRuntime.createNew(options);
         replaceWithHostRecoveryUrl(globalThis.location, runtime.tableId);
         showHostDeviceView("host");
         setHostRuntime(runtime);

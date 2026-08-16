@@ -14,6 +14,9 @@ importers:
       '@eslint/js':
         specifier: 10.0.1
         version: 10.0.1(eslint@10.8.1(supports-color@7.2.0))
+      '@html-poker/accounting':
+        specifier: workspace:*
+        version: link:packages/accounting
       '@html-poker/card-custody':
         specifier: workspace:*
         version: link:packages/card-custody
@@ -136,12 +139,17 @@ importers:
         specifier: 8.2.1
         version: 8.2.1(@types/node@26.2.0)(yaml@2.9.0)
 
+  packages/accounting: {}
+
   packages/card-custody: {}
 
   packages/diagnostics: {}
 
   packages/game-core:
     dependencies:
+      '@html-poker/accounting':
+        specifier: workspace:*
+        version: link:../accounting
       '@html-poker/card-custody':
         specifier: workspace:*
         version: link:../card-custody

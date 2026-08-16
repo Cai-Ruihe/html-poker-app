@@ -286,6 +286,90 @@ button:disabled {
   color: var(--red);
 }
 
+.chip-mode-picker {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0 0 1rem;
+  border: 0;
+  padding: 0;
+}
+
+.chip-mode-picker legend {
+  margin-bottom: 0.55rem;
+  color: var(--quiet);
+  font-size: 0.64rem;
+  font-weight: 760;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.chip-mode-picker label {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.7rem;
+  align-items: start;
+  border: 1px solid var(--rule);
+  border-radius: 0.7rem;
+  padding: 0.75rem;
+  cursor: pointer;
+}
+
+.chip-mode-picker label:has(input:checked) {
+  border-color: var(--green);
+  box-shadow: inset 0.25rem 0 0 var(--green);
+}
+
+.chip-mode-picker input {
+  margin-top: 0.12rem;
+  accent-color: var(--green);
+}
+
+.chip-mode-picker label > span {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.chip-mode-picker strong {
+  font-size: 0.78rem;
+}
+
+.chip-mode-picker small {
+  color: var(--quiet);
+  font-size: 0.65rem;
+  line-height: 1.4;
+}
+
+.digital-chip-settings {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-bottom: 1rem;
+}
+
+.digital-chip-settings label {
+  display: grid;
+  gap: 0.3rem;
+  color: var(--ink-soft);
+  font-size: 0.65rem;
+  font-weight: 680;
+}
+
+.digital-chip-settings input,
+.bet-amount input {
+  min-width: 0;
+  border: 1px solid var(--rule-strong);
+  border-radius: 0.45rem;
+  padding: 0.58rem;
+  color: var(--ink);
+  background: var(--surface);
+  font: inherit;
+}
+
+.digital-chip-settings .inline-warning {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
 .button,
 .action,
 .tool-button {
@@ -518,6 +602,89 @@ button:disabled {
   max-width: 84rem;
   margin: 0 auto;
   padding: 0 clamp(1rem, 3vw, 3rem);
+}
+
+.lobby-primary {
+  display: grid;
+  gap: 1rem;
+}
+
+.host-device-switcher {
+  position: sticky;
+  z-index: 30;
+  top: 0;
+  display: flex;
+  justify-content: center;
+  gap: 0.35rem;
+  border-bottom: 1px solid var(--rule);
+  padding: max(0.55rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right)) 0.55rem
+    max(1rem, env(safe-area-inset-left));
+  background: var(--canvas);
+}
+
+.host-device-switcher button {
+  min-height: 2.45rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.5rem 0.9rem;
+  color: var(--ink-soft);
+  background: transparent;
+  font-size: 0.72rem;
+  font-weight: 760;
+}
+
+.host-device-switcher button[aria-pressed="true"] {
+  color: white;
+  background: var(--green);
+}
+
+.host-device-switcher button:disabled {
+  opacity: 0.42;
+}
+
+.host-device-view {
+  min-height: 100svh;
+  background: var(--canvas);
+}
+
+.join-own-device {
+  border: 1px solid var(--green);
+  border-radius: 1rem;
+  padding: clamp(1.3rem, 3vw, 2rem);
+  background: var(--green-soft);
+}
+
+.join-own-device h2 {
+  font-size: clamp(1.65rem, 3vw, 2.5rem);
+}
+
+.join-own-device > p:not(.section-label) {
+  max-width: 46rem;
+  margin: 0.75rem 0 1rem;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.join-own-device form,
+.join-own-device label {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.join-own-device label {
+  color: var(--quiet);
+  font-size: 0.72rem;
+  font-weight: 680;
+}
+
+.join-own-device input {
+  width: 100%;
+  border: 1px solid var(--rule-strong);
+  border-radius: 0.55rem;
+  padding: 0.8rem 0.85rem;
+  color: var(--ink);
+  background: var(--surface);
 }
 
 .invite-panel,
@@ -1188,6 +1355,45 @@ button:disabled {
   padding: clamp(1.5rem, 4vw, 4rem) 0;
 }
 
+.chip-rail {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: clamp(1rem, 3vw, 2.5rem);
+  align-items: end;
+  width: min(58rem, 100%);
+  margin: 0 auto 1.25rem;
+  border-left: 0.28rem solid var(--green);
+  padding: 0.7rem 0.9rem;
+  background: var(--green-soft);
+}
+
+.chip-rail > div {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.chip-rail span {
+  color: var(--quiet);
+  font-size: 0.58rem;
+  font-weight: 720;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.chip-rail strong {
+  font-family: Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.chip-rail p {
+  justify-self: end;
+  margin: 0;
+  color: var(--green-dark);
+  font-size: 0.7rem;
+  font-weight: 720;
+}
+
 .dealer-rail {
   position: relative;
   display: grid;
@@ -1347,6 +1553,14 @@ button:disabled {
   text-transform: capitalize;
 }
 
+.seat-tile__stack {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--green-dark);
+  font-size: 0.7rem;
+  font-weight: 760;
+}
+
 .card-back-pair,
 .mini-hand {
   display: flex;
@@ -1398,6 +1612,57 @@ button:disabled {
   font-weight: 680;
 }
 
+.settlement-panel {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) auto;
+  gap: 1rem;
+  width: min(58rem, 100%);
+  margin: 1.2rem auto 0;
+  border: 1px solid var(--rule-strong);
+  border-radius: 0.8rem;
+  padding: 1rem;
+  background: var(--surface);
+}
+
+.settlement-panel h2 {
+  margin: 0.15rem 0 0;
+  font-family: Georgia, serif;
+  font-weight: 500;
+}
+
+.settlement-panel p {
+  margin: 0.35rem 0 0;
+  color: var(--quiet);
+  font-size: 0.7rem;
+}
+
+.settlement-panel > strong {
+  color: var(--green-dark);
+  font-family: Georgia, serif;
+}
+
+.settlement-panel ol {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.settlement-panel li {
+  display: grid;
+  gap: 0.2rem;
+  border-top: 1px solid var(--rule);
+  padding-top: 0.55rem;
+  font-size: 0.72rem;
+}
+
+.settlement-panel small {
+  color: var(--green-dark);
+  font-weight: 720;
+}
+
 .dealer-dock {
   position: fixed;
   z-index: 15;
@@ -1442,6 +1707,14 @@ button:disabled {
 .end-confirm > span {
   color: var(--ink-soft);
   font-size: 0.7rem;
+  font-weight: 680;
+}
+
+.dealer-guidance,
+.betting-wait {
+  margin: 0;
+  color: var(--quiet);
+  font-size: 0.72rem;
   font-weight: 680;
 }
 
@@ -1977,6 +2250,30 @@ button:disabled {
   gap: 0.5rem;
 }
 
+.betting-actions {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.bet-amount {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.7rem;
+  padding: 0.35rem;
+  color: var(--quiet);
+  font-size: 0.65rem;
+  font-weight: 720;
+}
+
+.bet-amount input {
+  width: 5rem;
+}
+
 .sit-out-control {
   display: flex;
   grid-column: 1 / -1;
@@ -2100,6 +2397,21 @@ button:disabled {
   .private-hand {
     gap: 1.5rem;
     padding-top: 2rem;
+  }
+
+  .digital-chip-settings,
+  .chip-rail,
+  .settlement-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .chip-rail p {
+    justify-self: start;
+  }
+
+  .settlement-panel > strong,
+  .settlement-panel ol {
+    grid-column: 1;
   }
 
   .private-hand__heading {

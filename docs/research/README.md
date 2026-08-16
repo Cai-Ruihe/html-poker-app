@@ -6,6 +6,7 @@ Research documents preserve the background used to choose defaults and identify 
 
 - [Product and rules scope](PRODUCT-RULES-SCOPE.md) — commercial/open-source precedents, live-poker rules, phase boundaries, and remote-play implications.
 - [Privacy and network robustness](PRIVACY-NETWORK-ROBUSTNESS.md) — browser/network standards, host trust, Airplane Mode, recovery, release integrity, and China test gates.
+- [Phase 2 accounting foundation](PHASE-2-ACCOUNTING-FOUNDATION.md) — house-policy defaults, inspected implementations, authoritative poker rules, and the first tracer boundary.
 
 ## Evidence rules
 

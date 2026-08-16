@@ -19,6 +19,11 @@ The documentation is deliberately split by authority and reading purpose. Start 
 - [ADR index](adr/README.md) — accepted cross-cutting architecture and governance choices.
 - [TypeScript browser monorepo ADR](adr/0007-typescript-browser-monorepo-toolchain.md) — current implementation and test toolchain.
 
+## Design records
+
+- [Shared visual system](design/SHARED-VISUAL-SYSTEM.md) — production-integrated Dark Green, Black Gold, and Deep Navy tokens; card, interaction, accessibility, and role-adaptation principles.
+- [Tablet UI and shared-table visual feedback](design/TABLET-UI-FEEDBACK-2026-08-16.md) — accepted owner direction, rejected patterns, revision-v6 evidence, production-integration receipt, and remaining physical-device gates.
+
 ## Quality and release
 
 - [Quality gates](quality/QUALITY-GATES.md) — checks required at contribution, phase, and release boundaries.

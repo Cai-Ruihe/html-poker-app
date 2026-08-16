@@ -151,7 +151,7 @@ test("the Airplane start screen has no unexplained red ornaments", async ({
 }) => {
   const page = await openAirplanePage(context);
   await expect(
-    page.getByText("Build 0.1.2-phase1", { exact: true }),
+    page.getByText("Build 0.1.3-phase1", { exact: true }),
   ).toBeVisible();
   expect(await unexplainedRedDecorations(page)).toEqual([]);
 });
@@ -355,11 +355,9 @@ test("two players pair by two-way QR and deal over direct local WebRTC", async (
     await host.getByRole("button", { name: "Deal first hand" }).click();
 
     await expect(
-      alice.getByRole("heading", { name: "Your cards" }),
+      alice.getByRole("region", { name: "Your cards" }),
     ).toBeVisible();
-    await expect(
-      bob.getByRole("heading", { name: "Your cards" }),
-    ).toBeVisible();
+    await expect(bob.getByRole("region", { name: "Your cards" })).toBeVisible();
     await expect(alice.locator("[data-private-card]")).toHaveCount(2);
     await expect(bob.locator("[data-private-card]")).toHaveCount(2);
     await expect(
@@ -427,7 +425,7 @@ test("a player reveals private cards with one clear local-only control", async (
     await pairPlayer(host, bob, "Bob");
     await host.getByRole("button", { name: "Deal first hand" }).click();
     await expect(
-      alice.getByRole("heading", { name: "Your cards" }),
+      alice.getByRole("region", { name: "Your cards" }),
     ).toBeVisible();
     await expect
       .poll(() =>
@@ -544,7 +542,7 @@ test("a closed Airplane phone can be replaced into the same active seat", async 
       .click();
 
     await expect(
-      replacement.getByRole("heading", { name: "Your cards" }),
+      replacement.getByRole("region", { name: "Your cards" }),
     ).toBeVisible();
     await expect
       .poll(() =>

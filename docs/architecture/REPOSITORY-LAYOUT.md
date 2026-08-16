@@ -42,6 +42,7 @@ html-poker-app/
 │   ├── presentation/                # Player, Tablet, TV, Public table views
 │   ├── persistence/                 # Commit, replay, checkpoint, recovery
 │   ├── diagnostics/                 # Redacted schemas and support bundles
+│   ├── accounting/                  # Optional play-chip betting, pots, settlement
 ├── services/
 │   └── connection-service/          # Card-blind signaling, relay, ticket, pairing mailbox
 ├── tests/
@@ -55,7 +56,7 @@ html-poker-app/
 └── .github/                         # Contribution templates and automation
 ```
 
-The Airplane adapter deliberately lives in the web app because it is a browser delivery/bootstrap concern, while its message transport uses the same realtime boundary as Normal Mode. Phase 2 reserves `packages/accounting`; Phase 3 reserves `packages/skin-schema`, `packages/ai-seat`, and a separately isolated `services/ai-gateway`. They are not empty directories and must not be added merely to make the tree look complete.
+The Airplane adapter deliberately lives in the web app because it is a browser delivery/bootstrap concern, while its message transport uses the same realtime boundary as Normal Mode. Phase 2 instantiated `packages/accounting` for its first tracer slice. Phase 3 reserves `packages/skin-schema`, `packages/ai-seat`, and a separately isolated `services/ai-gateway`; they must not be added as empty directories merely to make the tree look complete.
 
 ## Dependency rules
 

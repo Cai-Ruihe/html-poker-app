@@ -6,10 +6,15 @@ import {
 } from "@html-poker/diagnostics";
 import {
   createTrustedHostAuthority,
+  isBettingActionIntent,
+  isRulesProfile,
+  type BettingActionIntent,
   type CommandEnvelope,
   type PersistedAuthorityState,
   type PublicProjection,
+  type RulesProfile,
   type SeatProjection,
+  type TableTheme,
   type TrustedHostAuthority,
 } from "@html-poker/game-core";
 import {
@@ -39,13 +44,14 @@ import {
   type HostAirplanePairing,
 } from "./airplane";
 
-export const BUILD_VERSION = "0.1.2-phase1";
-export const PROTOCOL_VERSION = 1;
+export const BUILD_VERSION = "0.1.3-phase1";
+export const PROTOCOL_VERSION = 2;
 
 const requestTimeoutMs = 7_500;
 const invitationTtlMs = 15 * 60 * 1_000;
 
 export type PlayerAction =
+  | { readonly action: BettingActionIntent; readonly type: "betting" }
   | { readonly type: "fold" }
   | { readonly type: "undo-fold" }
   | { readonly type: "finalize-fold" }
@@ -56,7 +62,49 @@ export type PlayerAction =
 export type DealerAction =
   | { readonly street: Street; readonly type: "reveal-street" }
   | { readonly type: "end-hand" }
+  | { readonly type: "prepare-settlement" }
+  | { readonly type: "confirm-settlement" }
   | { readonly type: "start-next-hand" };
+
+function isPlayerAction(value: unknown): value is PlayerAction {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as {
+    readonly action?: unknown;
+    readonly sittingOut?: unknown;
+    readonly type?: unknown;
+  };
+  if (candidate.type === "betting") {
+    return isBettingActionIntent(candidate.action);
+  }
+  if (candidate.type === "set-sitting-out") {
+    return typeof candidate.sittingOut === "boolean";
+  }
+  return [
+    "fold",
+    "undo-fold",
+    "finalize-fold",
+    "show",
+    "muck",
+    "disconnect",
+  ].includes(String(candidate.type));
+}
+
+function isDealerAction(value: unknown): value is DealerAction {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as {
+    readonly street?: unknown;
+    readonly type?: unknown;
+  };
+  if (candidate.type === "reveal-street") {
+    return ["flop", "turn", "river"].includes(String(candidate.street));
+  }
+  return [
+    "end-hand",
+    "prepare-settlement",
+    "confirm-settlement",
+    "start-next-hand",
+  ].includes(String(candidate.type));
+}
 
 interface JoinRequestMessage {
   readonly ciphertext: string;
@@ -253,6 +301,7 @@ interface HostRecoveryState {
   readonly invitations: readonly Invitation[];
   readonly privacyClass: "host-recovery-secret";
   readonly relayRoutes?: RelayRouteConfiguration;
+  readonly rulesProfile?: RulesProfile;
   readonly schemaVersion: 1;
 }
 
@@ -868,6 +917,32 @@ class RoomEndpoint {
       if (nextConfig?.accessToken && !this.relayConnections.has(route)) {
         void this.connectRelay(route).catch(() => undefined);
       }
+    }
+  }
+
+  /**
+   * Re-register configured relay routes after a browser foreground transition.
+   * Mobile browsers can preserve a document while silently retiring its
+   * WebSocket. Replacing the socket is bounded to relay transports; Airplane
+   * and already-open direct data channels remain available for probing.
+   */
+  async resume(): Promise<void> {
+    if (this.closed) throw new Error("The room route is closed.");
+    this.selectedRoute = undefined;
+    const routes = (["private-relay", "cloud-relay"] as const).filter((route) =>
+      Boolean(relayConfigForRoute(route, this.relayRoutes)),
+    );
+    if (routes.length === 0) return;
+    const results = await Promise.allSettled(
+      routes.map(async (route) => {
+        this.relaySockets.get(route)?.close(1000, "browser foregrounded");
+        this.relaySockets.delete(route);
+        this.relayConnections.delete(route);
+        await this.connectRelay(route);
+      }),
+    );
+    if (results.every((result) => result.status === "rejected")) {
+      throw new Error("The configured relay did not reconnect.");
     }
   }
 
@@ -1550,7 +1625,8 @@ function assertHostRecoveryState(
     state.identity.binding.tableId !== tableId ||
     !sameBinding(state.binding, state.identity.binding) ||
     !state.authorityEpoch ||
-    !state.diagnosticSalt
+    !state.diagnosticSalt ||
+    !isRulesProfile(state.rulesProfile ?? { id: "deal-only-v1" })
   ) {
     throw new Error("The saved Trusted Host state failed validation.");
   }
@@ -1623,10 +1699,12 @@ interface HostRuntimeOptions {
   readonly relayRoutes?: RelayRouteConfiguration;
   readonly recoveryRevision: number;
   readonly recoveryStore: AtomicTableStore<HostRecoveryState>;
+  readonly rulesProfile: RulesProfile;
 }
 
 export interface HostRuntimeCreateOptions {
   readonly operatorToken?: string;
+  readonly rulesProfile?: RulesProfile;
 }
 
 export class HostTableRuntime {
@@ -1652,6 +1730,7 @@ export class HostTableRuntime {
   private recoveryRevision: number;
   private relayRouteConfiguration: RelayRouteConfiguration | undefined;
   private readonly recoveryStore: AtomicTableStore<HostRecoveryState>;
+  readonly rulesProfile: RulesProfile;
 
   private constructor(options: HostRuntimeOptions) {
     this.authorityEpoch = options.authorityEpoch;
@@ -1664,6 +1743,7 @@ export class HostTableRuntime {
     this.relayRouteConfiguration = cloneRelayRoutes(options.relayRoutes);
     this.recoveryRevision = options.recoveryRevision;
     this.recoveryStore = options.recoveryStore;
+    this.rulesProfile = structuredClone(options.rulesProfile);
     this.diagnostics = createDiagnosticLog({
       pseudonymSalt: options.diagnosticSalt,
     });
@@ -1701,6 +1781,10 @@ export class HostTableRuntime {
   static async createNew(
     options: HostRuntimeCreateOptions = {},
   ): Promise<HostTableRuntime> {
+    const rulesProfile = options.rulesProfile ?? { id: "deal-only-v1" };
+    if (!isRulesProfile(rulesProfile)) {
+      throw new Error("The selected chip rules are invalid.");
+    }
     const tableId = makeId("table");
     const binding: PeerBinding = {
       buildVersion: BUILD_VERSION,
@@ -1727,6 +1811,7 @@ export class HostTableRuntime {
       ...(relayRoutes ? { relayRoutes } : {}),
       recoveryRevision: 0,
       recoveryStore: hostRecoveryStore(tableId),
+      rulesProfile,
     });
     await runtime.issueInvitationInternal("player");
     await runtime.persistRecovery();
@@ -1758,6 +1843,7 @@ export class HostTableRuntime {
           : {}),
         recoveryRevision: saved.revision,
         recoveryStore,
+        rulesProfile: saved.state.rulesProfile ?? { id: "deal-only-v1" },
       });
       await runtime.rebuildInvitationDigests();
       const authority = createTrustedHostAuthority({
@@ -1933,6 +2019,11 @@ export class HostTableRuntime {
 
   async setJoinWindow(open: boolean): Promise<void> {
     await this.runExclusive(async () => {
+      if (open && this.rulesProfile.id === "nlhe-home-v1" && this.authority) {
+        throw new Error(
+          "New Digital Chips seats after the first deal are not available in this tracer.",
+        );
+      }
       if (open) {
         this.identity.openJoinWindow();
         if (this.identity.roster().seats.length < 10) {
@@ -1994,6 +2085,21 @@ export class HostTableRuntime {
     });
   }
 
+  async resumeConnectivity(): Promise<void> {
+    try {
+      await this.endpoint.resume();
+      this.error = undefined;
+      this.broadcastChange();
+    } catch (error) {
+      this.captureError(
+        error instanceof Error
+          ? new Error(`Host connection did not resume: ${error.message}`)
+          : new Error("Host connection did not resume."),
+      );
+      throw error;
+    }
+  }
+
   async relocateDealer(dealerSeatId: string): Promise<void> {
     await this.runExclusive(async () => {
       const receipt = await this.submitHostInternal({
@@ -2002,6 +2108,18 @@ export class HostTableRuntime {
       });
       if (receipt.status === "rejected") {
         throw new Error(`Dealer relocation rejected: ${receipt.code}`);
+      }
+    });
+  }
+
+  async setTableTheme(tableTheme: TableTheme): Promise<void> {
+    await this.runExclusive(async () => {
+      const receipt = await this.submitHostInternal({
+        tableTheme,
+        type: "SetTableTheme",
+      });
+      if (receipt.status === "rejected") {
+        throw new Error(`Table theme rejected: ${receipt.code}`);
       }
     });
   }
@@ -2098,6 +2216,7 @@ export class HostTableRuntime {
         expectedRevision: 0,
         payload: {
           dealerSeatId: seats[0]?.seatId ?? "",
+          rulesProfile: this.rulesProfile,
           seats: seats.map(({ displayName, seatId }) => ({
             displayName,
             seatId,
@@ -2113,6 +2232,10 @@ export class HostTableRuntime {
       const start = await this.submitHostInternal({ type: "StartHand" });
       if (start.status === "rejected") {
         throw new Error(`First deal failed: ${start.code}`);
+      }
+      if (this.rulesProfile.id === "nlhe-home-v1") {
+        this.identity.closeJoinWindow();
+        this.invitations.delete("player");
       }
       this.identity.onHandStarted();
       await this.persistRecovery();
@@ -2139,6 +2262,35 @@ export class HostTableRuntime {
       const receipt = await this.submitHostInternal({ type: "EndHand" }, true);
       if (receipt.status === "rejected") {
         throw new Error(`End hand rejected: ${receipt.code}`);
+      }
+      this.identity.onHandEnded();
+      await this.syncParticipation();
+      await this.persistRecovery();
+      this.refreshProjection();
+      this.broadcastChange();
+    });
+  }
+
+  async prepareSettlement(): Promise<void> {
+    await this.runExclusive(async () => {
+      const receipt = await this.submitHostInternal(
+        { type: "PrepareSettlement" },
+        true,
+      );
+      if (receipt.status === "rejected") {
+        throw new Error(`Settlement review rejected: ${receipt.code}`);
+      }
+    });
+  }
+
+  async confirmSettlement(): Promise<void> {
+    await this.runExclusive(async () => {
+      const receipt = await this.submitHostInternal(
+        { type: "ConfirmSettlement" },
+        true,
+      );
+      if (receipt.status === "rejected") {
+        throw new Error(`Settlement confirmation rejected: ${receipt.code}`);
       }
       this.identity.onHandEnded();
       await this.syncParticipation();
@@ -2311,6 +2463,16 @@ export class HostTableRuntime {
       authenticated.role !== "table-control"
     ) {
       response = { code: "role-mismatch", status: "rejected" };
+    } else if (
+      request.type === "player-action" &&
+      !isPlayerAction(request.action)
+    ) {
+      response = { code: "invalid-action", status: "rejected" };
+    } else if (
+      request.type === "dealer-action" &&
+      !isDealerAction(request.action)
+    ) {
+      response = { code: "invalid-action", status: "rejected" };
     } else {
       if (authenticated.role === "player") {
         this.identity.setConnected({
@@ -2436,6 +2598,24 @@ export class HostTableRuntime {
       }
       this.identity.onHandEnded();
       await this.syncParticipation();
+    } else if (action.type === "prepare-settlement") {
+      const receipt = await this.submitHostInternal(
+        { type: "PrepareSettlement" },
+        true,
+      );
+      if (receipt.status === "rejected") {
+        throw new Error(`Tablet action rejected: ${receipt.code}`);
+      }
+    } else if (action.type === "confirm-settlement") {
+      const receipt = await this.submitHostInternal(
+        { type: "ConfirmSettlement" },
+        true,
+      );
+      if (receipt.status === "rejected") {
+        throw new Error(`Tablet action rejected: ${receipt.code}`);
+      }
+      this.identity.onHandEnded();
+      await this.syncParticipation();
     } else {
       const receipt = await this.submitHostInternal({ type: "StartHand" });
       if (receipt.status === "rejected") {
@@ -2466,6 +2646,17 @@ export class HostTableRuntime {
           sittingOut: action.sittingOut,
           type: "SetSeatParticipation",
         });
+      }
+      return;
+    }
+    if (action.type === "betting") {
+      const receipt = await this.submitPlayerInternal(
+        seatId,
+        { action: action.action, type: "SubmitBettingAction" },
+        true,
+      );
+      if (receipt.status === "rejected") {
+        throw new Error(`Betting action rejected: ${receipt.code}`);
       }
       return;
     }
@@ -2515,6 +2706,7 @@ export class HostTableRuntime {
         ...(this.relayRouteConfiguration
           ? { relayRoutes: this.relayRouteConfiguration }
           : {}),
+        rulesProfile: structuredClone(this.rulesProfile),
         schemaVersion: 1,
       },
     });
@@ -2567,18 +2759,25 @@ export class HostTableRuntime {
   private orderProjection<T extends PublicProjection | SeatProjection>(
     projection: T,
   ): T {
+    const roster = this.identity.roster();
     const positions = new Map(
-      this.identity
-        .roster()
-        .seats.map((seat) => [seat.seatId, seat.displayPosition]),
+      roster.seats.map((seat) => [seat.seatId, seat.displayPosition]),
+    );
+    const connections = new Map(
+      roster.seats.map((seat) => [seat.seatId, seat.connected]),
     );
     return {
       ...structuredClone(projection),
-      seats: [...projection.seats].sort(
-        (left, right) =>
-          (positions.get(left.seatId) ?? Number.MAX_SAFE_INTEGER) -
-          (positions.get(right.seatId) ?? Number.MAX_SAFE_INTEGER),
-      ),
+      seats: [...projection.seats]
+        .map((seat) => ({
+          ...seat,
+          connected: connections.get(seat.seatId) ?? false,
+        }))
+        .sort(
+          (left, right) =>
+            (positions.get(left.seatId) ?? Number.MAX_SAFE_INTEGER) -
+            (positions.get(right.seatId) ?? Number.MAX_SAFE_INTEGER),
+        ),
     };
   }
 
@@ -2717,8 +2916,8 @@ export class TableClientRuntime {
   private presencePaused = false;
   private projection: PublicProjection | SeatProjection | undefined;
   private recoveryCommitTail: Promise<void> = Promise.resolve();
-  private recoveryRevision: number;
   private readonly recoveryNavigation: "client" | "embedded-host";
+  private recoveryRevision: number;
   private readonly recoveryStore: AtomicTableStore<ClientRecoveryState>;
   private relayRoutes: RelayRouteConfiguration | undefined;
   private seat: RoomSeat | undefined;
@@ -2734,8 +2933,8 @@ export class TableClientRuntime {
     this.invitationToken = options.invitationToken;
     this.lease = options.lease;
     this.relayRoutes = cloneRelayRoutes(options.relayRoutes);
-    this.recoveryRevision = options.recoveryRevision;
     this.recoveryNavigation = options.recoveryNavigation ?? "client";
+    this.recoveryRevision = options.recoveryRevision;
     this.slotId = options.slotId;
     this.recoveryStore = clientRecoveryStore(
       options.binding.tableId,
@@ -2873,6 +3072,11 @@ export class TableClientRuntime {
     };
   }
 
+  async reconnect(): Promise<void> {
+    await this.endpoint.resume();
+    await this.refresh();
+  }
+
   async join(displayName?: string): Promise<void> {
     if (!this.invitationToken) {
       throw new Error("The invitation is unavailable.");
@@ -2964,6 +3168,7 @@ export class TableClientRuntime {
     if (this.role !== "player" || !this.credential) return;
     if (connected) {
       this.presencePaused = false;
+      await this.endpoint.resume();
       await this.refresh();
       return;
     }

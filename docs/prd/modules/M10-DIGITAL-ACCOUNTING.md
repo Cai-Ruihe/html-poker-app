@@ -1,12 +1,13 @@
 ---
 id: PRD-M10
 kind: module
-status: deferred
-last_reconciled: 2026-08-14
+status: current
+last_reconciled: 2026-08-15
 decision_ids:
   - SCOPE-PLAY-MONEY
   - ACCOUNTING-PHASE-2
   - PHASE2-NLHE-HOME-SESSION
+  - PHASE2-HOUSE-POLICY-V1
   - TEST-RULES-PROFILE
   - TEST-ACCOUNTING
 router: ../manifest.yaml
@@ -55,7 +56,7 @@ Given committed public hand state and one player's private eligibility, expose e
 - Initial profile is single-table, home-session No-Limit Texas Hold'em. `BettingStructure` and `SessionPolicy` remain explicit axes.
 - Phase 1 never instantiates this module or fake zero-valued accounting state.
 - Derive pots from immutable contributions/eligibility; never mutate a pot total as the sole truth.
-- Settlement proposal and balance mutation are separate. Confirmation timing/authority, odd-chip rule, straddles, antes, and missed blinds are deferred to Phase 2 research/specification.
+- Settlement proposal and balance mutation are separate. `p2-house-1` pins explicit host confirmation, clockwise odd-chip allocation beginning left of the dealer, blinds without antes/straddles, between-hand top-ups, and wait-for-big-blind re-entry.
 - Every correction references original entries and preserves total conservation.
 - Histories separate public facts, the player's own cards, and diagnostics; no all-card export.
 
@@ -69,4 +70,9 @@ Real money, payments, rake, credit, clubs, tournament lifecycle, multi-table bal
 
 ## Further Notes
 
-Phase 2 begins only after its unresolved house policies are researched. This PRD reserves the deep module and test seam without pretending those future choices are settled.
+The deep module and its first heads-up tracer are active development work. The
+default Phase 1 party path does not expose it; the browser selector requires
+`?experimental=digital-chips`. Current tests do not yet qualify multiway
+short-all-in reopening, complex side pots, top-up/re-entry, corrections,
+replayable exports, physical devices, or release behavior; those remain
+required before the module can be called complete or party-ready.
