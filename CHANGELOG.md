@@ -16,13 +16,16 @@ All notable project changes will be documented here. The format follows [Keep a 
 
 ### Changed
 
+- Simplified the player decision surface to **Fold** or **Show cards to table**. The legacy Muck event remains replayable for older encrypted recovery state but is no longer emitted by current clients.
+- Made the same-device host path explicit with **Join my own table on this device** and labeled ordinary player invitations for other devices only.
+- Bumped the visible Phase 1 build identity to `0.1.2-phase1` so older table invitations fail compatibility checks instead of silently mixing the two player-decision interfaces.
 - Bumped the visible Phase 1 build identity to `0.1.1-phase1`, added best-effort active-table screen wake locks, and verified Airplane replacement of a closed phone into the same active seat and cards.
 - Added an owner-authorized GitHub Pages field-build deployment that runs only after the complete CI and browser journey gate succeeds.
 - Added a CI-packaged `/normal/` field build whose deploy-time configuration requires one exact WSS service origin and narrows browser connections to that origin.
 
 ### Added
 
-- Added a single-page host-device flow: **Join my own table** redeems an ordinary Player credential, then **Host Controls**, **My Hand**, and **Table View** switch among authority, private, and public projections without relying on a background iOS tab.
+- Added a single-page host-device flow: **Join my own table on this device** redeems an ordinary Player credential, then **Host Controls**, **My Hand**, and **Table View** switch among authority, private, and public projections without relying on a background iOS tab.
 - Complete Phase 1 trusted-host dealer slice: two-to-ten seat capabilities, one-use/revocable invitations, Player/TV/Public Table/Tablet projections, hand lifecycle controls, seat replacement/reorder/dealer relocation, void/correction records, encrypted recovery, and redacted diagnostics.
 - Normal Mode route implementation with local browser channel, direct WebRTC after private signaling, card-blind private relay fallback, table-scoped four-hour relay tickets, host-side ticket renewal, and host-approved reverse display pairing.
 - Standalone Airplane Mode artifact with fully bundled assets, restrictive offline CSP, two-way QR offer/answer pairing, local `iceServers: []` WebRTC, native saved-image detection plus bundled ZXing/jsQR fallbacks, and artifact request regression coverage.

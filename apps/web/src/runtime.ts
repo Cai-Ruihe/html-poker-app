@@ -39,7 +39,7 @@ import {
   type HostAirplanePairing,
 } from "./airplane";
 
-export const BUILD_VERSION = "0.1.1-phase1";
+export const BUILD_VERSION = "0.1.2-phase1";
 export const PROTOCOL_VERSION = 1;
 
 const requestTimeoutMs = 7_500;
@@ -50,7 +50,6 @@ export type PlayerAction =
   | { readonly type: "undo-fold" }
   | { readonly type: "finalize-fold" }
   | { readonly type: "show" }
-  | { readonly type: "muck" }
   | { readonly sittingOut: boolean; readonly type: "set-sitting-out" }
   | { readonly type: "disconnect" };
 
@@ -2473,7 +2472,6 @@ export class HostTableRuntime {
     const payloadByAction = {
       "finalize-fold": { type: "FinalizeFold" },
       fold: { type: "FoldCards" },
-      muck: { type: "MuckCards" },
       show: { type: "ShowCards" },
       "undo-fold": { type: "RetractFold" },
     } as const;

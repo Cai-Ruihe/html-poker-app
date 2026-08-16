@@ -14,7 +14,7 @@ Use these terms consistently across PRDs, tickets, code, tests, and UI copy.
 | Player Mode | One seat's private phone/browser presentation. |
 | Tablet Mode | Touch-oriented public table plus scoped dealer controls. |
 | TV Mode | Distance-readable, primarily non-touch public presentation. |
-| Public Table View | Read-only public state, never hidden or mucked cards. |
+| Public Table View | Read-only public state, never hidden, folded, or legacy-mucked cards. |
 | Table-Control Capability | Separate revocable bearer authority for dealer controls; never card access and never derivable from a Public Table permission. |
 | Join Window | Host-controlled interval during which an active invitation may create a new player seat. |
 | Seat Credential | Room-scoped, revocable credential used to authenticate and recover one seat. It is not an account or display name. |

@@ -48,12 +48,25 @@ test("the host device can play and switch to a private hand or public table view
 }) => {
   await host.goto("/");
   await host.getByRole("button", { name: "Create table" }).click();
+  await expect(
+    host.getByRole("heading", { name: "Other devices join here" }),
+  ).toBeVisible();
+  await expect(
+    host.getByText(
+      "Do not scan or open this invitation on the Trusted Host device.",
+    ),
+  ).toBeVisible();
   await host.getByLabel("My display name").fill("Ruihe");
-  await host.getByRole("button", { name: "Join my own table" }).click();
+  await host
+    .getByRole("button", { name: "Join my own table on this device" })
+    .click();
 
   await expect(
     host.getByRole("heading", { name: "You have a seat" }),
   ).toBeVisible();
+  await expect(
+    host.getByRole("heading", { name: "Join this table" }),
+  ).toHaveCount(0);
   await expect(host.locator("[data-private-card]")).toHaveCount(0);
   await host.getByRole("button", { name: "Host Controls" }).click();
   await expect(
@@ -141,10 +154,12 @@ test("host and two player devices complete a private deal-only hand without exte
 
   await alice.getByRole("button", { name: "Show cards to table" }).click();
   await expect(host.locator("[data-shown-card]")).toHaveCount(2);
-  await bob.getByRole("button", { name: "Muck" }).click();
-  await expect(host.getByText("mucked", { exact: true })).toBeVisible();
+  await expect(bob.getByRole("button", { name: "Muck" })).toHaveCount(0);
+  await bob.getByRole("button", { name: "Fold", exact: true }).click();
+  await expect(bob.getByRole("button", { name: "Undo fold" })).toBeVisible();
 
   await host.getByRole("button", { name: "Deal the turn" }).click();
+  await expect(host.getByText("folded", { exact: true })).toBeVisible();
   await host.getByRole("button", { name: "Deal the river" }).click();
   await host.getByRole("button", { name: "End hand" }).click();
   await expect(host.getByText("Physical chips settled?")).toBeVisible();
@@ -189,11 +204,11 @@ test("overlapping table updates do not corrupt player recovery state", async ({
 
   await Promise.all([
     alice.getByRole("button", { name: "Show cards to table" }).click(),
-    bob.getByRole("button", { name: "Muck" }).click(),
+    bob.getByRole("button", { name: "Fold", exact: true }).click(),
   ]);
 
   await expect(host.locator("[data-shown-card]")).toHaveCount(2);
-  await expect(host.getByText("mucked", { exact: true })).toBeVisible();
+  await expect(host.getByText(/folded/u).first()).toBeVisible();
   await alice.evaluate(() => globalThis.dispatchEvent(new Event("pagehide")));
   await host.getByRole("button", { name: /^Players/ }).click();
   await expect(

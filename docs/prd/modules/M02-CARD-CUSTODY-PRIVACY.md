@@ -53,7 +53,7 @@ The interface provides custody initialization under a Rules Profile, determinist
 1. As a player, I want only my hole cards delivered to my private seat.
 2. As a spectator/controller, I want useful table state without any hidden cards.
 3. As a player who shows, I expect that exposure to remain public for the hand even if I flip my own screen down.
-4. As a player who mucks/folds, I expect my cards never to appear in public history or completed-hand cloud backup.
+4. As a player who folds, I expect my cards never to appear in public history or completed-hand cloud backup.
 5. As a deployer, I want relay/checkpoint administrators unable to decrypt card state.
 6. As a future maintainer, I want Mental Poker replaceable without rewriting Game Core or UI.
 
@@ -62,7 +62,7 @@ The interface provides custody initialization under a Rules Profile, determinist
 - Generate projections from authoritative state; never send whole state and hide fields in CSS.
 - Keep Hidden Card State out of DOM, generic application stores, URLs, analytics, crash text, and skin inputs. A dedicated worker/vault may reduce accidental exposure but cannot defeat host control.
 - Public Show is irreversible. A prematurely exposed community card remains recorded as exposed even when the rules repair/redeal the street.
-- Completed-hand remote checkpoints remove mucked/unrevealed cards and finished shuffle/key material before encryption.
+- Completed-hand remote checkpoints remove folded/unrevealed cards, legacy-mucked cards, and finished shuffle/key material before encryption.
 - The Connection Service receives no card keys. Recovery material is generated/exported separately from remote ciphertext.
 - Static HTML contains no live secret. Same-origin/extension/OS compromise remains outside the Phase 1 protection claim.
 

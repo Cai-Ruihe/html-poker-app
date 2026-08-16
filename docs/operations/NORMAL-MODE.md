@@ -62,8 +62,8 @@ Do not put an operator token, table ticket, invitation secret, or personal endpo
 
 1. Open the static site in the host browser and pass the capability preflight.
 2. If a relay URL is configured, enter the private operator token locally and create the table. The UI refuses to create a configured relay table without it.
-3. If the host is also playing, enter **My display name** and choose **Join my own table**. The same page gains **Host Controls** and **My Hand**; after dealing it also gains **Table View** for a shared iPad/tablet screen.
-4. Share the one-use player QR/link for every other seat. Treat the full link as sensitive: its fragment is not sent to the server, but it can remain in browser history, screenshots, clipboard history, or extensions.
+3. If the host is also playing, enter **My display name** and choose **Join my own table on this device**. The same page gains **Host Controls** and **My Hand**; after dealing it also gains **Table View** for a shared iPad/tablet screen.
+4. Share the one-use player QR/link for every other seat. Do not scan or open that ordinary invitation on the Trusted Host device: doing so can replace or background the active authority page and drop its route. Treat the full link as sensitive: its fragment is not sent to the server, but it can remain in browser history, screenshots, clipboard history, or extensions.
 5. Let the host deal after at least two player seats have joined. Normal Mode prefers direct WebRTC after private signaling and falls back to the private relay when direct WebRTC is unavailable.
 6. Pair a TV/Public Table by opening **Pair this display** on the display, choosing the requested public role, then scanning its QR from the host. The display obtains nothing until that host scan completes.
 7. Use the off-table **Connection Service** card to renew a relay ticket before a long interruption or after a recovered host reports expiry. The operator token is not persisted. Ticket expiry stops a new relay registration; it does not forcibly close an already-open in-memory WebSocket.

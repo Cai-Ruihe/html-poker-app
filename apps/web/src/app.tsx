@@ -887,18 +887,25 @@ function InvitePanel({
       </div>
       <div className="invite-panel__content">
         <p className="section-label">
-          {replacementSeat ? "Device replacement" : "Player invitation"}
+          {replacementSeat ? "Device replacement" : "Other devices only"}
         </p>
         <h2>
           {replacementSeat
             ? `Replace ${replacementSeat.displayName}'s device`
-            : "Scan to take a seat"}
+            : "Other devices join here"}
         </h2>
         <p>
           {replacementSeat
             ? "This one-use link keeps the seat and revokes its previous device when redeemed."
             : "Each QR works once. A player chooses their display name after opening it; no account or host approval prompt follows."}
         </p>
+        {!replacementSeat ? (
+          <p className="invite-device-note">
+            <strong>Using this phone or iPad as the host?</strong> Choose Join
+            my own table on this device above. Do not scan or open this
+            invitation on the Trusted Host device.
+          </p>
+        ) : null}
         <label className="invite-link">
           <span>
             {replacementSeat
@@ -1534,8 +1541,9 @@ function JoinOwnDeviceCard({
       <p className="section-label">Host also playing</p>
       <h2 id="join-own-title">Play on this device</h2>
       <p>
-        Keep the Trusted Host running here and switch privately to your hand
-        without opening another browser tab.
+        Keep the Trusted Host running on this page. The controls above switch
+        privately between Host Controls and My Hand; do not scan your own player
+        QR.
       </p>
       <form onSubmit={(event) => void join(event)}>
         <label>
@@ -1557,7 +1565,7 @@ function JoinOwnDeviceCard({
           disabled={!displayName.trim() || busy}
           type="submit"
         >
-          {busy ? "Taking seat…" : "Join my own table"}
+          {busy ? "Taking seat…" : "Join my own table on this device"}
         </button>
       </form>
     </section>
@@ -2062,7 +2070,6 @@ function PlayerExperience({
       mode="player"
       onFinalizeFold={() => perform({ type: "finalize-fold" })}
       onFold={() => perform({ type: "fold" })}
-      onMuck={() => perform({ type: "muck" })}
       onShowCards={() => perform({ type: "show" })}
       onToggleSittingOut={(sittingOut) =>
         perform({ sittingOut, type: "set-sitting-out" })

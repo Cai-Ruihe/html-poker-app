@@ -64,7 +64,7 @@ Expose an atomic `commit accepted transition`, `load latest valid state`, `repla
 - Stable command IDs return stored receipts on retry. Stale revision/epoch commands resynchronize instead of applying.
 - Host recovery proves exclusivity, loads a valid snapshot, replays later events through the same reducer, and compares state digest. Uncertain exclusivity, corruption, missing custody, or unsupported version fails closed.
 - Remote success appears only after exact server acknowledgment and ciphertext hash; distinguish local saved, remote pending, and remote verified.
-- Completed-hand remote checkpoints strip mucked/unrevealed cards and active custody material. Recovery secret is separate from storage.
+- Completed-hand remote checkpoints strip folded/unrevealed cards, legacy-mucked cards, and active custody material. Recovery secret is separate from storage.
 - Diagnostic storage has a separate quota and may evict before authoritative recovery data.
 
 ## Testing Decisions
