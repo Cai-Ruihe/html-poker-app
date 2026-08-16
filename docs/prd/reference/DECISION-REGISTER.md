@@ -7,7 +7,7 @@ This is the searchable source of settled product choices. Load rows by ID rather
 | ID | Decision | Status | Owner |
 |---|---|---|---|
 | SCOPE-PLAY-MONEY | Social Texas Hold'em only; digital chips have no money value, payment, cash-out, or rake. | locked | PRD-000, M10 |
-| PHASE1-DEAL-ONLY | Phase 1 replaces the deck/dealer. Bet amounts, calls/checks/raises, blind posting, stacks, pots, and settlement remain physical/off-app; fold/show/muck/street/hand lifecycle remains in-app. | locked | P1, M01 |
+| PHASE1-DEAL-ONLY | Phase 1 replaces the deck/dealer. Bet amounts, calls/checks/raises, blind posting, stacks, pots, and settlement remain physical/off-app; Fold, Show, street, and hand lifecycle remain in-app. | locked | P1, M01 |
 | PHASE1-TABLE-SIZE | Support 2–10 player seats per table, in addition to the Trusted Host authority and at least one Public Table device. | research-default | P1, M03, M05, M06 |
 | GOV-LICENCE | Project code uses Apache-2.0; commercial use and forks are allowed subject to notices. | locked | M09 |
 | GOV-OFFICIAL-CORE | Anyone may propose changes; only Ruihe approves Official Core changes and Official Releases. | locked | M09 |
@@ -61,7 +61,7 @@ This is the searchable source of settled product choices. Load rows by ID rather
 | RECOVERY-PLAYER | Refresh, power loss, or route change resumes the same seat when its credential survives. | locked | M03, M07 |
 | RECOVERY-DISCONNECT-SIT-OUT | A player disconnected past current-hand end is sitting out for future hands. | locked | M03, M07 |
 | RECOVERY-HOST-REFRESH | Same-browser host refresh recovers only after exclusive authority is proved; otherwise pause/fail closed. | locked | M07 |
-| BACKUP-HAND-END | Optional encrypted checkpoint after explicit hand end; remove mucked/unrevealed cards and completed-hand custody material. Manual Save Log remains available. | locked | M07 |
+| BACKUP-HAND-END | Optional encrypted checkpoint after explicit hand end; remove folded/unrevealed cards, legacy-mucked cards, and completed-hand custody material. Manual Save Log remains available. | locked | M07 |
 | BACKUP-NO-BATTERY | Correctness never depends on the Battery API or a below-10-percent trigger. | locked | M07 |
 | KEY-SEPARATION-RECOVERY | Identity, seat, envelope, vault, remote-recovery, service, AI, and diagnostic secrets are purpose-separated; remote ciphertext does not escrow its recovery material. | research-default | M02, M07 |
 
@@ -77,7 +77,7 @@ This is the searchable source of settled product choices. Load rows by ID rather
 | FOLD-UNDO | Fold has a visible five-second undo window ending earlier at the first dependent irreversible progression. | locked | M01, M06 |
 | FOLD-SIT-OUT | A folded player may already choose sitting out for future hands. | locked | M03, M06 |
 | SHOW-IRREVERSIBLE | Full Show permanently reveals/records cards; only the player's local screen may flip them down, while Public Table keeps them shown until next hand. | locked | M02, M06 |
-| SHOWDOWN-CONCEDE | One contender may show while others fold/muck/concede without revealing; never wait for every contender to show. | locked | M01, M02 |
+| SHOWDOWN-CONCEDE | One contender may show while others Fold without revealing; never wait for every contender to show. Current clients expose no separate Muck action, while Game Core retains the legacy event only for recovery compatibility. | locked | M01, M02 |
 | HAND-END-EXPLICIT | No hand ends automatically, including all-fold; a guarded explicit action ends it after physical settlement. | locked | M01, M06 |
 | CORRECTION-LIVE-EVENTS | Accepted history is append-only; corrections name actor, reason, and corrected event IDs and cannot restore disclosed secrecy. | research-default | M01, M07 |
 | CORRECTION-DEAL-REPAIR | Reject invalid pre-commit deals; repair early misdeals explicitly; record premature public cards as exposed and safely repair/redeal or void. | research-default | M01, M02 |

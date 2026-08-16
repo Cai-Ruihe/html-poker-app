@@ -6,7 +6,7 @@ HTML Poker keeps betting, chips, and conversation physical. A Trusted Host brows
 
 ## Phase 1 status
 
-**Fact — implemented and automated locally.** The Phase 1 codebase supports two to ten player seats, one-use/revocable QR or link invitations, role-scoped Player/TV/Public Table/Tablet surfaces, private card projection, guarded hand lifecycle, show/muck/fold handling, correction/void controls, encrypted IndexedDB recovery, redacted local diagnostics, Normal Mode direct WebRTC with card-blind relay fallback, reverse display pairing, and a standalone two-way-QR Airplane artifact with in-page camera scanning and saved-image fallback.
+**Fact — implemented and automated locally.** The Phase 1 codebase supports two to ten player seats, one-use/revocable QR or link invitations, role-scoped Player/TV/Public Table/Tablet surfaces, private card projection, guarded hand lifecycle, simple Show/Fold handling, correction/void controls, encrypted IndexedDB recovery, redacted local diagnostics, Normal Mode direct WebRTC with card-blind relay fallback, reverse display pairing, and a standalone two-way-QR Airplane artifact with in-page camera scanning and saved-image fallback.
 
 **Fact — automated evidence.** Contract suites cover authority, identity, persistence, diagnostics, and relay isolation. Chromium and Mobile WebKit journeys cover a host joining its own table, switching among host/private/tablet views, player refresh/recovery, and disconnect-to-sit-out. Chromium additionally covers Normal direct/relay routes, reverse display pairing, stale-link diagnosis and ticket refresh after a service restart, plus standalone Airplane boot and pairing.
 
@@ -20,7 +20,7 @@ The owner-authorized field build is published from `main` only after the configu
 
 **https://cai-ruihe.github.io/html-poker-app/**
 
-Open that exact HTTPS address on the host and every iPhone, confirm **Build 0.1.1-phase1**, and create a fresh table. This removes copied-file version drift and gives the in-page QR scanner a normal secure web origin. Use **Enlarge QR** before each phone scans the laptop's offer. The page still uses Airplane Mode's local, serverless WebRTC path after it loads; GitHub Pages does not receive cards or table messages.
+Open that exact HTTPS address on the host and every iPhone, confirm **Build 0.1.2-phase1**, and create a fresh table. This removes copied-file version drift and gives the in-page QR scanner a normal secure web origin. Use **Enlarge QR** before each phone scans the laptop's offer. The page still uses Airplane Mode's local, serverless WebRTC path after it loads; GitHub Pages does not receive cards or table messages.
 
 For the short operating sequence and phone-replacement recovery, use the [Airplane Mode party runbook](docs/operations/AIRPLANE-MODE.md#same-wi-fi-party-setup).
 
@@ -32,7 +32,7 @@ The owner-authorized Normal field build is published at:
 
 Normal Mode uses ordinary one-use invitation links/QRs and a card-blind Connection Service. The current field service runs on the owner's laptop through an outbound TLS tunnel, so the laptop and its container runtime must remain awake. The operator token stays outside the repository and public site. This temporary service has no uptime guarantee; it is not the later permanent deployment claim.
 
-If the host phone or iPad is also playing, choose **Join my own table** before dealing. Keep that one page foregrounded and use **Host Controls**, **My Hand**, and **Table View**; a separate background iOS tab is not required.
+If the host phone or iPad is also playing, choose **Join my own table on this device** before dealing. Keep that one page foregrounded and use **Host Controls**, **My Hand**, and **Table View**. The ordinary player QR/link is for other devices; opening it on the host device can replace or background the active authority page and break that route.
 
 See [Normal Mode operations](docs/operations/NORMAL-MODE.md) for the host flow, service boundary, and restart procedure.
 

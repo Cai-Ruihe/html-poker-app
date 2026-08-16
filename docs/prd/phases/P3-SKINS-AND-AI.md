@@ -82,7 +82,7 @@ Community Skins use a versioned manifest and validated assets/tokens only. Devic
 
 ## Out of Scope
 
-Arbitrary plug-ins/prompts, provider credentials in browser code, automatic paid fallback, provider eligibility by assumption, remote AI before disclosure approval, AI authority over the Game Core, guaranteed style/strength, unlabeled exact-GTO claims, raw provider chain-of-thought, automatic disclosure of folded/mucked human cards, and Mental Poker.
+Arbitrary plug-ins/prompts, provider credentials in browser code, automatic paid fallback, provider eligibility by assumption, remote AI before disclosure approval, AI authority over the Game Core, guaranteed style/strength, unlabeled exact-GTO claims, raw provider chain-of-thought, automatic disclosure of folded or otherwise unrevealed human cards, and Mental Poker.
 
 ## Further Notes
 

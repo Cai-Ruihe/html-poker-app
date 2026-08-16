@@ -28,6 +28,7 @@ export type CommandPayload =
   | { readonly type: "RetractFold" }
   | { readonly type: "FinalizeFold" }
   | { readonly type: "ShowCards" }
+  /** Legacy recovery compatibility. Current player interfaces emit FoldCards instead. */
   | { readonly type: "MuckCards" }
   | { readonly type: "EndHand" }
   | { readonly dealerSeatId: string; readonly type: "RelocateDealer" }

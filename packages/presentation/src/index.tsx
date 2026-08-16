@@ -20,7 +20,6 @@ export interface TableSurfaceProps {
   readonly onEndHand?: () => void;
   readonly onFinalizeFold?: () => void;
   readonly onFold?: () => void;
-  readonly onMuck?: () => void;
   readonly onRevealStreet?: (street: Street) => void;
   readonly onShowCards?: () => void;
   readonly onStartNextHand?: () => void;
@@ -361,13 +360,6 @@ function PrivateHand(
               onClick={() => props.onShowCards?.()}
             >
               Show cards to table
-            </ActionButton>
-            <ActionButton
-              disabled={props.busy || !props.onMuck}
-              onClick={() => props.onMuck?.()}
-              quiet
-            >
-              Muck
             </ActionButton>
           </>
         ) : null}

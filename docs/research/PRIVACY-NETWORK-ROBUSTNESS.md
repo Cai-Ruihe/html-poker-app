@@ -215,7 +215,7 @@ Use separate material for at least these purposes:
 
 - Never embed long-lived credentials or private keys in static HTML, invitation URLs/QR, peer messages, checkpoint blobs, support bundles, or logs.
 - Write authoritative state before acknowledging irreversible actions. Recovery accepts only a single proven current authority and fails closed on split-brain ambiguity.
-- The optional remote checkpoint is authenticated ciphertext. At explicit hand end, remove mucked/unrevealed completed-hand cards and obsolete custody material before upload.
+- The optional remote checkpoint is authenticated ciphertext. At explicit hand end, remove folded/unrevealed completed-hand cards, legacy-mucked cards, and obsolete custody material before upload.
 - Claim cross-device remote recovery only after the host explicitly confirms or exports the separate recovery material. If the only recovery secret is lost, the checkpoint is intentionally unrecoverable; Phase 1 already accepts that permanent host loss may end the game.
 - Rotate and compact keys/checkpoints at a hand boundary, never in the middle of custody transitions.
 

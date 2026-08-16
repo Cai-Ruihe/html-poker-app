@@ -78,7 +78,7 @@ Academic evidence does not decide whether this home product should prioritize to
 
 **Inference**
 
-Phase 1 should model only state it can authoritatively know: table/seat eligibility, dealer position, shuffled cards, streets, fold/show/muck/concede, available hand evaluation, and explicit hand end. Betting-round completion is communicated by an explicit dealer control, not inferred from chip movement or a timer.
+Phase 1 should model only state it can authoritatively know: table/seat eligibility, dealer position, shuffled cards, streets, Fold/Show, available hand evaluation, and explicit hand end. Betting-round completion is communicated by an explicit dealer control, not inferred from chip movement or a timer. The older Muck event remains a recovery-compatibility state, not a current player action.
 
 **Accepted result:** **LOCKED**. Phase 1 must contain no fake zero-valued stack, bet, pot, buy-in, or settlement fields. A missing digital accounting module means “not known,” not zero.
 
@@ -184,7 +184,7 @@ Digital No-Limit Profile
   -> SettlementPending separates proposed awards from balance mutation
 ```
 
-Both profiles reuse card custody, dealing, fold/show/muck, explicit hand end, projections, transport, persistence, and recovery. Phase 2 adds typed betting/accounting events; it does not reinterpret Phase 1's absent chip state.
+Both profiles reuse card custody, dealing, Fold/Show, explicit hand end, projections, transport, persistence, and recovery. Phase 2 adds typed betting/accounting events; it does not reinterpret Phase 1's absent chip state.
 
 A conceptual Rules Profile needs independent, pinned axes like these:
 
@@ -208,7 +208,7 @@ This is an architecture constraint, not a stable wire-schema commitment. Unsuppo
 | Physical betting appears complete | Only an authorized dealer command advances the street; the app never infers completion from time or cards remaining. | `PHASE1-DEAL-ONLY` |
 | Physical all-in or side pot exists | Phase 1 records no amount or pot truth and does not claim to allocate chips. Players settle physically before explicit End Hand. | `PHASE1-DEAL-ONLY`, `HAND-END-EXPLICIT` |
 | Everyone folds | Mark the remaining player as awardable, but do not end or settle automatically. | `HAND-END-EXPLICIT` |
-| One contender shows and others muck/concede | Evaluate only from available shown cards and concessions. Hidden losing hands remain Unknown and private. | `SHOWDOWN-CONCEDE` |
+| One contender shows and others Fold | Evaluate only from available shown cards. Hidden losing hands remain Unknown and private. | `SHOWDOWN-CONCEDE` |
 | Heads-up play | Dealer/small-blind position and pre/post-flop order must be covered by profile tests, not UI assumptions copied from larger tables. | `TEST-RULES-PROFILE` |
 | Short all-in creates side pots | Phase 2 derives pots from immutable contributions and eligibility; balances remain unchanged until confirmed settlement. | `TEST-ACCOUNTING` |
 | Tie leaves an odd chip | Do not guess. Pin a house policy when Phase 2 begins and include it in replay and explanation. | Deferred Phase 2 house policy |

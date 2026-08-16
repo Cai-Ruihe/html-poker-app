@@ -48,9 +48,9 @@ A capable browser creates one table, owns the shuffled deck, and commits an orde
 1. As a host, I want a capability check before creating a table so that an unsuitable browser fails before cards are dealt.
 2. As a player, I want QR/full-URL joining without an account or per-player approval prompt.
 3. As a host who is also playing, I want a separate Player credential and private view on this device or another device so my role does not leak cards or authority.
-4. As a player, I want cover-and-drag peek, fold with guarded undo, irreversible Show, and private muck/concede behavior.
+4. As a player, I want private reveal, Fold with guarded undo, and irreversible Show without a second concession action to interpret.
 5. As a dealer, I want explicit street advance and guarded End Hand, including when everyone folds.
-6. As a group, we want the Public Table to evaluate available shown hands without forcing folded/mucked players to reveal.
+6. As a group, we want the Public Table to evaluate available shown hands without forcing folded players to reveal.
 7. As a dealer, I want auto seating, movable visual positions, and separate dealer relocation without charging blinds or dealing.
 8. As a returning player, I want refresh, temporary power loss, or route change to recover my seat.
 9. As a group, we want a disconnected player to become sitting out for future hands after current-hand end.
@@ -67,12 +67,12 @@ A capable browser creates one table, owns the shuffled deck, and commits an orde
 - A host device may redeem an ordinary Player invitation, then switch within one active document among Host Controls, its credential-filtered My Hand, and card-blind Table View. The switch changes presentation, never authority.
 - Normal route order is direct → deployer private relay → optional deployer cloud relay. The host key is authenticated independently of signaling.
 - Host death may end the game. Same-browser host refresh resumes only after exclusive authority and deterministic replay succeed.
-- Optional completed-hand remote checkpoints exclude never-revealed/mucked cards and active custody material.
+- Optional completed-hand remote checkpoints exclude never-revealed/folded cards, legacy-mucked cards, and active custody material.
 
 ## Testing Decisions
 
-- End-to-end: create → join 2–10 seats → deal → peek/fold/show/muck → reveal board → explicit end → next hand.
-- Exercise heads-up, six-max, ten-player layout, all-fold, one-show/rest-muck, tie evaluation, accidental fold, premature deal, duplicate control, player replacement, and disconnect past hand end.
+- End-to-end: create → join 2–10 seats → deal → privately reveal/fold/show → reveal board → explicit end → next hand.
+- Exercise heads-up, six-max, ten-player layout, all-fold, one-show/rest-fold, tie evaluation, accidental fold, premature deal, duplicate control, player replacement, and disconnect past hand end.
 - Fault every persistence boundary and prove no success/private projection precedes commit.
 - Run direct/private/cloud path, network switch, hostile signaling, replayed invitation, and reconnect tests.
 - Run actual iOS/iPadOS, Android, desktop, tablet, and selected TV matrices.

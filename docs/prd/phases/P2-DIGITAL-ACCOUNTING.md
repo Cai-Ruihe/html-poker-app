@@ -42,7 +42,7 @@ At table creation, the host selects either the Phase 1 Deal-Only Profile or the 
 4. As a table, we want main/side-pot eligibility and ties explained before balances change.
 5. As a dealer, I want explicit settlement confirmation so conversation and correction can finish first.
 6. As a player, I want a private history containing public events plus only my own cards.
-7. As a group, we want a public history containing shown cards but never mucked or never-revealed cards.
+7. As a group, we want a public history containing shown cards but never folded, legacy-mucked, or never-revealed cards.
 8. As a learner, I want versioned JSON plus a readable replay/report for later analysis.
 9. As a remote observer/player, I want the public board available on my device when I cannot see the room's display.
 10. As a future AI seat, I need an exact state, action history, and legal-action envelope.

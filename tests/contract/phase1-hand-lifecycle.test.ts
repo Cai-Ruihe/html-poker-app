@@ -134,7 +134,7 @@ describe("complete Phase 1 hand lifecycle", () => {
     });
   });
 
-  it("keeps mucked cards private while evaluating voluntarily shown cards", async () => {
+  it("keeps legacy muck events private during recovery replay", async () => {
     const authority = createAuthority();
     await createAndStart(authority);
 

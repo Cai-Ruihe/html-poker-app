@@ -76,7 +76,7 @@ The Seat Controller interface receives a versioned seat-scoped observation, lega
 - Play Style Profiles are bounded versioned data and measured behavior, not arbitrary imported prompts or personality guarantees.
 - Each recorded AI training decision links a solver baseline or explicit unavailable/error status, the applied Play Style Profile/version, the final validated proposal, and a concise user-facing consideration note. Missing analysis never masquerades as solved play.
 - The consideration note is a generated explanation artifact, not raw provider chain-of-thought and not authoritative evidence that the model internally reasoned as described.
-- Completed-hand replay/export uses M07 persistence and M10 action history. It remains projection-filtered: folded or mucked human cards and unrelated seat secrets are not exposed merely because the hand ended.
+- Completed-hand replay/export uses M07 persistence and M10 action history. It remains projection-filtered: folded, legacy-mucked, or otherwise unrevealed human cards and unrelated seat secrets are not exposed merely because the hand ended.
 - Phase 3 research evaluates lawful free online solver access first and inspected open-source local execution as the offline/self-hosted route. No engine, licence, accuracy level, real-time method, or resource budget is assumed before that evidence exists.
 
 ## Testing Decisions
@@ -85,7 +85,7 @@ Test projection/cross-seat isolation, provider-domain collisions, prompt injecti
 
 ## Out of Scope
 
-AI dealer/authority, arbitrary tools/code execution, credential sharing, assumed subscription reuse, silent API/overage fallback, provider eligibility without dated evidence, multi-seat remote provider disclosure by default, guaranteed style/strength, unlabeled claims of exact GTO play, raw provider chain-of-thought, automatic disclosure of folded/mucked human cards, and dependence of human play on AI.
+AI dealer/authority, arbitrary tools/code execution, credential sharing, assumed subscription reuse, silent API/overage fallback, provider eligibility without dated evidence, multi-seat remote provider disclosure by default, guaranteed style/strength, unlabeled claims of exact GTO play, raw provider chain-of-thought, automatic disclosure of folded or otherwise unrevealed human cards, and dependence of human play on AI.
 
 ## Further Notes
 

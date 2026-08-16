@@ -40,7 +40,7 @@ The external interface is conceptually one operation: submit a command with tabl
 ### Owns
 
 - Rules Profile compatibility and lifecycle legality.
-- Seats in hand, logical dealer/blind positions, streets, fold/show/muck/concede, evaluator facts, and explicit hand end.
+- Seats in hand, logical dealer/blind positions, streets, Fold/Show, evaluator facts, and explicit hand end. Legacy Muck events remain replayable but are not emitted by current clients.
 - Command idempotency semantics, revision progression, typed corrections, and event schema.
 - Phase 1 explicit street authority and Phase 2 `BettingRoundClosed` authority.
 
@@ -72,7 +72,7 @@ The external interface is conceptually one operation: submit a command with tabl
 
 ## Testing Decisions
 
-The command handler plus replay interface is the primary test seam. Use table-driven state transitions, property tests for legal event sequences, duplicate/reorder/race faults, snapshot-versus-genesis replay, rules-version mismatch, and Phase 1 no-chip-state assertions. Differentially test hand evaluation. Exercise heads-up dealer/blind logic, all-fold, one-show/rest-muck, correction/void, and multiple controllers.
+The command handler plus replay interface is the primary test seam. Use table-driven state transitions, property tests for legal event sequences, duplicate/reorder/race faults, snapshot-versus-genesis replay, rules-version mismatch, and Phase 1 no-chip-state assertions. Differentially test hand evaluation. Exercise heads-up dealer/blind logic, all-fold, one-show/rest-fold, legacy Muck replay privacy, correction/void, and multiple controllers.
 
 ## Out of Scope
 
