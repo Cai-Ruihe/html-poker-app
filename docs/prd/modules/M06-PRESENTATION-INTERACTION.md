@@ -2,12 +2,13 @@
 id: PRD-M06
 kind: module
 status: current
-last_reconciled: 2026-08-14
+last_reconciled: 2026-08-16
 decision_ids:
   - PHASE1-TABLE-SIZE
   - NET-DISPLAY-REVERSE-QR
   - MODE-SEPARATION
   - MODE-TABLE-CONTROL
+  - MODE-HOST-DEVICE-SWITCH
   - SEAT-AUTO-AND-DRAG
   - DEALER-RELOCATION
   - FOLD-UNDO
@@ -64,10 +65,12 @@ Each mode has its own renderer over a shared semantic design system. Renderers c
 10. As an accessibility user, I want semantic labels, high contrast, large ranks, reduced motion, and private headphone card reading where supported.
 11. As a public-display user, I want one clear mode-switch action to enter or leave Tablet presentation when this device already has Table-Control authority.
 12. As a TV user, I want the unpaired screen to show a distance-readable Normal Mode QR so the host can connect it without long remote-control typing.
+13. As a host using a phone or iPad, I want one clear switch among Host Controls, my private hand, and the public Table View so one foreground page can serve the roles I actually hold.
 
 ## Implementation Decisions
 
 - A Public Table can visually switch to Tablet Mode only when the device already holds/redeems Table-Control.
+- A Trusted Host device keeps one active document and offers Host Controls, My Hand only after an ordinary Player credential is present, and Table View only after the table starts. Each view renders its own projection; opening a background host/player tab is not the primary interaction.
 - An unpaired Normal Mode TV/Public display may render its ephemeral reverse-pairing QR and plain-language status; it receives no table projection until an authorized scanner completes pairing.
 - The Player cover-and-drag interaction peeks progressively; deliberately dragging through the full-show threshold commits irreversible Show. Afterward, only that player's local screen may flip the cards face-down again.
 - Exact button placement and press-hold versus Dealer double-action remain prototype decisions; the outcome—guarded explicit End Hand—is locked.
@@ -79,7 +82,7 @@ Each mode has its own renderer over a shared semantic design system. Renderers c
 
 ## Testing Decisions
 
-Use rendered interaction tests at each mode's public interface plus browser/device tests. Cover common one-hand flow, accidental gesture, multi-touch/scroll conflict, background/resume, tablet orientation, TV distance/input, ten seats, long names, controller revoke, capability denial, VoiceOver/screen readers, headphones, reduced motion, contrast, text scaling, and skin fallback. Measure button count/attention in prototypes before locking layout.
+Use rendered interaction tests at each mode's public interface plus browser/device tests. Cover common one-hand flow, same-device host-player join and view switching, private-card DOM isolation, refresh recovery, accidental gesture, multi-touch/scroll conflict, background/resume, tablet orientation, TV distance/input, ten seats, long names, controller revoke, capability denial, VoiceOver/screen readers, headphones, reduced motion, contrast, text scaling, and skin fallback. Measure button count/attention in prototypes before locking layout.
 
 ## Out of Scope
 

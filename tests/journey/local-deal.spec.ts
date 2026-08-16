@@ -42,6 +42,62 @@ async function createTableWithTwoPlayers(
   return { alice, bob };
 }
 
+test("the host device can play and switch to a private hand or public table view", async ({
+  context,
+  page: host,
+}) => {
+  await host.goto("/");
+  await host.getByRole("button", { name: "Create table" }).click();
+  await host.getByLabel("My display name").fill("Ruihe");
+  await host.getByRole("button", { name: "Join my own table" }).click();
+
+  await expect(
+    host.getByRole("heading", { name: "You have a seat" }),
+  ).toBeVisible();
+  await expect(host.locator("[data-private-card]")).toHaveCount(0);
+  await host.getByRole("button", { name: "Host Controls" }).click();
+  await expect(
+    host.getByRole("heading", { name: "Waiting for players" }),
+  ).toBeVisible();
+  await expect(host.getByText("Ruihe", { exact: true })).toBeVisible();
+
+  const bob = await joinPlayer(host, context, "Bob");
+  await host.getByRole("button", { name: "Deal first hand" }).click();
+  await expect(bob.locator("[data-private-card]")).toHaveCount(2);
+
+  await host.getByRole("button", { name: "My Hand" }).click();
+  await expect(host.getByRole("heading", { name: "Your cards" })).toBeVisible();
+  await expect(host.locator("[data-private-card]")).toHaveCount(2);
+  const cardsBeforeRefresh = await host
+    .locator("[data-private-card]")
+    .evaluateAll((cards) =>
+      cards.map((card) => card.getAttribute("data-card")),
+    );
+
+  await host.getByRole("button", { name: "Table View" }).click();
+  await expect(host.getByLabel("Dealer controls")).toBeVisible();
+  await expect(host.locator("[data-private-card]")).toHaveCount(0);
+
+  await host.reload();
+  await expect(host.getByRole("button", { name: "My Hand" })).toBeVisible();
+  expect(new URL(host.url()).hash).toContain("resume=host");
+  await host.getByRole("button", { name: "My Hand" }).click();
+  await expect(host.locator("[data-private-card]")).toHaveCount(2);
+  await expect
+    .poll(() =>
+      host
+        .locator("[data-private-card]")
+        .evaluateAll((cards) =>
+          cards.map((card) => card.getAttribute("data-card")),
+        ),
+    )
+    .toEqual(cardsBeforeRefresh);
+  const combinedHostAccessibility = await new AxeBuilder({
+    page: host,
+  }).analyze();
+  expect(combinedHostAccessibility.violations).toEqual([]);
+});
+
 test("host and two player devices complete a private deal-only hand without external requests", async ({
   context,
   page: host,

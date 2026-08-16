@@ -400,6 +400,89 @@ button:disabled {
   min-height: 100svh;
 }
 
+.lobby-primary {
+  display: grid;
+  gap: 1rem;
+}
+
+.host-device-switcher {
+  position: sticky;
+  z-index: 30;
+  top: 0;
+  display: flex;
+  justify-content: center;
+  gap: 0.35rem;
+  border-bottom: 1px solid var(--rule);
+  padding: max(0.55rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right)) 0.55rem
+    max(1rem, env(safe-area-inset-left));
+  background: var(--canvas);
+}
+
+.host-device-switcher button {
+  min-height: 2.45rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.5rem 0.9rem;
+  color: var(--ink-soft);
+  background: transparent;
+  font-size: 0.72rem;
+  font-weight: 760;
+}
+
+.host-device-switcher button[aria-pressed="true"] {
+  color: white;
+  background: var(--green);
+}
+
+.host-device-switcher button:disabled {
+  opacity: 0.42;
+}
+
+.host-device-view {
+  min-height: 100svh;
+  background: var(--canvas);
+}
+
+.join-own-device {
+  border: 1px solid var(--green);
+  border-radius: 1rem;
+  padding: clamp(1.3rem, 3vw, 2rem);
+  background: var(--green-soft);
+}
+
+.join-own-device h2 {
+  font-size: clamp(1.65rem, 3vw, 2.5rem);
+}
+
+.join-own-device > p:not(.section-label) {
+  max-width: 46rem;
+  margin: 0.75rem 0 1rem;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.join-own-device form,
+.join-own-device label {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.join-own-device label {
+  color: var(--quiet);
+  font-size: 0.72rem;
+  font-weight: 680;
+}
+
+.join-own-device input {
+  width: 100%;
+  border: 1px solid var(--rule-strong);
+  border-radius: 0.55rem;
+  padding: 0.8rem 0.85rem;
+  color: var(--ink);
+  background: var(--surface);
+}
+
 .room-id {
   display: flex;
   align-items: baseline;
@@ -1012,7 +1095,7 @@ button:disabled {
 .host-tools {
   position: fixed;
   z-index: 20;
-  top: 0.72rem;
+  top: 4.2rem;
   right: clamp(1rem, 2vw, 2rem);
   display: flex;
   gap: 0.45rem;
@@ -2021,6 +2104,20 @@ button:disabled {
 }
 
 @media (max-width: 620px) {
+  .host-device-switcher {
+    gap: 0.2rem;
+    padding-right: max(0.4rem, env(safe-area-inset-right));
+    padding-left: max(0.4rem, env(safe-area-inset-left));
+  }
+
+  .host-device-switcher button {
+    flex: 1;
+    min-width: 0;
+    padding-right: 0.35rem;
+    padding-left: 0.35rem;
+    font-size: 0.64rem;
+  }
+
   .brand-lockup span:not(.brand-glyph),
   .table-mark strong {
     display: none;
