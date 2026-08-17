@@ -295,6 +295,9 @@ test("Phone host shown cards are compact and showdown marks exactly the winning 
       Math.max(0, document.documentElement.scrollWidth - innerWidth),
     ),
   ).toBe(0);
+  await expect(
+    host.getByRole("button", { name: "End hand", exact: true }),
+  ).toBeEnabled();
 
   await screenshotIfChromium(host, testInfo, "phone-host-showdown");
   const accessibility = await new AxeBuilder({ page: host }).analyze();
