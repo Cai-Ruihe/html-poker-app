@@ -149,6 +149,10 @@ visual_contract:
 visual_baselines:
   platforms: [darwin, linux]
   project: chromium
+  ci_failure_evidence:
+    workflow: .github/workflows/ci.yml
+    retention_days: 14
+    required_paths: [test-results/playwright, playwright-report]
   required:
     - { name: phone-home, test: tests/journey/feedback-regressions.spec.ts }
     - { name: phone-join, test: tests/journey/feedback-regressions.spec.ts }

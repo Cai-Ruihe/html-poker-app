@@ -40,6 +40,8 @@ For every changed role/state:
 6. Run the interaction in Chromium and WebKit. Pixel baselines remain deterministic-Chromium evidence unless a second engine has a stable checked-in baseline. Darwin and Linux keep separate reviewed Chromium baselines; cross-platform differences may not be hidden by widening the pixel threshold.
 7. Run the small-phone, iPad landscape, desktop, and TV-width matrix named in the registry.
 
+When browser QA fails in CI, the workflow retains the Playwright HTML report, actual image, diff image, failure screenshots, error context, and trace for 14 days. A visual failure may not be classified, re-baselined, or waived from log text alone; the retained expected/actual/diff evidence must be inspected first.
+
 For menus and dialogs, existence is not functional coverage. Tests open every layer, invoke every available action, assert the resulting view/state, and verify that unavailable actions are disabled with an explicit capability explanation.
 
 Every Tablet secondary action has a stable `data-qa-action` ID imported by `qa-registry.yaml`. Registry validation fails when an action is missing from the implementation or from an invoking journey. The browser test also compares the complete rendered action inventory, so adding a control without adding its result assertion blocks release. The registry separately names every required visual baseline and fails when a baseline call or Darwin/Linux image is absent. Actual Tablet player administration is both operated and screenshot-compared; opening a placeholder or merely finding the menu label cannot pass.
@@ -96,7 +98,7 @@ pnpm release:manifest
 pnpm release:verify
 ```
 
-`pnpm qa:release` runs the local automated subset in the required order. CI repeats the locked install and release-blocking browser suite before Pages deployment.
+`pnpm qa:release` runs the local automated subset in the required order. CI repeats the locked install and release-blocking browser suite before Pages deployment. `pnpm qa:registry` also verifies that CI preserves browser failure evidence; removing that diagnostic step blocks the release gate.
 
 ## Evidence and claim language
 

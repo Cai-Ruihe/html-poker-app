@@ -171,6 +171,35 @@ if (visualBaselines?.project !== "chromium") {
     "visual baselines must declare the deterministic chromium project",
   );
 }
+const failureEvidence = visualBaselines?.ci_failure_evidence;
+if (!failureEvidence?.workflow || !relativeExists(failureEvidence.workflow)) {
+  failures.push("visual failure-evidence workflow is missing");
+} else {
+  const workflow = await readFile(
+    path.join(root, failureEvidence.workflow),
+    "utf8",
+  );
+  for (const requiredFragment of [
+    "if: failure()",
+    "actions/upload-artifact@",
+    ...(failureEvidence.required_paths ?? []),
+  ]) {
+    if (!workflow.includes(requiredFragment)) {
+      failures.push(
+        `CI does not preserve required visual failure evidence: ${requiredFragment}`,
+      );
+    }
+  }
+  if (
+    !Number.isSafeInteger(failureEvidence.retention_days) ||
+    failureEvidence.retention_days < 7
+  ) {
+    failures.push("visual failure-evidence retention must be at least 7 days");
+  }
+  if (!workflow.includes(`retention-days: ${failureEvidence.retention_days}`)) {
+    failures.push("CI visual failure-evidence retention differs from registry");
+  }
+}
 for (const baseline of visualBaselines?.required ?? []) {
   if (!relativeExists(baseline.test)) {
     failures.push(`visual baseline test is missing: ${baseline.test}`);
