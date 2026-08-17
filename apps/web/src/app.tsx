@@ -2104,9 +2104,9 @@ function HostTable({
         {...(activeView === "table"
           ? {
               onHostControls: () => onViewChange("host"),
-              ...(hasPlayer ? { onMyHand: () => onViewChange("player") } : {}),
             }
           : {})}
+        {...(hasPlayer ? { onMyHand: () => onViewChange("player") } : {})}
         onDownloadLog={() =>
           downloadText(
             `html-poker-${runtime.tableId}-diagnostics.json`,
@@ -2143,6 +2143,7 @@ function HostTable({
         onStartNextHand={() =>
           performDealerAction(() => runtime.startNextHand())
         }
+        onTableView={() => onViewChange("table")}
         onTableThemeChange={(tableTheme) =>
           performDealerAction(() => runtime.setTableTheme(tableTheme))
         }

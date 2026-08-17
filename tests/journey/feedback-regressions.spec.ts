@@ -240,7 +240,7 @@ test("Phone host shown cards are compact and showdown marks exactly the winning 
   await host.addInitScript(() => {
     // Visual QA needs a stable shuffled deck. This replacement is scoped to
     // the isolated test page and is never part of the production runtime.
-    let nextByte = 19;
+    let nextByte = 48;
     Object.defineProperty(globalThis.crypto, "getRandomValues", {
       configurable: true,
       value: <T extends ArrayBufferView>(values: T): T => {
@@ -272,6 +272,19 @@ test("Phone host shown cards are compact and showdown marks exactly the winning 
 
   const miniHand = host.locator(".mini-hand").filter({ hasText: "" }).first();
   await expect(miniHand.locator(".card--compact")).toHaveCount(2);
+  await expect(miniHand.locator(".card--best")).toHaveCount(1);
+  await expect(miniHand.locator(".card--unused")).toHaveCount(1);
+  const selectedHoleOpacity = Number.parseFloat(
+    await miniHand
+      .locator(".card--best")
+      .evaluate((element) => getComputedStyle(element).opacity),
+  );
+  const unusedHoleOpacity = Number.parseFloat(
+    await miniHand
+      .locator(".card--unused")
+      .evaluate((element) => getComputedStyle(element).opacity),
+  );
+  expect(selectedHoleOpacity).toBeGreaterThan(unusedHoleOpacity);
   const compactCards = await miniHand.locator(".card--compact").all();
   const compactBoxes = await Promise.all(
     compactCards.map((card) => card.boundingBox()),
@@ -286,9 +299,39 @@ test("Phone host shown cards are compact and showdown marks exactly the winning 
   expect(second.x + second.width).toBeLessThanOrEqual(
     miniBox.x + miniBox.width + 0.5,
   );
+  const shownSeatDecoration = await miniHand
+    .locator("xpath=..")
+    .evaluate((seat) => {
+      const style = getComputedStyle(seat);
+      return {
+        borderWidths: [
+          style.borderTopWidth,
+          style.borderRightWidth,
+          style.borderBottomWidth,
+          style.borderLeftWidth,
+        ],
+        boxShadow: style.boxShadow,
+      };
+    });
+  expect(new Set(shownSeatDecoration.borderWidths).size).toBe(1);
+  expect(shownSeatDecoration.boxShadow).not.toContain("inset");
   for (const card of compactCards) {
     await expect(card.locator(".card__corner--bottom")).toBeHidden();
     await expect(card.locator(".card__pip")).toBeHidden();
+    const compactStyle = await card.evaluate((element) => {
+      const rankStyle = getComputedStyle(
+        element.querySelector<HTMLElement>(".card__rank")!,
+      );
+      return {
+        decoration: getComputedStyle(element, "::after").content,
+        height: element.getBoundingClientRect().height,
+        rankSize: Number.parseFloat(rankStyle.fontSize),
+        width: element.getBoundingClientRect().width,
+      };
+    });
+    expect(compactStyle.height / compactStyle.width).toBeLessThan(1.35);
+    expect(compactStyle.rankSize).toBeGreaterThanOrEqual(16);
+    expect(compactStyle.decoration).toBe("none");
   }
   expect(
     await host.evaluate(() =>
@@ -302,6 +345,32 @@ test("Phone host shown cards are compact and showdown marks exactly the winning 
   await screenshotIfChromium(host, testInfo, "phone-host-showdown");
   const accessibility = await new AxeBuilder({ page: host }).analyze();
   expect(accessibility.violations).toEqual([]);
+
+  await host.getByRole("button", { name: "Open table control center" }).click();
+  const rootControls = host.getByRole("dialog", {
+    name: "Table control center",
+  });
+  await expect(rootControls).toBeVisible();
+  await screenshotIfChromium(host, testInfo, "phone-host-control-center");
+  const rootAccessibility = await new AxeBuilder({ page: host }).analyze();
+  expect(rootAccessibility.violations).toEqual([]);
+  await rootControls
+    .getByRole("button", { name: "Close table control center" })
+    .click();
+
+  await host.setViewportSize({ height: 1_024, width: 1_366 });
+  await host.getByRole("button", { name: "Table View" }).click();
+  const quietCards = host.locator(".quiet-shown-hand .card--compact");
+  await expect(quietCards).toHaveCount(2);
+  const quietCardStyle = await quietCards.first().evaluate((element) => ({
+    decoration: getComputedStyle(element, "::after").content,
+    rankSize: Number.parseFloat(
+      getComputedStyle(element.querySelector<HTMLElement>(".card__rank")!)
+        .fontSize,
+    ),
+  }));
+  expect(quietCardStyle.decoration).not.toBe("none");
+  expect(quietCardStyle.rankSize).toBeLessThan(16);
 });
 
 test("registered phone, tablet, desktop, and TV viewports remain free of clipping and horizontal overflow", async ({

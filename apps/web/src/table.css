@@ -104,6 +104,32 @@
   flex: 0 0 auto;
 }
 
+.table-surface .table-mark--control {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  justify-content: flex-start;
+  border: 0;
+  border-radius: 0.75rem;
+  padding: 0.3rem;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.table-surface .table-mark--control:hover {
+  background: color-mix(in srgb, var(--table-accent) 9%, transparent);
+}
+
+.table-surface .table-mark--control:active {
+  background: color-mix(in srgb, var(--table-accent) 15%, transparent);
+}
+
+.table-surface--host-root-open {
+  z-index: 31;
+}
+
 .table-surface .table-status {
   border-color: var(--table-rule);
   color: var(--table-ink-soft);
@@ -1157,7 +1183,7 @@ button.secondary-control-card:disabled {
 .table-surface .seat-tile--self,
 .table-surface .seat-tile[data-seat-status="shown"] {
   border-color: var(--table-accent);
-  box-shadow: inset 0 -0.2rem 0 var(--table-accent);
+  box-shadow: none;
 }
 .table-surface .seat-tile[data-seat-status="folded"],
 .table-surface .seat-tile[data-seat-status="mucked"],
@@ -1300,8 +1326,56 @@ button.secondary-control-card:disabled {
 }
 
 .table-surface .mini-hand .card--compact {
-  flex: 0 0 2.35rem;
+  flex: 0 0 2.25rem;
+  width: 2.25rem;
+  aspect-ratio: 0.8;
+  border-radius: 0.32rem;
   padding: 0;
+  background: linear-gradient(145deg, #fffaf0, #efe4d0);
+  box-shadow: 0 0.22rem 0.42rem rgba(0, 0, 0, 0.24);
+}
+
+.table-surface .mini-hand .card--compact::after {
+  content: none;
+}
+
+.table-surface .mini-hand .card--compact .card__corner--top {
+  inset: 0;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.04rem;
+  line-height: 1;
+  text-align: center;
+}
+
+.table-surface .mini-hand .card--compact .card__rank {
+  display: block;
+  width: 100%;
+  font-size: 1.08rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 0.9;
+  text-align: center;
+}
+
+.table-surface .mini-hand .card--compact .card__corner-suit {
+  display: block;
+  width: 100%;
+  margin-top: 0;
+  font-size: 0.92rem;
+  line-height: 0.9;
+  text-align: center;
+}
+
+.table-surface .mini-hand .card--compact.card--best {
+  border-color: var(--table-accent);
+  box-shadow:
+    0 0.22rem 0.42rem rgba(0, 0, 0, 0.24),
+    0 0 0.45rem color-mix(in srgb, var(--table-accent) 24%, transparent);
+  transform: translateY(-0.12rem);
 }
 .table-surface .player-board {
   width: min(68rem, calc(100% - 2rem));
@@ -1538,6 +1612,14 @@ button.secondary-control-card:disabled {
   }
   .secondary-controls__grid {
     grid-template-columns: 1fr;
+  }
+  .host-control-center .surface-theme-picker {
+    display: grid;
+    grid-template-columns: repeat(3, 52px);
+    gap: 6px;
+  }
+  .host-control-center .surface-theme-picker button {
+    width: 52px;
   }
   .theme-picker__options {
     grid-template-columns: 1fr;

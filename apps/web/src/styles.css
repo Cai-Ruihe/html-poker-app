@@ -2062,6 +2062,7 @@ button:disabled {
 
 .airplane-pairing-card--compact {
   display: block;
+  overflow: clip;
   margin-bottom: 1rem;
 }
 

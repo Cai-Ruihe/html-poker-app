@@ -37,3 +37,7 @@ Stable IDs preserve owner feedback independently of conversation context. `qa-re
 | `QA-RELEASE-BLOCK-001` | CI and publication stop when any release-blocking QA gate fails. | Process blocker |
 | `QA-SECONDARY-ACTION-COVERAGE-001` | Every available secondary-menu action has a machine-enforced stable action ID, is invoked, and has its resulting state asserted; unavailable authority is explicit and non-interactive. | Process blocker |
 | `QA-VISUAL-STATE-COVERAGE-001` | Interaction success cannot substitute for visual conformance. Upper-facing controls, the secondary menu, and the real Tablet player-administration surface require reviewed Darwin and Linux screenshot baselines. | Process blocker |
+| `HOST-WINNER-OUTLINE-001` | A shown or winning host seat uses one visually uniform accent outline; status emphasis must not create a thicker bottom edge. | Phase 1 blocker |
+| `HOST-COMPACT-CARD-003` | Host-control mini cards use exactly one optically centred rank and one larger suit symbol; this compact treatment must not alter Tablet or TV quiet-mode cards. | Phase 1 blocker |
+| `SHOWDOWN-HOLE-BEST-FIVE-002` | Best-five emphasis applies to the player's shown hole cards as well as the board, including hands that use exactly one of the two hole cards. | Phase 1 blocker |
+| `HOST-ROOT-CONTROL-001` | The canonical host table symbol is an accessible control that opens a centered Table control center containing existing host capabilities without adding new authority. | Phase 1 blocker |

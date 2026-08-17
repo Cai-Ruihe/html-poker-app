@@ -189,6 +189,10 @@ visual_baselines:
         test: tests/journey/feedback-regressions.spec.ts,
       }
     - {
+        name: phone-host-control-center,
+        test: tests/journey/feedback-regressions.spec.ts,
+      }
+    - {
         name: tablet-quiet-dark-green,
         test: tests/journey/visual-conformance.spec.ts,
       }
@@ -235,6 +239,25 @@ tablet_secondary_actions:
     - theme-black-gold
     - theme-dark-green
     - theme-deep-navy
+
+host_root_actions:
+  source: packages/presentation/src/index.tsx
+  evidence:
+    - tests/journey/control-conformance.spec.ts
+    - tests/journey/feedback-regressions.spec.ts
+  required:
+    - close-control-center
+    - fullscreen
+    - manage-displays
+    - manage-players
+    - my-hand
+    - return-table
+    - save-log
+    - table-view
+    - theme-black-gold
+    - theme-dark-green
+    - theme-deep-navy
+    - toggle-developer
 
 control_contract:
   sources:
@@ -596,6 +619,51 @@ control_contract:
     host-manage-players:
       surface: Host table
       expected_result: Real player administration opens.
+      evidence: tests/journey/control-conformance.spec.ts
+    host-root-controls-open:
+      surface: Host table brand mark
+      expected_result: The centered Table control center opens.
+      evidence: tests/journey/control-conformance.spec.ts
+    host-root-controls-close:
+      surface: Host Table control center
+      expected_result: The control center closes and returns to the table.
+      evidence: tests/journey/control-conformance.spec.ts
+    host-root-controls-return:
+      surface: Host Table control center
+      expected_result: The control center returns to the table without mutation.
+      evidence: tests/journey/control-conformance.spec.ts
+    host-root-manage-players:
+      surface: Host Table control center
+      expected_result: Real player and seat administration opens.
+      evidence: tests/journey/control-conformance.spec.ts
+    host-root-manage-displays:
+      surface: Host Table control center
+      expected_result: Real display and pairing administration opens.
+      evidence: tests/journey/control-conformance.spec.ts
+    host-root-theme-choice:
+      surface: Host Table control center
+      expected_result: The selected table theme synchronizes across roles.
+      variants: [dark-green, black-gold, deep-navy]
+      evidence: tests/journey/control-conformance.spec.ts
+    host-root-view-table:
+      surface: Host Table control center
+      expected_result: This host device switches to Table View.
+      evidence: tests/journey/control-conformance.spec.ts
+    host-root-view-player:
+      surface: Host Table control center
+      expected_result: This host device switches to its private player hand.
+      evidence: tests/journey/control-conformance.spec.ts
+    host-root-fullscreen:
+      surface: Host Table control center
+      expected_result: Fullscreen is requested or an explicit capability error is shown.
+      evidence: tests/journey/control-conformance.spec.ts
+    host-root-toggle-developer:
+      surface: Host Table control center
+      expected_result: Developer diagnostics visibility changes.
+      evidence: tests/journey/control-conformance.spec.ts
+    host-root-save-log:
+      surface: Host Table control center
+      expected_result: A privacy-filtered diagnostics file downloads.
       evidence: tests/journey/control-conformance.spec.ts
     host-developer-toggle:
       surface: Host table

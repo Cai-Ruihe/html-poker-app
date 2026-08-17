@@ -44,8 +44,10 @@ test("the accepted Our Poker Table identity is used on entry and host surfaces",
 
   const inHandBrand = host.locator(".table-mark");
   await expect(
-    inHandBrand.getByRole("img", { name: "Our Poker Table" }),
+    host.getByRole("button", { name: "Open table control center" }),
   ).toBeVisible();
+  await expect(inHandBrand.locator(".table-mark__symbol")).toBeVisible();
+  await expect(inHandBrand).toContainText("Our Poker Table");
   await expect(inHandBrand).not.toContainText("HTML Poker");
 });
 

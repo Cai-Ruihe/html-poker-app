@@ -1027,6 +1027,157 @@ test("Tablet quick and secondary controls all produce their registered outcomes"
   );
 });
 
+test("Host brand control center routes every existing host capability", async ({
+  context,
+  page: host,
+}) => {
+  await createHost(host);
+  await host.getByLabel("My display name").fill("Host player");
+  await host
+    .getByRole("button", { name: "Join my own table on this device" })
+    .click();
+  await expect(
+    host.getByRole("heading", { name: "You have a seat" }),
+  ).toBeVisible();
+  await control(host, "device-view-host").click();
+  await expect(host.getByLabel("Player invitation link")).toBeVisible();
+  await joinPlayer(host, context, "Bob");
+  await host.getByRole("button", { name: "Deal first hand" }).click();
+
+  const rootDialog = host.getByRole("dialog", {
+    name: "Table control center",
+  });
+  await exerciseControl(
+    "host-root-controls-open",
+    control(host, "host-root-controls-open"),
+    (target) => target.click(),
+    () => expect(rootDialog).toBeVisible(),
+  );
+  await exerciseControl(
+    "host-root-controls-close",
+    control(rootDialog, "host-root-controls-close"),
+    (target) => target.click(),
+    () => expect(rootDialog).toHaveCount(0),
+  );
+
+  await control(host, "host-root-controls-open").click();
+  await exerciseControl(
+    "host-root-controls-return",
+    control(rootDialog, "host-root-controls-return"),
+    (target) => target.click(),
+    () => expect(rootDialog).toHaveCount(0),
+  );
+
+  await control(host, "host-root-controls-open").click();
+  await exerciseControlVariant(
+    "host-root-theme-choice",
+    "dark-green",
+    controlVariant(rootDialog, "host-root-theme-choice", "dark-green"),
+    (target) => target.click(),
+    () =>
+      expect(host.locator(".table-surface")).toHaveAttribute(
+        "data-theme",
+        "dark-green",
+      ),
+  );
+  await exerciseControlVariant(
+    "host-root-theme-choice",
+    "black-gold",
+    controlVariant(rootDialog, "host-root-theme-choice", "black-gold"),
+    (target) => target.click(),
+    () =>
+      expect(host.locator(".table-surface")).toHaveAttribute(
+        "data-theme",
+        "black-gold",
+      ),
+  );
+  await exerciseControlVariant(
+    "host-root-theme-choice",
+    "deep-navy",
+    controlVariant(rootDialog, "host-root-theme-choice", "deep-navy"),
+    (target) => target.click(),
+    () =>
+      expect(host.locator(".table-surface")).toHaveAttribute(
+        "data-theme",
+        "deep-navy",
+      ),
+  );
+  await host.evaluate(() => {
+    Object.defineProperty(document.documentElement, "requestFullscreen", {
+      configurable: true,
+      value: async () => {
+        document.documentElement.dataset.hostFullscreenRequested = "true";
+      },
+    });
+  });
+  await exerciseControl(
+    "host-root-fullscreen",
+    control(rootDialog, "host-root-fullscreen"),
+    (target) => target.click(),
+    () =>
+      expect(host.locator("html")).toHaveAttribute(
+        "data-host-fullscreen-requested",
+        "true",
+      ),
+  );
+  await exerciseControl(
+    "host-root-toggle-developer",
+    control(rootDialog, "host-root-toggle-developer"),
+    (target) => target.click(),
+    () => expect(host.getByLabel("Developer diagnostics")).toBeVisible(),
+  );
+  const diagnosticDownload = host.waitForEvent("download");
+  await exerciseControl(
+    "host-root-save-log",
+    control(rootDialog, "host-root-save-log"),
+    (target) => target.click(),
+    async () => {
+      const download = await diagnosticDownload;
+      expect(download.suggestedFilename()).toContain("diagnostics.json");
+    },
+  );
+
+  await exerciseControl(
+    "host-root-manage-players",
+    control(rootDialog, "host-root-manage-players"),
+    (target) => target.click(),
+    () =>
+      expect(
+        host.getByRole("complementary", { name: "Player administration" }),
+      ).toHaveAttribute("data-admin-focus", "players"),
+  );
+  await control(host, "administration-close").click();
+
+  await control(host, "host-root-controls-open").click();
+  await exerciseControl(
+    "host-root-manage-displays",
+    control(rootDialog, "host-root-manage-displays"),
+    (target) => target.click(),
+    () =>
+      expect(
+        host.getByRole("complementary", { name: "Player administration" }),
+      ).toHaveAttribute("data-admin-focus", "displays"),
+  );
+  await control(host, "administration-close").click();
+
+  await control(host, "host-root-controls-open").click();
+  await exerciseControl(
+    "host-root-view-player",
+    control(rootDialog, "host-root-view-player"),
+    (target) => target.click(),
+    () =>
+      expect(host.getByRole("region", { name: "Your cards" })).toBeVisible(),
+  );
+  await control(host, "device-view-host").click();
+  await control(host, "host-root-controls-open").click();
+  await exerciseControl(
+    "host-root-view-table",
+    control(rootDialog, "host-root-view-table"),
+    (target) => target.click(),
+    () => expect(host.locator("[data-table-corner]")).toHaveCount(4),
+  );
+});
+
 test("Airplane pairing controls and role variants open the correct local workflows", async ({
   context,
 }, testInfo: TestInfo) => {

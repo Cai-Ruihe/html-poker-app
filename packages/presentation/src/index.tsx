@@ -46,6 +46,7 @@ export interface TableSurfaceProps {
   readonly onRevealStreet?: (street: Street) => ActionResult;
   readonly onShowCards?: () => void;
   readonly onStartNextHand?: () => ActionResult;
+  readonly onTableView?: () => void;
   readonly onTableThemeChange?: (theme: TableTheme) => ActionResult;
   readonly onToggleSittingOut?: (sittingOut: boolean) => void;
   readonly onToggleDeveloperMode?: () => void;
@@ -681,6 +682,31 @@ function ReconnectAction({
   );
 }
 
+async function togglePageFullscreen(): Promise<void> {
+  const fullscreenDocument = document as Document & {
+    readonly webkitFullscreenElement?: Element;
+    webkitExitFullscreen?: () => Promise<void> | void;
+  };
+  const root = document.documentElement as HTMLElement & {
+    webkitRequestFullscreen?: () => Promise<void> | void;
+  };
+  if (
+    document.fullscreenElement ||
+    fullscreenDocument.webkitFullscreenElement
+  ) {
+    if (document.exitFullscreen) await document.exitFullscreen();
+    else await fullscreenDocument.webkitExitFullscreen?.();
+  } else if (root.requestFullscreen) {
+    await root.requestFullscreen({ navigationUI: "hide" });
+  } else if (root.webkitRequestFullscreen) {
+    await root.webkitRequestFullscreen();
+  } else {
+    throw new Error(
+      "This browser does not expose page full screen. Add the table to the Home Screen to remove browser controls.",
+    );
+  }
+}
+
 type TableCorner = "lower-left" | "lower-right" | "upper-left" | "upper-right";
 
 function TabletControls(props: TableSurfaceProps) {
@@ -814,29 +840,8 @@ function TabletControls(props: TableSurfaceProps) {
 
   async function toggleFullscreen(): Promise<void> {
     setFullscreenError(undefined);
-    const fullscreenDocument = document as Document & {
-      readonly webkitFullscreenElement?: Element;
-      webkitExitFullscreen?: () => Promise<void> | void;
-    };
-    const root = document.documentElement as HTMLElement & {
-      webkitRequestFullscreen?: () => Promise<void> | void;
-    };
     try {
-      if (
-        document.fullscreenElement ||
-        fullscreenDocument.webkitFullscreenElement
-      ) {
-        if (document.exitFullscreen) await document.exitFullscreen();
-        else await fullscreenDocument.webkitExitFullscreen?.();
-      } else if (root.requestFullscreen) {
-        await root.requestFullscreen({ navigationUI: "hide" });
-      } else if (root.webkitRequestFullscreen) {
-        await root.webkitRequestFullscreen();
-      } else {
-        throw new Error(
-          "This browser does not expose page full screen. Add the table to the Home Screen to remove browser controls.",
-        );
-      }
+      await togglePageFullscreen();
     } catch (caught) {
       setFullscreenError(
         caught instanceof Error
@@ -1197,6 +1202,214 @@ function TabletControls(props: TableSurfaceProps) {
   );
 }
 
+function HostRootThemeButtons(props: TableSurfaceProps) {
+  if (!props.onTableThemeChange) return null;
+  return (
+    <div className="surface-theme-picker" role="group" aria-label="Table style">
+      {tableThemeOptions.map((theme) => (
+        <button
+          aria-label={theme.label}
+          aria-pressed={props.projection.tableTheme === theme.id}
+          data-qa-control="host-root-theme-choice"
+          data-qa-variant={theme.id}
+          data-theme-choice={theme.id}
+          disabled={props.busy}
+          key={theme.id}
+          onClick={() => void props.onTableThemeChange?.(theme.id)}
+          type="button"
+        >
+          <span aria-hidden="true" />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function HostControlCenter({
+  onClose,
+  ...props
+}: TableSurfaceProps & { readonly onClose: () => void }) {
+  const [fullscreenError, setFullscreenError] = useState<string>();
+
+  function closeAndRun(action?: () => void): void {
+    if (!action) return;
+    action();
+    onClose();
+  }
+
+  async function toggleFullscreen(): Promise<void> {
+    setFullscreenError(undefined);
+    try {
+      await togglePageFullscreen();
+    } catch (caught) {
+      setFullscreenError(
+        caught instanceof Error
+          ? caught.message
+          : "Full screen was not accepted by this browser.",
+      );
+    }
+  }
+
+  return (
+    <div className="secondary-controls-backdrop">
+      <section
+        aria-labelledby="host-control-center-title"
+        aria-modal="true"
+        className="secondary-controls host-control-center"
+        id="host-control-center"
+        onKeyDown={(event) => {
+          if (event.key === "Escape") onClose();
+        }}
+        role="dialog"
+      >
+        <header>
+          <div>
+            <span className="section-label">Trusted Host</span>
+            <h2 id="host-control-center-title">Table control center</h2>
+          </div>
+          <span className="secondary-controls__health">
+            {props.connectionLabel}
+          </span>
+          <button
+            aria-label="Close table control center"
+            autoFocus
+            className="icon-action icon-action--close"
+            data-qa-control="host-root-controls-close"
+            onClick={onClose}
+            type="button"
+          >
+            <span aria-hidden="true">×</span>
+          </button>
+        </header>
+        <div className="secondary-controls__rule" />
+        <div className="secondary-controls__grid">
+          <button
+            className="secondary-control-card"
+            data-qa-control="host-root-manage-players"
+            disabled={!props.onManagePlayers}
+            onClick={() => closeAndRun(props.onManagePlayers)}
+            type="button"
+          >
+            <span className="secondary-control-card__icon" aria-hidden="true">
+              ◎
+            </span>
+            <strong>Players &amp; seats</strong>
+            <small>Invites, seat order, dealer and replacement</small>
+            <em>
+              {props.hostPlayerCount ?? props.projection.seats.length} players
+            </em>
+            <b aria-hidden="true">›</b>
+          </button>
+          <button
+            className="secondary-control-card"
+            data-qa-control="host-root-manage-displays"
+            disabled={!props.onManageDisplays}
+            onClick={() => closeAndRun(props.onManageDisplays)}
+            type="button"
+          >
+            <span className="secondary-control-card__icon" aria-hidden="true">
+              ▣
+            </span>
+            <strong>Displays &amp; pairing</strong>
+            <small>Tablet, TV and public table screens</small>
+            <em>Manage on this host</em>
+            <b aria-hidden="true">›</b>
+          </button>
+          <section className="secondary-control-card secondary-control-card--appearance">
+            <span className="secondary-control-card__icon" aria-hidden="true">
+              ◐
+            </span>
+            <strong>Appearance</strong>
+            <small>One table colour on every screen</small>
+            <HostRootThemeButtons {...props} />
+          </section>
+          <section className="secondary-control-card secondary-control-card--device">
+            <span className="secondary-control-card__icon" aria-hidden="true">
+              ▯
+            </span>
+            <strong>This device</strong>
+            <small>Views and browser presentation</small>
+            <div className="secondary-device-actions">
+              {props.onTableView ? (
+                <button
+                  data-qa-control="host-root-view-table"
+                  onClick={() => closeAndRun(props.onTableView)}
+                  type="button"
+                >
+                  Table View
+                </button>
+              ) : null}
+              {props.onMyHand ? (
+                <button
+                  data-qa-control="host-root-view-player"
+                  onClick={() => closeAndRun(props.onMyHand)}
+                  type="button"
+                >
+                  My Hand
+                </button>
+              ) : null}
+              <button
+                data-qa-control="host-root-fullscreen"
+                onClick={() => void toggleFullscreen()}
+                type="button"
+              >
+                Full screen
+              </button>
+            </div>
+          </section>
+          <section className="secondary-control-card">
+            <span className="secondary-control-card__icon" aria-hidden="true">
+              ⌁
+            </span>
+            <strong>Diagnostics &amp; history</strong>
+            <small>Privacy-filtered support evidence</small>
+            <div className="secondary-device-actions">
+              <button
+                aria-pressed={props.developerMode ?? false}
+                data-qa-control="host-root-toggle-developer"
+                disabled={!props.onToggleDeveloperMode}
+                onClick={() => props.onToggleDeveloperMode?.()}
+                type="button"
+              >
+                Developer mode
+              </button>
+              <button
+                data-qa-control="host-root-save-log"
+                disabled={!props.onDownloadLog}
+                onClick={() => props.onDownloadLog?.()}
+                type="button"
+              >
+                Save log
+              </button>
+            </div>
+          </section>
+          <section className="secondary-control-card">
+            <span className="secondary-control-card__icon" aria-hidden="true">
+              ↻
+            </span>
+            <strong>Connection &amp; recovery</strong>
+            <small>The authoritative browser remains the source of truth</small>
+            <em>{props.connectionLabel}</em>
+          </section>
+        </div>
+        {fullscreenError ? (
+          <p className="secondary-controls__error" role="alert">
+            {fullscreenError}
+          </p>
+        ) : null}
+        <button
+          className="secondary-controls__return"
+          data-qa-control="host-root-controls-return"
+          onClick={onClose}
+          type="button"
+        >
+          Return to table
+        </button>
+      </section>
+    </div>
+  );
+}
+
 function BettingControls(props: {
   readonly busy: boolean;
   readonly onBettingAction?: (action: BettingActionIntent) => void;
@@ -1466,25 +1679,35 @@ function PrivateHand(
 }
 
 export function TableSurface(props: TableSurfaceProps) {
+  const [hostRootOpen, setHostRootOpen] = useState(false);
   const isPlayer = props.mode === "player" && props.projection.view === "seat";
   const isQuietPublic = ["public", "tablet", "tv"].includes(props.mode);
   const tableTheme = props.projection.tableTheme ?? "dark-green";
   const bestCards = winningBestCards(props.projection);
   return (
     <main
-      className={`table-surface table-surface--${props.mode}`}
+      className={`table-surface table-surface--${props.mode}${hostRootOpen ? " table-surface--host-root-open" : ""}`}
       data-theme={tableTheme}
     >
       {props.mode === "host" ? (
         <header className="table-bar">
-          <div className="table-mark">
+          <button
+            aria-controls="host-control-center"
+            aria-expanded={hostRootOpen}
+            aria-haspopup="dialog"
+            aria-label="Open table control center"
+            className="table-mark table-mark--control"
+            data-qa-control="host-root-controls-open"
+            onClick={() => setHostRootOpen(true)}
+            type="button"
+          >
             <img
-              alt={props.productName}
+              alt=""
               className="table-mark__symbol"
               src={props.brandSymbolSrc}
             />
             <strong>{props.productName}</strong>
-          </div>
+          </button>
           <div className="table-bar__right">
             <div className="table-status" aria-live="polite">
               <strong>{phaseLabel(props.projection.phase)}</strong>
@@ -1584,6 +1807,10 @@ export function TableSurface(props: TableSurfaceProps) {
       ) : null}
 
       {props.mode === "tablet" ? <TabletControls {...props} /> : null}
+
+      {props.mode === "host" && hostRootOpen ? (
+        <HostControlCenter {...props} onClose={() => setHostRootOpen(false)} />
+      ) : null}
 
       {props.developerMode ? (
         <aside className="developer-strip" aria-label="Developer diagnostics">
