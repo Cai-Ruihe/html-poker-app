@@ -44,6 +44,9 @@ Use this checklist for a release candidate; do not mark an item complete without
 ## Operations and handoff
 
 - [ ] Deployment configuration never defaults to Ruihe's private endpoints or credentials.
+- [ ] The unconfigured-fork contract, deployer-owned Compose recipe, token-file handling, and self-hosting documentation pass `tests/contract/normal-self-hosting.test.ts` and `tests/contract/normal-release-config.test.ts`.
+- [ ] For configured Normal Mode, `pnpm qa:live-relay` proves public DNS, `/health`, exact-origin CORS preflight, and invalid-token rejection before manifest creation or Pages deployment; the owner-only token acceptance check passes without logging credentials.
+- [ ] The deployed `normal/poker-config.js` is read back and contains the same verified WSS URL; a dead or different URL is a rollback/block condition.
 - [ ] Rollback and last-known-good artifacts are available without changing a live table mid-game.
 - [ ] Retention/deletion behavior is verified, including the 30-day diagnostic maximum.
 - [ ] Release notes name breaking changes, migration, supported matrix, known limitations, and evidence summary.

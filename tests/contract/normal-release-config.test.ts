@@ -45,6 +45,26 @@ afterEach(async () => {
 });
 
 describe("Normal release configuration", () => {
+  it("keeps an unconfigured open-source deployment free of private relay routing", async () => {
+    const root = await fixture();
+
+    await execute(process.execPath, [configureScript], {
+      cwd: root,
+      env: {
+        ...process.env,
+        NORMAL_CONNECTION_SERVICE_URL: "",
+      },
+    });
+
+    const [html, config] = await Promise.all([
+      readFile(path.join(root, "dist", "normal", "index.html"), "utf8"),
+      readFile(path.join(root, "dist", "normal", "poker-config.js"), "utf8"),
+    ]);
+    expect(config).toBe("globalThis.__HTML_POKER_CONFIG__ ??= {};\n");
+    expect(config).not.toContain("wss://");
+    expect(html).toContain(baselineCsp);
+  });
+
   it("binds the static artifact to one exact HTTPS/WSS service origin", async () => {
     const root = await fixture();
 
@@ -113,5 +133,25 @@ describe("Normal release configuration", () => {
     ).rejects.toMatchObject({
       stderr: expect.stringContaining("blob:"),
     });
+  });
+
+  it("blocks Pages deployment until the configured live relay passes its release gate", async () => {
+    const workflow = await readFile(
+      path.join(process.cwd(), ".github", "workflows", "ci.yml"),
+      "utf8",
+    );
+    const configure = workflow.indexOf("Configure hosted Normal Mode");
+    const liveGate = workflow.indexOf("Verify configured live relay");
+    const deploy = workflow.indexOf("Deploy GitHub Pages");
+
+    expect(configure).toBeGreaterThan(-1);
+    expect(liveGate).toBeGreaterThan(configure);
+    expect(deploy).toBeGreaterThan(liveGate);
+    expect(workflow).toContain("pnpm qa:live-relay");
+    expect(workflow).toContain(
+      "NORMAL_APP_ORIGIN: ${{ vars.NORMAL_APP_ORIGIN || format('https://{0}.github.io', github.repository_owner) }}",
+    );
+    expect(workflow).toContain("if: vars.NORMAL_CONNECTION_SERVICE_URL != ''");
+    expect(workflow).not.toContain("trycloudflare.com");
   });
 });

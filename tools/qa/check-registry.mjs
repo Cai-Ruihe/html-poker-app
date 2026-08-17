@@ -147,6 +147,121 @@ if (duplicateStableIds.length > 0) {
   );
 }
 
+const liveRelay = registry.live_relay_contract;
+for (const field of ["checker", "test", "workflow"]) {
+  const relativePath = liveRelay?.[field];
+  if (!relativePath || !relativeExists(relativePath)) {
+    failures.push(`live relay ${field} is missing: ${relativePath ?? "unset"}`);
+  }
+}
+const rootPackage = JSON.parse(
+  await readFile(path.join(root, "package.json"), "utf8"),
+);
+if (!rootPackage.scripts?.[liveRelay?.package_script]) {
+  failures.push(
+    `live relay package script is missing: ${liveRelay?.package_script ?? "unset"}`,
+  );
+}
+if (liveRelay?.command !== `pnpm ${liveRelay?.package_script}`) {
+  failures.push("live relay command does not match its package script");
+}
+if (liveRelay?.workflow && relativeExists(liveRelay.workflow)) {
+  const workflow = await readFile(path.join(root, liveRelay.workflow), "utf8");
+  for (const requiredFragment of [
+    "Verify configured live relay",
+    liveRelay.command,
+    "NORMAL_APP_ORIGIN: ${{ vars.NORMAL_APP_ORIGIN || format('https://{0}.github.io', github.repository_owner) }}",
+    "if: vars.NORMAL_CONNECTION_SERVICE_URL != ''",
+  ]) {
+    if (!workflow.includes(requiredFragment)) {
+      failures.push(`live relay workflow is missing: ${requiredFragment}`);
+    }
+  }
+}
+if (liveRelay?.checker && relativeExists(liveRelay.checker)) {
+  const checker = await readFile(path.join(root, liveRelay.checker), "utf8");
+  for (const requiredCheck of liveRelay.required_checks ?? []) {
+    const evidenceFragment =
+      {
+        dns: "does not resolve in DNS",
+        health: "GET /health",
+        "exact-origin-cors": "CORS allows",
+        "invalid-token-rejection": "invalid operator token",
+      }[requiredCheck] ?? requiredCheck;
+    if (!checker.includes(evidenceFragment)) {
+      failures.push(`live relay checker has no ${requiredCheck} evidence`);
+    }
+  }
+  if (!checker.includes("operatorTokenAcceptance")) {
+    failures.push("live relay checker has no owner-token acceptance evidence");
+  }
+}
+
+const selfHosting = registry.self_hosting_contract;
+for (const field of [
+  "guide",
+  "compose",
+  "environment_template",
+  "dockerfile",
+  "token_tool",
+  "test",
+  "configuration_test",
+]) {
+  const relativePath = selfHosting?.[field];
+  if (!relativePath || !relativeExists(relativePath)) {
+    failures.push(
+      `self-hosting ${field} is missing: ${relativePath ?? "unset"}`,
+    );
+  }
+}
+for (const field of ["token_script", "doctor_script"]) {
+  const script = selfHosting?.[field];
+  if (!script || !rootPackage.scripts?.[script]) {
+    failures.push(
+      `self-hosting package script is missing: ${script ?? "unset"}`,
+    );
+  }
+}
+if (selfHosting?.ownership !== "deployer") {
+  failures.push("self-hosting ownership must remain deployer-owned");
+}
+if (selfHosting?.unconfigured_behavior !== "no-relay") {
+  failures.push("an unconfigured fork must contain no relay fallback");
+}
+if (selfHosting?.compose && relativeExists(selfHosting.compose)) {
+  const compose = await readFile(path.join(root, selfHosting.compose), "utf8");
+  for (const requiredFragment of [
+    "127.0.0.1:${POKER_CONNECTION_PORT:-8787}:8787",
+    "POKER_CONNECTION_ACCESS_TOKEN_FILE: /run/secrets/operator_token",
+    "POKER_CONNECTION_ALLOWED_ORIGIN: ${NORMAL_APP_ORIGIN:?required}",
+    "RELAY_OPERATOR_TOKEN_FILE:?required",
+  ]) {
+    if (!compose.includes(requiredFragment)) {
+      failures.push(
+        `self-hosting Compose recipe is missing: ${requiredFragment}`,
+      );
+    }
+  }
+  if (/cai-ruihe|trycloudflare\.com/iu.test(compose)) {
+    failures.push("self-hosting Compose recipe contains an owner endpoint");
+  }
+}
+if (selfHosting?.guide && relativeExists(selfHosting.guide)) {
+  const guide = await readFile(path.join(root, selfHosting.guide), "utf8");
+  for (const requiredFragment of [
+    "pnpm relay:create-token",
+    "pnpm relay:doctor",
+    "NORMAL_CONNECTION_SERVICE_URL",
+    "normal/poker-config.js",
+    "## Troubleshooting guide",
+    "does **not** fall back to the project owner's relay",
+  ]) {
+    if (!guide.includes(requiredFragment)) {
+      failures.push(`self-hosting guide is missing: ${requiredFragment}`);
+    }
+  }
+}
+
 const visual = registry.visual_contract;
 for (const requiredState of [
   "quiet",

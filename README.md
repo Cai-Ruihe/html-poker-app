@@ -145,7 +145,7 @@ the host and clients attempt authenticated catch-up when Safari returns, with a
 visible **Reconnect to table** fallback. This is foreground recovery—not
 background execution. The ordinary player QR/link is for other devices.
 
-See [Normal Mode operations](docs/operations/NORMAL-MODE.md) for the host flow, service boundary, and restart procedure.
+See [Normal Mode operations](docs/operations/NORMAL-MODE.md) for the host flow and restart procedure. Fork operators can create an isolated server with the [Normal Mode self-hosting guide](docs/operations/NORMAL-MODE-SELF-HOSTING.md); the repository includes a hardened Compose recipe, private token generator, and live relay doctor.
 
 ## Product constraints
 

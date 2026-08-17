@@ -87,7 +87,8 @@ export interface DisplayPairingEnvelope {
 export type DisplayPairingPutResult =
   | { readonly status: "stored" }
   | {
-      readonly code: "capacity" | "expired" | "invalid-envelope" | "invalid-request";
+      readonly code:
+        "capacity" | "expired" | "invalid-envelope" | "invalid-request";
       readonly status: "rejected";
     };
 
@@ -96,7 +97,10 @@ export type DisplayPairingTakeResult =
   | { readonly envelope: DisplayPairingEnvelope; readonly status: "answered" };
 
 export interface DisplayPairingMailbox {
-  put(requestId: string, envelope: DisplayPairingEnvelope): DisplayPairingPutResult;
+  put(
+    requestId: string,
+    envelope: DisplayPairingEnvelope,
+  ): DisplayPairingPutResult;
   take(requestId: string): DisplayPairingTakeResult;
 }
 
@@ -124,7 +128,9 @@ function safeEqual(left: string, right: string): boolean {
 }
 
 function boundedString(value: unknown, maximum: number): value is string {
-  return typeof value === "string" && value.length > 0 && value.length <= maximum;
+  return (
+    typeof value === "string" && value.length > 0 && value.length <= maximum
+  );
 }
 
 function validDisplayPairingRequest(value: string): boolean {
@@ -185,7 +191,9 @@ function peerKey(registration: {
   ]);
 }
 
-function sessionKey(registration: Omit<RelayRegistration, "accessToken" | "peerId">): string {
+function sessionKey(
+  registration: Omit<RelayRegistration, "accessToken" | "peerId">,
+): string {
   return JSON.stringify([
     registration.tableId,
     registration.hostKey,
@@ -203,7 +211,9 @@ export function createConnectionBroker(
   const now = options.now ?? Date.now;
   const sessionTtlMs = options.sessionTtlMs ?? 4 * 60 * 60 * 1_000;
   if (!Number.isSafeInteger(sessionTtlMs) || sessionTtlMs < 60_000) {
-    throw new Error("Connection Service session TTL must be at least one minute.");
+    throw new Error(
+      "Connection Service session TTL must be at least one minute.",
+    );
   }
   const peersByClient = new Map<string, ActivePeer>();
   const clientsByPeer = new Map<string, ActivePeer>();
@@ -394,7 +404,8 @@ export function createDisplayPairingMailbox(
       }
       if (!validDisplayPairingEnvelope(envelope, currentTime, maxTtlMs)) {
         return {
-          code: envelope.expiresAt <= currentTime ? "expired" : "invalid-envelope",
+          code:
+            envelope.expiresAt <= currentTime ? "expired" : "invalid-envelope",
           status: "rejected",
         };
       }

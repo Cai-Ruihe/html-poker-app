@@ -6,6 +6,7 @@ All notable project changes will be documented here. The format follows [Keep a 
 
 ### Fixed
 
+- Replaced browser-native Normal Mode network errors with actionable relay recovery guidance, and blocked configured Pages publication when the selected relay fails DNS, health, exact-origin CORS, or invalid-token rejection checks.
 - Rebuilt the approved Tablet quick controls with the exact short custom slider, continuous four-pixel gold thread, equal four-corner orientation, and centered complete secondary panel; removed the native-range artifact and incomplete strip that escaped the earlier interaction-only gate.
 - Connected Tablet **Players & seats** and **Displays & pairing** to the real host administration surface and added a machine-enforced action inventory whose journeys invoke every available secondary action and assert its result.
 - Added automatic player catch-up for new hands, an explicit refresh fallback, return-from-sit-out, and permanent credential-revoking leave; corrected the hand-end synchronization bug that could silently cancel a player's return choice.
@@ -49,6 +50,7 @@ All notable project changes will be documented here. The format follows [Keep a 
 
 ### Added
 
+- Added a fork-safe Normal Mode self-hosting kit: locked multi-stage Connection Service image, hardened loopback-only Compose recipe, file-mounted private operator token, non-overwriting token generator, live relay doctor, deployed-config read-back, and symptom-based operator runbook.
 - Added the repository-owned QA registry, feedback ledger, corrective specification, physical-device matrix, deterministic visual baselines, exact geometry checks, responsive/text-size checks, artifact performance budgets, and release-blocking Chromium/Mobile WebKit journeys.
 
 - Added four equal Tablet corner entries, orientation-correct upper controls, a
@@ -79,6 +81,7 @@ All notable project changes will be documented here. The format follows [Keep a 
 
 ### Security
 
+- Made an unconfigured fork explicitly relay-free and kept each deployer's public endpoint and private operator token isolated from Ruihe's service and repository configuration.
 - Replaced static relay credential configuration with URL-only deployment configuration; a host operator token mints a table-scoped ticket locally and is not placed in player links.
 - Added encrypted reverse-display pairing responses, relay table/host/protocol binding, relay-ticket expiry/renewal behavior, and browser evidence for direct/relay route behavior.
 - Documented the Phase 1 Trusted Host limitation and mandatory Card Privacy Red Team gate.

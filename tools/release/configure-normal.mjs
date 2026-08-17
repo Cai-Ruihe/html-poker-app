@@ -8,7 +8,7 @@ const localQrImagePolicy = "img-src 'self' data: blob:;";
 
 function validatedServiceUrl(candidate) {
   if (!candidate) {
-    throw new Error("NORMAL_CONNECTION_SERVICE_URL is required.");
+    return undefined;
   }
   let service;
   try {
@@ -37,8 +37,6 @@ export async function configureNormalBuild(
   root = process.cwd(),
   candidate = process.env.NORMAL_CONNECTION_SERVICE_URL,
 ) {
-  const serviceOrigin = validatedServiceUrl(candidate);
-  const httpsOrigin = serviceOrigin.replace(/^wss:/u, "https:");
   const normalDirectory = path.join(root, "dist", "normal");
   const htmlPath = path.join(normalDirectory, "index.html");
   const configPath = path.join(normalDirectory, "poker-config.js");
@@ -53,6 +51,11 @@ export async function configureNormalBuild(
       "The Normal artifact CSP must allow blob: images for local QR scans.",
     );
   }
+  const serviceOrigin = validatedServiceUrl(candidate);
+  if (!serviceOrigin) {
+    return { configured: false };
+  }
+  const httpsOrigin = serviceOrigin.replace(/^wss:/u, "https:");
   const configuredHtml = html.replace(
     broadConnectPolicy,
     `connect-src 'self' ${httpsOrigin} ${serviceOrigin};`,
@@ -62,12 +65,16 @@ export async function configureNormalBuild(
     writeFile(htmlPath, configuredHtml, "utf8"),
     writeFile(configPath, config, "utf8"),
   ]);
-  return { httpsOrigin, serviceOrigin };
+  return { configured: true, httpsOrigin, serviceOrigin };
 }
 
 async function main() {
-  const { serviceOrigin } = await configureNormalBuild();
-  process.stdout.write(`Configured Normal build for ${serviceOrigin}\n`);
+  const result = await configureNormalBuild();
+  process.stdout.write(
+    result.configured
+      ? `Configured Normal build for ${result.serviceOrigin}\n`
+      : "Normal build left without a relay configuration.\n",
+  );
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === scriptPath) {

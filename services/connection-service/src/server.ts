@@ -13,11 +13,9 @@ import {
   type RelayClient,
   type RelayRegistration,
 } from "./index.js";
+import { resolveOperatorAccessToken } from "./operator-config.js";
 
-const accessToken = process.env.POKER_CONNECTION_ACCESS_TOKEN;
-if (!accessToken) {
-  throw new Error("POKER_CONNECTION_ACCESS_TOKEN is required.");
-}
+const accessToken = resolveOperatorAccessToken();
 const port = Number.parseInt(process.env.POKER_CONNECTION_PORT ?? "8787", 10);
 const host = process.env.POKER_CONNECTION_HOST ?? "127.0.0.1";
 if (!Number.isInteger(port) || port < 1 || port > 65_535) {
@@ -90,8 +88,10 @@ async function handleDisplayPairing(
       readonly iv?: unknown;
     };
     const result = displayPairings.put(requestId, {
-      ciphertext: typeof envelope.ciphertext === "string" ? envelope.ciphertext : "",
-      expiresAt: typeof envelope.expiresAt === "number" ? envelope.expiresAt : 0,
+      ciphertext:
+        typeof envelope.ciphertext === "string" ? envelope.ciphertext : "",
+      expiresAt:
+        typeof envelope.expiresAt === "number" ? envelope.expiresAt : 0,
       iv: typeof envelope.iv === "string" ? envelope.iv : "",
     });
     if (result.status === "rejected") {
@@ -146,11 +146,9 @@ async function handleTableSession(
       tableId: typeof binding.tableId === "string" ? binding.tableId : "",
     });
     if (result.status === "rejected") {
-      writeJson(
-        response,
-        result.code === "access-denied" ? 401 : 400,
-        { code: result.code },
-      );
+      writeJson(response, result.code === "access-denied" ? 401 : 400, {
+        code: result.code,
+      });
       return;
     }
     writeJson(response, 201, result.ticket);
@@ -175,11 +173,7 @@ const server = createServer((request, response) => {
   }
   const pairingMatch = /^\/v1\/display-pairings\/([^/]+)$/u.exec(pathname);
   if (pairingMatch?.[1]) {
-    void handleDisplayPairing(
-      request,
-      response,
-      pairingMatch[1],
-    );
+    void handleDisplayPairing(request, response, pairingMatch[1]);
     return;
   }
   if (request.method === "GET" && request.url === "/health") {
@@ -252,7 +246,11 @@ websocketServer.on("connection", (socket: WebSocket) => {
     const result = broker.receive(clientId, frame);
     if (result.status === "rejected") {
       socket.send(
-        JSON.stringify({ code: result.code, status: "rejected", type: "receipt" }),
+        JSON.stringify({
+          code: result.code,
+          status: "rejected",
+          type: "receipt",
+        }),
       );
     }
   });

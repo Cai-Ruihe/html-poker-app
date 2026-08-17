@@ -4,17 +4,18 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./operator-config": "./src/operator-config.ts"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js"
   },
   "dependencies": {
-    "@html-poker/realtime-transport": "workspace:*",
     "ws": "8.21.3"
   },
   "devDependencies": {
+    "@html-poker/realtime-transport": "workspace:*",
     "@types/ws": "8.18.1"
   }
 }

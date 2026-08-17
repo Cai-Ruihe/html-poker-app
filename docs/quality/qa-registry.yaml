@@ -53,6 +53,8 @@ requirement_imports:
     evidence:
       [
         tests/contract/connection-service.test.ts,
+        tests/contract/live-relay-release-gate.test.ts,
+        tests/contract/normal-self-hosting.test.ts,
         tests/journey/normal-relay.spec.ts,
         tests/journey/relay-restart.spec.ts,
       ]
@@ -89,7 +91,14 @@ requirement_imports:
   M09:
     file: docs/prd/modules/M09-RELEASE-DISTRIBUTION.md
     lifecycle: active
-    evidence: [tools/release, docs/releasing/RELEASE-CHECKLIST.md]
+    evidence:
+      [
+        tools/release,
+        tests/contract/live-relay-release-gate.test.ts,
+        tests/contract/normal-release-config.test.ts,
+        tests/contract/normal-self-hosting.test.ts,
+        docs/releasing/RELEASE-CHECKLIST.md,
+      ]
   M10:
     file: docs/prd/modules/M10-DIGITAL-ACCOUNTING.md
     lifecycle: tracer
@@ -120,6 +129,28 @@ stable_id_sources:
     file: docs/quality/FIELD-FEEDBACK-LEDGER.md
     pattern: "^[|] `([A-Z][A-Z0-9-]+-[0-9]{3})`"
     evidence: tests/journey/feedback-regressions.spec.ts
+
+live_relay_contract:
+  command: pnpm qa:live-relay
+  package_script: qa:live-relay
+  checker: tools/release/check-live-relay.mjs
+  test: tests/contract/live-relay-release-gate.test.ts
+  workflow: .github/workflows/ci.yml
+  required_checks: [dns, health, exact-origin-cors, invalid-token-rejection]
+  optional_owner_check: operator-token-acceptance
+
+self_hosting_contract:
+  guide: docs/operations/NORMAL-MODE-SELF-HOSTING.md
+  compose: deploy/normal/compose.yaml
+  environment_template: deploy/normal/.env.example
+  dockerfile: services/connection-service/Dockerfile
+  token_tool: tools/operations/create-relay-token.mjs
+  test: tests/contract/normal-self-hosting.test.ts
+  configuration_test: tests/contract/normal-release-config.test.ts
+  token_script: relay:create-token
+  doctor_script: relay:doctor
+  unconfigured_behavior: no-relay
+  ownership: deployer
 
 brand_contract:
   authority: docs/design/brand/README.md

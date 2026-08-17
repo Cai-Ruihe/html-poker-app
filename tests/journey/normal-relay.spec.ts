@@ -187,6 +187,32 @@ test("the Connection Service allows its POST ticket preflight", async ({
   await expect(preflightMethods()).resolves.toContain("POST");
 });
 
+test("an unreachable Connection Service produces actionable host guidance", async ({
+  browser,
+}, testInfo) => {
+  skipInsecureLocalRelayOnMobileWebKit(testInfo);
+  const context = await browser.newContext({ bypassCSP: true });
+  await context.addInitScript(() => {
+    const configuredGlobal = globalThis as typeof globalThis & {
+      __HTML_POKER_CONFIG__?: { privateRelay: { url: string } };
+    };
+    configuredGlobal.__HTML_POKER_CONFIG__ = {
+      privateRelay: { url: "ws://127.0.0.1:18786" },
+    };
+  });
+  try {
+    const host = await context.newPage();
+    await host.goto("/");
+    await host.getByLabel("Private relay host token").fill(relayToken);
+    await host.getByRole("button", { name: "Create table" }).click();
+    await expect(host.getByRole("alert")).toHaveText(
+      "The Connection Service is unreachable. Normal Mode needs its relay online. Ask the table owner to restore it, or use Airplane Mode.",
+    );
+  } finally {
+    await context.close();
+  }
+});
+
 test("an expired relay ticket is rejected before the browser opens a client connection", async ({
   page,
 }) => {

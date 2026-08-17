@@ -1,0 +1,26 @@
+name: our-poker-table-normal
+
+services:
+  connection_service:
+    build:
+      context: ../..
+      dockerfile: services/connection-service/Dockerfile
+    environment:
+      POKER_CONNECTION_ACCESS_TOKEN_FILE: /run/secrets/operator_token
+      POKER_CONNECTION_ALLOWED_ORIGIN: ${NORMAL_APP_ORIGIN:?required}
+    ports:
+      - "127.0.0.1:${POKER_CONNECTION_PORT:-8787}:8787"
+    restart: unless-stopped
+    secrets:
+      - operator_token
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+secrets:
+  operator_token:
+    file: ${RELAY_OPERATOR_TOKEN_FILE:?required}

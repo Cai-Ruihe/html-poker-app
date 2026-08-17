@@ -181,13 +181,13 @@ importers:
 
   services/connection-service:
     dependencies:
-      '@html-poker/realtime-transport':
-        specifier: workspace:*
-        version: link:../../packages/realtime-transport
       ws:
         specifier: 8.21.3
         version: 8.21.3
     devDependencies:
+      '@html-poker/realtime-transport':
+        specifier: workspace:*
+        version: link:../../packages/realtime-transport
       '@types/ws':
         specifier: 8.18.1
         version: 8.18.1

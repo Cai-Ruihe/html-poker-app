@@ -19,17 +19,25 @@ Operational checks:
 ```sh
 docker inspect --format '{{.State.Health.Status}}' html-poker-normal-service
 docker ps --filter name=html-poker-normal
+NORMAL_APP_ORIGIN=https://cai-ruihe.github.io \
+  NORMAL_CONNECTION_SERVICE_URL=wss://your-current-tunnel.example \
+  pnpm qa:live-relay
 ```
+
+Before updating GitHub or publishing Pages, repeat the gate with `RELAY_OPERATOR_TOKEN_FILE` pointing to the owner-only token file. The command reports only pass/fail fields and never prints the operator token or minted table ticket. CI repeats the public checks after configuring the Normal artifact and blocks Pages when the relay is dead or misconfigured.
 
 ## What Normal Mode needs
 
 For same-browser development, leave the runtime configuration empty. For multi-device use, publish `dist/normal/` on your own HTTPS origin and run your own Connection Service. The static site is not the poker engine: the active host remains authoritative, and the service only helps peers find/relay sealed messages.
 
+Open-source deployers should use the clone-to-running-service [Normal Mode self-hosting guide](NORMAL-MODE-SELF-HOSTING.md). It includes the hardened Compose recipe, private token generator, TLS alternatives, fork variables, live doctor, read-back check, and symptom-based troubleshooting. A fork without a relay variable remains unconfigured; it never inherits or falls back to the project owner's service.
+
 The current Connection Service is an in-memory Node process. It requires these environment variables:
 
 | Variable                          |                 Required | Meaning                                                                                                                                      |
 | --------------------------------- | -----------------------: | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POKER_CONNECTION_ACCESS_TOKEN`   |                      Yes | Long-lived operator secret accepted only by the table-session endpoint. Keep it off the static site and out of source control.               |
+| `POKER_CONNECTION_ACCESS_TOKEN_FILE` | One token source required | Preferred file containing the long-lived operator secret. The supplied Compose recipe mounts it as a file secret.                           |
+| `POKER_CONNECTION_ACCESS_TOKEN`      | One token source required | Inline compatibility alternative. Do not set it together with the file option; keep it off the static site and out of source control.       |
 | `POKER_CONNECTION_HOST`           |                       No | Bind address; defaults to `127.0.0.1`.                                                                                                       |
 | `POKER_CONNECTION_PORT`           |                       No | TCP port; defaults to `8787`.                                                                                                                |
 | `POKER_CONNECTION_ALLOWED_ORIGIN` | No for local development | CORS/Origin policy value. Set the exact HTTPS app origin in a deployment; the `*` default is only suitable for controlled local development. |
@@ -40,7 +48,7 @@ Run the built service after setting the variables:
 pnpm --filter @html-poker/connection-service start
 ```
 
-For a locked production container, first build the service and create its production-only pnpm deployment directory, then build with `services/connection-service/Dockerfile`. The image runs as the unprivileged `node` user, exposes only port 8787 inside its private container network, and includes a health check.
+The repository-root `services/connection-service/Dockerfile` now performs its own locked multi-stage build. The supplied `deploy/normal/compose.yaml` mounts the operator token as a file secret, binds cleartext port 8787 only to loopback, drops Linux capabilities, uses a read-only runtime filesystem, runs as the unprivileged `node` user, and includes a health check. Use the self-hosting guide rather than assembling an image directory by hand.
 
 Terminate TLS at a deployer-controlled reverse proxy and configure the browser with `wss://` in production. Use ordinary ingress rate limiting and network restrictions around the service; those controls are deployment infrastructure, not code supplied by this repository.
 

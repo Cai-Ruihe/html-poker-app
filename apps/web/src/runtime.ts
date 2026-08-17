@@ -541,18 +541,25 @@ async function provisionHostRelayRoutes(
   if (!endpoint) {
     throw new Error("The configured Connection Service URL is invalid.");
   }
-  const response = await fetch(endpoint, {
-    body: JSON.stringify({
-      hostKey: binding.hostKey,
-      protocolVersion: binding.protocolVersion,
-      tableId: binding.tableId,
-    }),
-    headers: {
-      authorization: `Bearer ${operatorToken.trim()}`,
-      "content-type": "application/json",
-    },
-    method: "POST",
-  });
+  let response: Response;
+  try {
+    response = await fetch(endpoint, {
+      body: JSON.stringify({
+        hostKey: binding.hostKey,
+        protocolVersion: binding.protocolVersion,
+        tableId: binding.tableId,
+      }),
+      headers: {
+        authorization: `Bearer ${operatorToken.trim()}`,
+        "content-type": "application/json",
+      },
+      method: "POST",
+    });
+  } catch {
+    throw new Error(
+      "The Connection Service is unreachable. Normal Mode needs its relay online. Ask the table owner to restore it, or use Airplane Mode.",
+    );
+  }
   if (!response.ok) {
     throw new Error("The Connection Service rejected the host operator token.");
   }

@@ -82,6 +82,31 @@ Baseline changes require a controlling decision/feedback reference and review. `
 - Recovery checks cover refresh, bfcache, temporary suspension, route restart, stale link, credential rotation, revision conflict, and explicit reconnect.
 - Every public artifact and test trace is searched for invitation tokens, credentials, unrevealed cards, deck order, and private diagnostics.
 
+### Live Normal relay deployment contract
+
+Normal Mode is not deployable merely because its static artifact and local relay fixture pass. When `NORMAL_CONNECTION_SERVICE_URL` is configured, `pnpm qa:live-relay` must run after the hosted artifact is configured and before its manifest is created or Pages is deployed. The gate verifies:
+
+1. the configured WSS hostname resolves in public DNS;
+2. `GET /health` returns HTTP 200 and `{ "status": "ok" }`;
+3. the table-session CORS preflight permits the exact configured app origin, `POST`, `authorization`, and `content-type`;
+4. a structurally valid request carrying an intentionally invalid operator token reaches the service and is rejected with HTTP 401 `access-denied`;
+5. when `RELAY_OPERATOR_TOKEN_FILE` is supplied for an owner-side check, the owner-only file has restrictive permissions and its token receives a valid short-lived table ticket without either credential being printed.
+
+The deployed `normal/poker-config.js` must then be read back and checked against the same verified URL. A later Quick Tunnel failure remains an uptime incident; the UI must replace browser-native `Load failed`/`Failed to fetch` text with actionable relay guidance. Quick Tunnels remain temporary field infrastructure, not an uptime claim.
+
+### Open-source relay isolation contract
+
+`self_hosting_contract` in `qa-registry.yaml` makes operator portability independent of project memory. Its focused test and registry gate require:
+
+1. a build with no `NORMAL_CONNECTION_SERVICE_URL` keeps `poker-config.js` empty and does not acquire a project-owner endpoint;
+2. the fork-aware Pages workflow derives an ordinary GitHub Pages origin from `github.repository_owner`, accepts an explicit `NORMAL_APP_ORIGIN` for a custom domain, and runs the live relay gate only when that fork configured a relay;
+3. the deployer kit builds the Connection Service from source, binds cleartext HTTP to loopback, mounts an operator-token file secret, and contains no Ruihe endpoint or credential;
+4. `pnpm relay:create-token` creates a private non-overwriting token file without printing it;
+5. `pnpm relay:doctor` verifies the public service contract without printing the operator token or table ticket; and
+6. the self-hosting guide contains the complete server, TLS/tunnel, fork configuration, deployed read-back, recovery, and symptom-based troubleshooting path.
+
+The operator token is never a GitHub variable or secret. Repository variables hold only the deployer's public relay URL and, for a custom app domain, its public HTTPS origin. A missing relay variable produces an intentionally unconfigured static build, not a hidden shared-service default.
+
 ## Accessibility and responsive protocol
 
 - Run axe on Home, join, waiting/sit-out, Player, Host, Tablet quiet/quick/secondary, Public, and TV states.
@@ -106,6 +131,8 @@ pnpm check
 pnpm qa:browser
 pnpm qa:performance
 pnpm audit:prod
+NORMAL_APP_ORIGIN=https://cai-ruihe.github.io NORMAL_CONNECTION_SERVICE_URL=wss://relay.example.test pnpm qa:live-relay
+pnpm vitest run tests/contract/normal-self-hosting.test.ts tests/contract/normal-release-config.test.ts tests/contract/live-relay-release-gate.test.ts
 pnpm release:reproducibility
 pnpm release:manifest
 pnpm release:verify
