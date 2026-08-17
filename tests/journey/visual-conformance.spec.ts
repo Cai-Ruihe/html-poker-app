@@ -114,6 +114,15 @@ async function screenshotIfChromium(
   name: string,
 ): Promise<void> {
   if (testInfo.project.name !== "chromium") return;
+  // Theme changes affect a composited felt layer and card gradients. Wait for
+  // two paints so the reviewed baseline reflects the final visual state rather
+  // than a partially composited transition frame.
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
+  );
   await expect(page).toHaveScreenshot(`${name}.png`, {
     animations: "disabled",
     fullPage: false,
@@ -186,6 +195,15 @@ test("Tablet quiet and quick-control states conform to approved geometry", async
       expect(transform).toBe("none");
     }
     if (corner === "upper right") {
+      const upperRightPanelBox = await box(panel);
+      expect(
+        upperRightPanelBox.x + upperRightPanelBox.width,
+        "upper-right app controls reserve the iPad browser-exit corner",
+      ).toBeLessThanOrEqual(referenceViewport.width - 72);
+      expect(
+        upperRightPanelBox.y,
+        "upper-right app controls reserve the iPad browser-exit corner",
+      ).toBeGreaterThanOrEqual(72);
       await screenshotIfChromium(host, testInfo, "tablet-quick-upper-right");
     }
     await closeQuickPanel(host);
@@ -208,6 +226,9 @@ test("Tablet quiet and quick-control states conform to approved geometry", async
     1,
     "utility gap",
   );
+  await expect(
+    utilityButtons.nth(1).locator("svg.table-close-glyph"),
+  ).toBeVisible();
 
   const nextCard = await box(panel.getByRole("button", { name: "Next card" }));
   const nextHand = await box(panel.locator(".next-hand-control"));
@@ -307,6 +328,95 @@ test("Tablet quiet and quick-control states conform to approved geometry", async
     "Deep Navy card geometry",
   );
   await screenshotIfChromium(host, testInfo, "tablet-quiet-deep-navy");
+});
+
+test("quiet seat state stays upright and a shown hand remains large and aligned", async ({
+  context,
+  page: host,
+}, testInfo) => {
+  await installDeterministicEntropy(host);
+  await host.setViewportSize(referenceViewport);
+  await host.goto("/");
+  await host.getByRole("button", { name: "Create table" }).click();
+  const alice = await joinPlayer(host, context, "Alice");
+  const bob = await joinPlayer(host, context, "Bob");
+  await joinPlayer(host, context, "Carol");
+  await host.getByRole("button", { name: "Deal first hand" }).click();
+  await host.getByRole("button", { name: "Deal the flop" }).click();
+  await host.getByRole("button", { name: "Deal the turn" }).click();
+  await host.getByRole("button", { name: "Deal the river" }).click();
+  await alice.getByRole("button", { name: "Show cards to table" }).click();
+  await bob.getByRole("button", { name: "Show cards to table" }).click();
+  await host.getByRole("button", { name: "Table View" }).click();
+
+  const sideGlyph = host.locator(
+    '[data-seat-edge-position="3"] [data-seat-status-glyph="screen-upright"]',
+  );
+  await expect(sideGlyph).toBeVisible();
+  const sideGlyphBox = await box(sideGlyph);
+  expect(sideGlyphBox.width).toBeGreaterThan(sideGlyphBox.height);
+
+  const shownCards = host.locator(".quiet-shown-hand .card--quiet-shown");
+  await expect(shownCards).toHaveCount(4);
+  const firstShown = await box(shownCards.first());
+  expect(firstShown.width).toBeGreaterThanOrEqual(84);
+  const firstHand = host.locator(".quiet-shown-hand").first();
+  const handCards = firstHand.locator(".card--quiet-shown");
+  const firstHandCard = await box(handCards.nth(0));
+  const secondHandCard = await box(handCards.nth(1));
+  expect(
+    Math.abs(secondHandCard.x - firstHandCard.x),
+    "shown cards must not overlap at a physical table edge",
+  ).toBeGreaterThanOrEqual(firstHandCard.width + 5);
+  const shownHandBoxes = await Promise.all(
+    (await host.locator(".quiet-shown-hand").all()).map((hand) => box(hand)),
+  );
+  for (let index = 1; index < shownHandBoxes.length; index += 1) {
+    const earlier = shownHandBoxes[index - 1];
+    const later = shownHandBoxes[index];
+    if (!earlier || !later) throw new Error("Shown hand did not render.");
+    const handsOverlap =
+      earlier.x < later.x + later.width &&
+      earlier.x + earlier.width > later.x &&
+      earlier.y < later.y + later.height &&
+      earlier.y + earlier.height > later.y;
+    expect(handsOverlap, "shown hands must retain separate table edges").toBe(
+      false,
+    );
+  }
+  const boardCards = await host.locator("[data-board-card]").all();
+  for (const shownCard of await shownCards.all()) {
+    const shownBox = await box(shownCard);
+    expect(
+      shownBox.x,
+      "shown cards stay inside the table viewport",
+    ).toBeGreaterThanOrEqual(0);
+    expect(
+      shownBox.y,
+      "shown cards stay inside the table viewport",
+    ).toBeGreaterThanOrEqual(0);
+    expect(
+      shownBox.x + shownBox.width,
+      "shown cards stay inside the table viewport",
+    ).toBeLessThanOrEqual(referenceViewport.width);
+    expect(
+      shownBox.y + shownBox.height,
+      "shown cards stay inside the table viewport",
+    ).toBeLessThanOrEqual(referenceViewport.height);
+    for (const boardCard of boardCards) {
+      const boardBox = await box(boardCard);
+      const overlaps =
+        shownBox.x < boardBox.x + boardBox.width &&
+        shownBox.x + shownBox.width > boardBox.x &&
+        shownBox.y < boardBox.y + boardBox.height &&
+        shownBox.y + shownBox.height > boardBox.y;
+      expect(overlaps, "shown cards must not cover community cards").toBe(
+        false,
+      );
+    }
+  }
+  await prepareScreenshot(host);
+  await screenshotIfChromium(host, testInfo, "tablet-shown-hands");
 });
 
 test("every host Tablet secondary action is exercised and player administration mutates state", async ({

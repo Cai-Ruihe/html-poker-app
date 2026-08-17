@@ -15,16 +15,16 @@ This is the durable operating manual for Our Poker Table quality assurance. It i
 
 ## Evidence layers
 
-| Layer | Proves | Cannot prove |
-|---|---|---|
-| Static and registry | source completeness, types, links, declared evidence routes | runtime behavior or visual quality |
-| Contract | deterministic rules, authority, persistence, privacy projections | browser layout, camera, OS lifecycle |
-| Browser behavior | public user journeys, semantics, interactions, recovery | exact physical hardware/network behavior |
-| Geometry and visual | approved size, spacing, orientation, overflow, rendered hierarchy | real camera/network/suspension behavior |
-| Accessibility | automated axe checks, names, keyboard paths, reduced motion, target sizes | full assistive-technology usability |
-| Privacy red team | negative disclosure and hostile-input evidence | perfect security |
-| Physical field | candidate behavior on named devices/networks | untested devices or future browser releases |
-| Deployed read-back | the public URL serves the intended candidate and manifest | long-term uptime or China readiness |
+| Layer               | Proves                                                                    | Cannot prove                                |
+| ------------------- | ------------------------------------------------------------------------- | ------------------------------------------- |
+| Static and registry | source completeness, types, links, declared evidence routes               | runtime behavior or visual quality          |
+| Contract            | deterministic rules, authority, persistence, privacy projections          | browser layout, camera, OS lifecycle        |
+| Browser behavior    | public user journeys, semantics, interactions, recovery                   | exact physical hardware/network behavior    |
+| Geometry and visual | approved size, spacing, orientation, overflow, rendered hierarchy         | real camera/network/suspension behavior     |
+| Accessibility       | automated axe checks, names, keyboard paths, reduced motion, target sizes | full assistive-technology usability         |
+| Privacy red team    | negative disclosure and hostile-input evidence                            | perfect security                            |
+| Physical field      | candidate behavior on named devices/networks                              | untested devices or future browser releases |
+| Deployed read-back  | the public URL serves the intended candidate and manifest                 | long-term uptime or China readiness         |
 
 No layer may be used as a substitute for a different layer.
 
@@ -60,6 +60,8 @@ For menus and dialogs, existence is not functional coverage. Tests open every la
 Every Tablet secondary action has a stable `data-qa-action` ID imported by `qa-registry.yaml`. Registry validation fails when an action is missing from the implementation or from an invoking journey. The browser test also compares the complete rendered action inventory, so adding a control without adding its result assertion blocks release. The registry separately names every required visual baseline and fails when a baseline call or Darwin/Linux image is absent. Actual Tablet player administration is both operated and screenshot-compared; opening a placeholder or merely finding the menu label cannot pass.
 
 Baseline changes require a controlling decision/feedback reference and review. `--update-snapshots` is never a repair command.
+
+Field feedback is authoritative in [FIELD-FEEDBACK-LEDGER.md](FIELD-FEEDBACK-LEDGER.md). A feedback item cannot be marked covered solely because a locator exists or a click succeeds: its registry route must include the affected deterministic rule, browser result, or visual/geometry evidence. Screenshot-visible feedback must retain an inspected baseline; physical Safari, iOS, Android, camera, suspension, or network reports additionally keep a named field verification rather than being silently inferred from a browser simulation.
 
 ### Tablet release contract
 

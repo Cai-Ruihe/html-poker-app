@@ -2,6 +2,10 @@
    operational layout; every active table role is rendered from these tokens. */
 
 .table-surface {
+  /* The table chooses its own palette. Do not let browser/OS dark-mode
+     heuristics invert the warm card stock or diagnostics. */
+  color-scheme: only light;
+  --tablet-browser-exit-clearance: max(72px, env(safe-area-inset-top));
   --table-felt: #003f33;
   --table-felt-deep: #002b23;
   --table-panel: #001f19;
@@ -204,6 +208,7 @@
 
 .table-surface .card {
   display: block;
+  isolation: isolate;
   border: 1px solid #d8cfbd;
   padding: 0;
   color: #151a17;
@@ -284,6 +289,47 @@
   display: none;
 }
 
+/* Quiet screens use full, physical card faces for shown hands. Host control
+   tiles remain compact on purpose; this is only for people around a table. */
+.table-surface .quiet-shown-hand .card--quiet-shown {
+  width: clamp(4.5rem, 6.5vw, 5.5rem);
+  min-width: 0;
+  aspect-ratio: 0.7;
+  border-radius: clamp(0.48rem, 0.72vw, 0.7rem);
+  box-shadow:
+    inset 0 0 0 0.22rem rgba(255, 255, 255, 0.34),
+    inset 0 0 0 0.29rem rgba(159, 143, 116, 0.2),
+    0 0.72rem 1.2rem rgba(0, 23, 17, 0.32),
+    0 0.12rem 0.25rem rgba(0, 0, 0, 0.22);
+}
+
+.table-surface .quiet-shown-hand .card--quiet-shown::after {
+  inset: clamp(0.24rem, 0.35vw, 0.34rem);
+  border-radius: clamp(0.26rem, 0.42vw, 0.38rem);
+}
+
+.table-surface .quiet-shown-hand .card--quiet-shown .card__corner--top {
+  top: clamp(0.38rem, 0.58vw, 0.55rem);
+  left: clamp(0.38rem, 0.58vw, 0.55rem);
+}
+
+.table-surface .quiet-shown-hand .card--quiet-shown .card__corner--bottom {
+  right: clamp(0.38rem, 0.58vw, 0.55rem);
+  bottom: clamp(0.38rem, 0.58vw, 0.55rem);
+}
+
+.table-surface .quiet-shown-hand .card--quiet-shown .card__rank {
+  font-size: clamp(1.36rem, 2.08vw, 1.98rem);
+}
+
+.table-surface .quiet-shown-hand .card--quiet-shown .card__corner-suit {
+  font-size: clamp(0.93rem, 1.35vw, 1.22rem);
+}
+
+.table-surface .quiet-shown-hand .card--quiet-shown .card__pip {
+  font-size: clamp(2.25rem, 3.65vw, 3.4rem);
+}
+
 .table-surface .card__corner {
   position: absolute;
   z-index: 1;
@@ -348,6 +394,17 @@
   width: min(96rem, 100%);
 }
 
+/* At showdown, full hole cards occupy the physical perimeter. Reserve a real
+   side gutter for them instead of letting a right/left player's cards cover a
+   community card. The ordinary quiet state keeps the full-width board. */
+.table-surface--tablet .public-table--quiet:has(.quiet-shown-hand) .dealer-rail,
+.table-surface--tv .public-table--quiet:has(.quiet-shown-hand) .dealer-rail,
+.table-surface--public
+  .public-table--quiet:has(.quiet-shown-hand)
+  .dealer-rail {
+  width: min(57rem, calc(100% - 22rem));
+}
+
 .table-surface--tablet .public-table--quiet .dealer-rail__cards,
 .table-surface--tv .public-table--quiet .dealer-rail__cards,
 .table-surface--public .public-table--quiet .dealer-rail__cards {
@@ -389,6 +446,7 @@
 }
 
 .seat-edge-status {
+  --seat-status-glyph-rotation: 0deg;
   position: absolute;
   display: flex;
   align-items: center;
@@ -403,26 +461,31 @@
   top: 1.1rem;
   left: 18%;
   transform: translateX(-50%) rotate(180deg);
+  --seat-status-glyph-rotation: -180deg;
 }
 .seat-edge-status--1 {
   top: 1.1rem;
   left: 50%;
   transform: translateX(-50%) rotate(180deg);
+  --seat-status-glyph-rotation: -180deg;
 }
 .seat-edge-status--2 {
   top: 1.1rem;
   left: 82%;
   transform: translateX(-50%) rotate(180deg);
+  --seat-status-glyph-rotation: -180deg;
 }
 .seat-edge-status--3 {
   top: 28%;
   right: 1.1rem;
   transform: translateY(-50%) rotate(-90deg);
+  --seat-status-glyph-rotation: 90deg;
 }
 .seat-edge-status--4 {
   top: 68%;
   right: 1.1rem;
   transform: translateY(-50%) rotate(-90deg);
+  --seat-status-glyph-rotation: 90deg;
 }
 .seat-edge-status--5 {
   right: 18%;
@@ -443,11 +506,13 @@
   top: 68%;
   left: 1.1rem;
   transform: translateY(-50%) rotate(90deg);
+  --seat-status-glyph-rotation: -90deg;
 }
 .seat-edge-status--9 {
   top: 28%;
   left: 1.1rem;
   transform: translateY(-50%) rotate(90deg);
+  --seat-status-glyph-rotation: -90deg;
 }
 
 .seat-state-glyph {
@@ -456,6 +521,8 @@
   width: 2.5rem;
   height: 2.15rem;
   opacity: 0.72;
+  transform: rotate(var(--seat-status-glyph-rotation));
+  transform-origin: center;
 }
 
 .seat-state-glyph--cards > span {
@@ -543,7 +610,7 @@
 
 .quiet-shown-hand {
   display: flex;
-  gap: 0.28rem;
+  gap: clamp(0.42rem, 0.72vw, 0.7rem);
   align-items: center;
 }
 
@@ -553,13 +620,13 @@
 
 .position-token {
   display: grid;
-  min-width: 2rem;
-  height: 2rem;
+  min-width: 2.2rem;
+  height: 2.2rem;
   place-items: center;
   border: 1px solid currentColor;
   border-radius: 50%;
   background: color-mix(in srgb, var(--table-panel) 86%, transparent);
-  font-size: 0.72rem;
+  font-size: 0.76rem;
   font-weight: 800;
   box-shadow: 0 0.35rem 0.9rem rgba(0, 0, 0, 0.2);
 }
@@ -620,8 +687,8 @@
   left: 3rem;
 }
 .table-corner--upper-right {
-  top: 0;
-  right: 0;
+  top: var(--tablet-browser-exit-clearance);
+  right: var(--tablet-browser-exit-clearance);
 }
 .table-corner--upper-right > span {
   top: 1.45rem;
@@ -683,8 +750,8 @@
 }
 
 .tablet-quick-panel--upper-right {
-  top: 0;
-  right: 0;
+  top: var(--tablet-browser-exit-clearance);
+  right: var(--tablet-browser-exit-clearance);
   border-radius: 0 0 0 44px;
   box-shadow: -15px 15px 28px rgba(0, 18, 13, 0.44);
 }
@@ -766,10 +833,14 @@
   border-radius: 50%;
 }
 
-.icon-action--close span {
-  font-size: 2rem;
-  font-weight: 300;
-  line-height: 1;
+.table-close-glyph {
+  display: block;
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 2.2;
 }
 
 .dot-glyph {
@@ -1487,6 +1558,52 @@ button.secondary-control-card:disabled {
 .host-table-shell > .host-device-switcher button[aria-pressed="true"] {
   color: var(--table-panel);
   background: var(--table-accent);
+}
+
+/* A host who temporarily uses their own device as the TV needs one quiet,
+   intentional way home. Independent TV invitations never receive this button. */
+.host-tv-return {
+  position: fixed;
+  z-index: 14;
+  top: max(0.9rem, env(safe-area-inset-top));
+  left: max(0.9rem, env(safe-area-inset-left));
+  display: grid;
+  width: 2.9rem;
+  height: 2.9rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--table-accent) 45%, transparent);
+  border-radius: 0.78rem;
+  padding: 0.45rem;
+  background: color-mix(in srgb, var(--table-panel) 88%, transparent);
+  box-shadow: 0 0.45rem 1rem rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+}
+
+.host-tv-return img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Global diagnostics previously inherited `--ink`, which becomes ivory on a
+   table and produced white-on-ivory in the navy theme. Keep the diagnostic
+   strip inside the selected table palette with an explicit readable contrast. */
+.table-surface .developer-strip {
+  border-color: var(--table-rule);
+  color: var(--table-ink);
+  background: var(--table-panel);
+  box-shadow: 0 0.45rem 1.1rem rgba(0, 0, 0, 0.22);
+}
+
+.table-surface .developer-strip button {
+  border-color: var(--table-ink-soft);
+  color: var(--table-ink);
+  background: var(--table-panel-raised);
+}
+
+.table-surface .developer-strip button:hover {
+  border-color: var(--table-accent);
+  color: var(--table-accent);
 }
 
 @media (min-width: 1000px) and (orientation: landscape) {

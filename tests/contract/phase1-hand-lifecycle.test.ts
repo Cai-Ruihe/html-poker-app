@@ -352,4 +352,45 @@ describe("complete Phase 1 hand lifecycle", () => {
       { self: { seatId: "seat-c" } },
     );
   });
+
+  it("moves the dealer button to an eligible seat before a sitting-out dealer is dealt", async () => {
+    const authority = createAuthority();
+    await authority.submit(
+      command("create-three-seat", 0, {
+        dealerSeatId: "seat-a",
+        seats: [
+          { displayName: "Alice", seatId: "seat-a" },
+          { displayName: "Bob", seatId: "seat-b" },
+          { displayName: "Carol", seatId: "seat-c" },
+        ],
+        type: "CreateTable",
+      }),
+    );
+    await authority.submit(command("start-first", 1, { type: "StartHand" }));
+    await authority.submit(
+      command("end-first", 2, { type: "EndHand" }, { handId: "hand-1" }),
+    );
+    await authority.submit(
+      command("sit-out-dealer", 3, {
+        seatId: "seat-a",
+        sittingOut: true,
+        type: "SetSeatParticipation",
+      }),
+    );
+
+    await expect(
+      authority.submit(
+        command("start-without-dealer", 4, { type: "StartHand" }),
+      ),
+    ).resolves.toMatchObject({ status: "accepted" });
+
+    const projection = authority.project({ kind: "public" });
+    expect(projection.dealerSeatId).toBe("seat-b");
+    expect(projection.seats).toContainEqual(
+      expect.objectContaining({ seatId: "seat-a", status: "sitting-out" }),
+    );
+    expect(projection.seats).toContainEqual(
+      expect.objectContaining({ seatId: "seat-b", status: "active" }),
+    );
+  });
 });

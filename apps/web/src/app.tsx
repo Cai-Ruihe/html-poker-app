@@ -1182,15 +1182,41 @@ const roleInvitationDetails = [
   },
 ] as const;
 
+function SameDeviceRoleButton({
+  onUseThisDevice,
+  role,
+}: {
+  readonly onUseThisDevice: (role: "tv" | "table-control") => void;
+  readonly role: "tv" | "table-control";
+}) {
+  const label =
+    role === "tv"
+      ? "Use this device as TV"
+      : "Use this device as Tablet Control";
+  return (
+    <button
+      className="button button--quiet"
+      data-qa-control="role-invitation-use-this-device"
+      data-qa-variant={role}
+      onClick={() => onUseThisDevice(role)}
+      type="button"
+    >
+      {label}
+    </button>
+  );
+}
+
 function RoleInvitationCard({
   button,
   label,
+  onUseThisDevice,
   role,
   runtime,
   snapshot,
 }: {
   readonly button: string;
   readonly label: string;
+  readonly onUseThisDevice?: (role: "tv" | "table-control") => void;
   readonly role: Exclude<CapabilityRole, "player">;
   readonly runtime: HostTableRuntime;
   readonly snapshot: HostRuntimeSnapshot;
@@ -1208,15 +1234,23 @@ function RoleInvitationCard({
               : "Public board and shown cards only"}
           </small>
         </div>
-        <button
-          className="button button--quiet"
-          data-qa-control="role-invitation-create"
-          data-qa-variant={role}
-          onClick={() => void runtime.issueInvitation(role)}
-          type="button"
-        >
-          {button}
-        </button>
+        <div className="button-row">
+          <button
+            className="button button--quiet"
+            data-qa-control="role-invitation-create"
+            data-qa-variant={role}
+            onClick={() => void runtime.issueInvitation(role)}
+            type="button"
+          >
+            {button}
+          </button>
+          {onUseThisDevice && (role === "tv" || role === "table-control") ? (
+            <SameDeviceRoleButton
+              onUseThisDevice={onUseThisDevice}
+              role={role}
+            />
+          ) : null}
+        </div>
       </article>
     );
   }
@@ -1254,6 +1288,12 @@ function RoleInvitationCard({
           >
             Replace link
           </button>
+          {onUseThisDevice && (role === "tv" || role === "table-control") ? (
+            <SameDeviceRoleButton
+              onUseThisDevice={onUseThisDevice}
+              role={role}
+            />
+          ) : null}
         </div>
       </div>
     </article>
@@ -1420,9 +1460,11 @@ function RelaySessionCard({
 }
 
 function RoleInvitations({
+  onUseThisDevice,
   runtime,
   snapshot,
 }: {
+  readonly onUseThisDevice?: (role: "tv" | "table-control") => void;
   readonly runtime: HostTableRuntime;
   readonly snapshot: HostRuntimeSnapshot;
 }) {
@@ -1448,6 +1490,7 @@ function RoleInvitations({
           <RoleInvitationCard
             {...details}
             key={details.role}
+            {...(onUseThisDevice ? { onUseThisDevice } : {})}
             runtime={runtime}
             snapshot={snapshot}
           />
@@ -1734,7 +1777,7 @@ function useHostSnapshot(runtime: HostTableRuntime): HostRuntimeSnapshot {
   return snapshot;
 }
 
-type HostDeviceView = "host" | "player" | "table";
+type HostDeviceView = "host" | "player" | "table" | "tv";
 
 function HostDeviceViewSwitcher({
   activeView,
@@ -1897,7 +1940,9 @@ function HostLobby({
   if (snapshot.stage === "table" && snapshot.projection) {
     return (
       <HostTable
-        activeView={activeView === "table" ? "table" : "host"}
+        activeView={
+          activeView === "table" || activeView === "tv" ? activeView : "host"
+        }
         hasPlayer={Boolean(playerRuntime)}
         onViewChange={onViewChange}
         runtime={runtime}
@@ -2031,7 +2076,7 @@ function HostTable({
   onViewChange,
   runtime,
 }: {
-  readonly activeView: "host" | "table";
+  readonly activeView: "host" | "table" | "tv";
   readonly hasPlayer: boolean;
   readonly onViewChange: (view: HostDeviceView) => void;
   readonly runtime: HostTableRuntime;
@@ -2100,8 +2145,14 @@ function HostTable({
           : {})}
         hostPlayerAdministrationOpen={adminOpen}
         hostPlayerCount={snapshot.roster.seats.length}
-        mode={activeView === "table" ? "tablet" : "host"}
-        {...(activeView === "table"
+        mode={
+          activeView === "table"
+            ? "tablet"
+            : activeView === "tv"
+              ? "tv"
+              : "host"
+        }
+        {...(activeView === "table" || activeView === "tv"
           ? {
               onHostControls: () => onViewChange("host"),
             }
@@ -2121,7 +2172,7 @@ function HostTable({
         }}
         onManagePlayers={() => {
           setAdminFocus("players");
-          if (activeView === "table") {
+          if (activeView !== "host") {
             setAdminOpen(true);
             onViewChange("host");
           } else {
@@ -2137,7 +2188,7 @@ function HostTable({
         onRevealStreet={(street) =>
           performDealerAction(() => runtime.revealStreet(street))
         }
-        {...(activeView === "table"
+        {...(activeView === "table" || activeView === "tv"
           ? { onReconnect: () => runtime.resumeConnectivity() }
           : {})}
         onStartNextHand={() =>
@@ -2172,7 +2223,14 @@ function HostTable({
             </button>
           </header>
           <InvitePanel compact runtime={runtime} snapshot={snapshot} />
-          <RoleInvitations runtime={runtime} snapshot={snapshot} />
+          <RoleInvitations
+            onUseThisDevice={(role) => {
+              setAdminOpen(false);
+              onViewChange(role === "tv" ? "tv" : "table");
+            }}
+            runtime={runtime}
+            snapshot={snapshot}
+          />
           <RelaySessionCard runtime={runtime} snapshot={snapshot} />
           <TableThemePicker
             busy={busy || actionGuard.busy}

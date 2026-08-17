@@ -1027,6 +1027,61 @@ test("Tablet quick and secondary controls all produce their registered outcomes"
   );
 });
 
+test("A Trusted Host can reuse this device as TV or Tablet Control without a capability upgrade", async ({
+  context,
+  page: host,
+}) => {
+  await createPhysicalTable(host, context);
+
+  await control(host, "host-manage-players").click();
+  const administration = host.getByRole("complementary", {
+    name: "Player administration",
+  });
+  await expect(administration).toBeVisible();
+
+  await exerciseControlVariant(
+    "role-invitation-use-this-device",
+    "tv",
+    controlVariant(administration, "role-invitation-use-this-device", "tv"),
+    (target) => target.click(),
+    async () => {
+      await expect(host.locator(".table-surface--tv")).toBeVisible();
+      await expect(control(host, "host-tv-return")).toBeVisible();
+      await expect(control(host, "tablet-corner-open")).toHaveCount(0);
+      await expect(host.getByLabel("TV invitation link")).toHaveCount(0);
+    },
+  );
+  await exerciseControl(
+    "host-tv-return",
+    control(host, "host-tv-return"),
+    (target) => target.click(),
+    () =>
+      expect(control(host, "device-view-host")).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      ),
+  );
+
+  await control(host, "host-manage-players").click();
+  await exerciseControlVariant(
+    "role-invitation-use-this-device",
+    "table-control",
+    controlVariant(
+      administration,
+      "role-invitation-use-this-device",
+      "table-control",
+    ),
+    (target) => target.click(),
+    async () => {
+      await expect(host.locator(".table-surface--tablet")).toBeVisible();
+      await expect(control(host, "tablet-corner-open")).toHaveCount(4);
+      await expect(
+        host.getByLabel("Tablet Control invitation link"),
+      ).toHaveCount(0);
+    },
+  );
+});
+
 test("Host brand control center routes every existing host capability", async ({
   context,
   page: host,

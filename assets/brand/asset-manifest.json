@@ -859,8 +859,8 @@
     },
     {
       "path": "web/apple-touch-icon-180.png",
-      "bytes": 4107,
-      "sha256": "50674892ece0d91fbf7ac41d3330b1c5284942bef90df6abf55c1d94f189e659",
+      "bytes": 5041,
+      "sha256": "f18a5fe98d34a348726a3fafbf3e2cb9fc70066168cf3c224e9be70f7db33144",
       "dimensions": [
         180,
         180

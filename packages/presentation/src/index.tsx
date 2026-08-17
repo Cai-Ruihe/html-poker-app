@@ -86,11 +86,13 @@ export function PlayingCard({
   compact = false,
   emphasis,
   marker,
+  quietShown = false,
 }: {
   readonly card: Card;
   readonly compact?: boolean;
   readonly emphasis?: "best" | "unused";
   readonly marker: "board" | "private" | "shown";
+  readonly quietShown?: boolean;
 }) {
   const details = cardDetails(card);
   const markerProps =
@@ -102,7 +104,7 @@ export function PlayingCard({
   return (
     <span
       aria-label={details.accessibleName}
-      className={`card${details.isRed ? " card--red" : ""}${compact ? " card--compact" : ""}${emphasis ? ` card--${emphasis}` : ""}`}
+      className={`card${details.isRed ? " card--red" : ""}${compact ? " card--compact" : ""}${quietShown ? " card--quiet-shown" : ""}${emphasis ? ` card--${emphasis}` : ""}`}
       data-card={card}
       {...(emphasis === "best" ? { "data-best-five-card": "true" } : {})}
       role="img"
@@ -215,6 +217,10 @@ function quietSeatPosition(index: number, count: number): number {
   return Math.round((index * 10) / count) % 10;
 }
 
+function seatCanHoldPosition(seat: PublicProjection["seats"][number]): boolean {
+  return seat.status !== "sitting-out" && seat.status !== "waiting";
+}
+
 function SeatStateGlyph({
   connected,
   status,
@@ -228,6 +234,7 @@ function SeatStateGlyph({
     return (
       <span
         className="seat-state-glyph seat-state-glyph--offline"
+        data-seat-status-glyph="screen-upright"
         aria-hidden="true"
       >
         <span />
@@ -238,6 +245,7 @@ function SeatStateGlyph({
     return (
       <span
         className="seat-state-glyph seat-state-glyph--sitting-out"
+        data-seat-status-glyph="screen-upright"
         aria-hidden="true"
       >
         <span />
@@ -248,6 +256,7 @@ function SeatStateGlyph({
   return (
     <span
       className={`seat-state-glyph seat-state-glyph--cards${folded ? " seat-state-glyph--folded" : ""}${winner ? " seat-state-glyph--winner" : ""}`}
+      data-seat-status-glyph="screen-upright"
       aria-hidden="true"
     >
       <span />
@@ -278,7 +287,9 @@ function QuietSeatGrid({
           <div
             aria-label={`${seat.displayName}, ${statusLabel}`}
             className={`seat-edge-status seat-edge-status--${position}`}
+            data-seat-edge-position={position}
             data-seat-edge-status={statusLabel}
+            data-seat-id={seat.seatId}
             key={seat.seatId}
             role="img"
           >
@@ -295,7 +306,7 @@ function QuietSeatGrid({
                 {seat.holeCards.map((card) => (
                   <PlayingCard
                     card={card}
-                    compact
+                    quietShown
                     {...(winners.has(seat.seatId) && seat.evaluation
                       ? {
                           emphasis: seat.evaluation.bestFive.includes(card)
@@ -310,7 +321,8 @@ function QuietSeatGrid({
               </span>
             ) : null}
             <span className="seat-edge-status__roles" aria-hidden="true">
-              {seat.seatId === projection.dealerSeatId ? (
+              {seatCanHoldPosition(seat) &&
+              seat.seatId === projection.dealerSeatId ? (
                 <span className="position-token position-token--dealer">D</span>
               ) : null}
               {seat.seatId === smallBlindSeatId ? (
@@ -350,7 +362,8 @@ function SeatGrid({
         >
           <header>
             <span className="seat-tile__number">Seat {index + 1}</span>
-            {seat.seatId === projection.dealerSeatId ? (
+            {seatCanHoldPosition(seat) &&
+            seat.seatId === projection.dealerSeatId ? (
               <span className="dealer-chip" aria-label="Dealer">
                 D
               </span>
@@ -709,6 +722,19 @@ async function togglePageFullscreen(): Promise<void> {
 
 type TableCorner = "lower-left" | "lower-right" | "upper-left" | "upper-right";
 
+function CloseGlyph() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="table-close-glyph"
+      focusable="false"
+      viewBox="0 0 24 24"
+    >
+      <path d="M6 6 18 18M18 6 6 18" />
+    </svg>
+  );
+}
+
 function TabletControls(props: TableSurfaceProps) {
   const [corner, setCorner] = useState<TableCorner>();
   const [fullscreenError, setFullscreenError] = useState<string>();
@@ -936,7 +962,7 @@ function TabletControls(props: TableSurfaceProps) {
                 onClick={() => setCorner(undefined)}
                 type="button"
               >
-                <span aria-hidden="true">×</span>
+                <CloseGlyph />
               </button>
             </div>
             <div className="tablet-quick-panel__actions">
@@ -1030,7 +1056,7 @@ function TabletControls(props: TableSurfaceProps) {
                 onClick={() => setMoreOpen(false)}
                 type="button"
               >
-                <span aria-hidden="true">×</span>
+                <CloseGlyph />
               </button>
             </header>
             <div className="secondary-controls__rule" />
@@ -1346,7 +1372,7 @@ function HostControlCenter({
             onClick={onClose}
             type="button"
           >
-            <span aria-hidden="true">×</span>
+            <CloseGlyph />
           </button>
         </header>
         <div className="secondary-controls__rule" />
@@ -1798,6 +1824,18 @@ export function TableSurface(props: TableSurfaceProps) {
             ) : null}
           </div>
         </header>
+      ) : null}
+
+      {props.mode === "tv" && props.onHostControls ? (
+        <button
+          aria-label="Return to Host Controls"
+          className="host-tv-return"
+          data-qa-control="host-tv-return"
+          onClick={props.onHostControls}
+          type="button"
+        >
+          <img alt="" src={props.brandSymbolSrc} />
+        </button>
       ) : null}
 
       {isPlayer ? (

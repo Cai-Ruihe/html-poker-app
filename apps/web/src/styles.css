@@ -1,4 +1,7 @@
 :root {
+  /* The product owns its three named table themes. Browser appearance settings
+     must not synthesize a fourth, auto-dark version of the card stock. */
+  color-scheme: only light;
   color: #1d2321;
   background: #f5f5f5;
   font-family: "Archivo Variable", "Avenir Next", "Segoe UI", sans-serif;

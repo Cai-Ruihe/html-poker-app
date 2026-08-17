@@ -228,6 +228,10 @@ visual_baselines:
         test: tests/journey/visual-conformance.spec.ts,
       }
     - {
+        name: tablet-shown-hands,
+        test: tests/journey/visual-conformance.spec.ts,
+      }
+    - {
         name: tablet-quick-upper-right,
         test: tests/journey/visual-conformance.spec.ts,
       }
@@ -377,6 +381,11 @@ control_contract:
       surface: Host displays
       expected_result: The selected role invitation is rotated.
       variants: [public-table, tv, table-control]
+      evidence: tests/journey/control-conformance.spec.ts
+    role-invitation-use-this-device:
+      surface: Host displays
+      expected_result: The Trusted Host reuses its current document as the selected quiet display without minting or upgrading a capability.
+      variants: [tv, table-control]
       evidence: tests/journey/control-conformance.spec.ts
     normal-display-pair-file:
       surface: Host displays
@@ -549,6 +558,10 @@ control_contract:
       surface: Tablet quiet view
       expected_result: The matching seat-facing quick panel opens.
       variants: [upper-left, upper-right, lower-left, lower-right]
+      evidence: tests/journey/control-conformance.spec.ts
+    host-tv-return:
+      surface: Same-device TV quiet view
+      expected_result: A host-owned TV view returns to Host Controls without exposing a permanent toolbar on invitation-based TVs.
       evidence: tests/journey/control-conformance.spec.ts
     tablet-quick-more:
       surface: Tablet quick controls

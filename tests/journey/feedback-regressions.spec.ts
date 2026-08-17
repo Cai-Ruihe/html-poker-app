@@ -133,6 +133,75 @@ test("Home can open a pasted player invitation and exposes an in-page QR scanner
   ).toBeVisible();
 });
 
+test("browser appearance cannot recolour the warm cards or developer diagnostics", async ({
+  context,
+  page: host,
+}) => {
+  await host.emulateMedia({ colorScheme: "dark" });
+  await host.goto("/");
+  await expect(host.locator('meta[name="color-scheme"]')).toHaveAttribute(
+    "content",
+    "light",
+  );
+  const { alice } = await createTable(host, context);
+  await host.getByRole("button", { name: "Developer" }).click();
+
+  const developer = host.getByLabel("Developer diagnostics");
+  await expect(developer).toBeVisible();
+  const developerContrast = await developer.evaluate((element) => {
+    const toLinear = (channel: number) => {
+      const value = channel / 255;
+      return value <= 0.03928
+        ? value / 12.92
+        : ((value + 0.055) / 1.055) ** 2.4;
+    };
+    const luminance = (value: string) => {
+      const channels = value.match(/\d+(?:\.\d+)?/gu)?.slice(0, 3);
+      if (!channels || channels.length !== 3) return 0;
+      const [red = 0, green = 0, blue = 0] = channels.map(Number);
+      return (
+        0.2126 * toLinear(red) +
+        0.7152 * toLinear(green) +
+        0.0722 * toLinear(blue)
+      );
+    };
+    const style = getComputedStyle(element);
+    const foreground = luminance(style.color);
+    const background = luminance(style.backgroundColor);
+    return (
+      (Math.max(foreground, background) + 0.05) /
+      (Math.min(foreground, background) + 0.05)
+    );
+  });
+  expect(developerContrast).toBeGreaterThanOrEqual(4.5);
+
+  await alice.emulateMedia({ colorScheme: "dark" });
+  const darkCardFace = await alice
+    .locator("[data-private-card]")
+    .first()
+    .evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        backgroundImage: style.backgroundImage,
+        color: style.color,
+        colorScheme: style.colorScheme,
+      };
+    });
+  await alice.emulateMedia({ colorScheme: "light" });
+  const lightCardFace = await alice
+    .locator("[data-private-card]")
+    .first()
+    .evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        backgroundImage: style.backgroundImage,
+        color: style.color,
+        colorScheme: style.colorScheme,
+      };
+    });
+  expect(darkCardFace).toStrictEqual(lightCardFace);
+});
+
 test("Player catches up to new hands, can return from sit-out, and can leave permanently", async ({
   context,
   page: host,
@@ -184,6 +253,20 @@ test("Player catches up to new hands, can return from sit-out, and can leave per
     "data-theme",
     "black-gold",
   );
+  const sittingOutSeat = host
+    .locator('.seat-tile[data-seat-status="sitting-out"]')
+    .filter({ hasText: "Alice" });
+  await expect(sittingOutSeat).toBeVisible();
+  await expect(sittingOutSeat.locator(".dealer-chip")).toHaveCount(0);
+  await host.getByRole("button", { name: "Table View" }).click();
+  const sittingOutEdge = host.locator('[data-seat-edge-status="sitting out"]');
+  await expect(sittingOutEdge).toBeVisible();
+  await expect(sittingOutEdge.locator(".position-token")).toHaveCount(0);
+  await host
+    .getByRole("button", { name: "Open table controls from lower right" })
+    .click();
+  await host.getByRole("button", { name: "More table controls" }).click();
+  await host.getByRole("button", { name: "Host Controls" }).click();
   await host.getByRole("button", { name: /^Players/u }).click();
   await host.getByRole("button", { name: "Dark Green" }).click();
   await expect(alice.locator(".message-shell--player-waiting")).toHaveAttribute(
@@ -232,7 +315,7 @@ test("Player catches up to new hands, can return from sit-out, and can leave per
   await expect(staleSeat.getByText(/revoked|no longer valid/iu)).toBeVisible();
 });
 
-test("Phone host shown cards are compact and showdown marks exactly the winning best five", async ({
+test("Phone host cards stay compact while Table View shown cards are full, and showdown marks the winning best five", async ({
   context,
   page: host,
 }, testInfo: TestInfo) => {
@@ -366,7 +449,7 @@ test("Phone host shown cards are compact and showdown marks exactly the winning 
 
   await host.setViewportSize({ height: 1_024, width: 1_366 });
   await host.getByRole("button", { name: "Table View" }).click();
-  const quietCards = host.locator(".quiet-shown-hand .card--compact");
+  const quietCards = host.locator(".quiet-shown-hand .card--quiet-shown");
   await expect(quietCards).toHaveCount(2);
   const quietCardStyle = await quietCards.first().evaluate((element) => ({
     decoration: getComputedStyle(element, "::after").content,
@@ -376,7 +459,11 @@ test("Phone host shown cards are compact and showdown marks exactly the winning 
     ),
   }));
   expect(quietCardStyle.decoration).not.toBe("none");
-  expect(quietCardStyle.rankSize).toBeLessThan(16);
+  expect(quietCardStyle.rankSize).toBeGreaterThanOrEqual(20);
+  await expect(
+    quietCards.first().locator(".card__corner--bottom"),
+  ).toBeVisible();
+  await expect(quietCards.first().locator(".card__pip")).toBeVisible();
 });
 
 test("registered phone, tablet, desktop, and TV viewports remain free of clipping and horizontal overflow", async ({

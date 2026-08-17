@@ -396,6 +396,33 @@ function accountingFor(profile: RulesProfile): DigitalAccounting | undefined {
   });
 }
 
+function eligibleDealerSeatId(
+  state: PersistedAuthorityState,
+  playingSeats: readonly SeatState[],
+): string {
+  if (playingSeats.some((seat) => seat.seatId === state.dealerSeatId)) {
+    return state.dealerSeatId;
+  }
+
+  const eligibleSeatIds = new Set(playingSeats.map((seat) => seat.seatId));
+  const formerDealerIndex = state.seats.findIndex(
+    (seat) => seat.seatId === state.dealerSeatId,
+  );
+  const firstCandidateIndex =
+    formerDealerIndex < 0 ? 0 : (formerDealerIndex + 1) % state.seats.length;
+  for (let offset = 0; offset < state.seats.length; offset += 1) {
+    const candidate =
+      state.seats[(firstCandidateIndex + offset) % state.seats.length];
+    if (candidate && eligibleSeatIds.has(candidate.seatId)) {
+      return candidate.seatId;
+    }
+  }
+
+  // StartHand already rejects fewer than two eligible seats. This return keeps
+  // the reducer total if a corrupted historical state reaches it.
+  return playingSeats[0]!.seatId;
+}
+
 function toAccountingCommand(
   action: BettingActionIntent,
   seatId: string,
@@ -886,6 +913,7 @@ export function createTrustedHostAuthority(
         );
         if (playingSeats.length < 2)
           return rejected("command-not-allowed", revision);
+        const dealerSeatId = eligibleDealerSeatId(current, playingSeats);
         const handId = options.handIdFactory();
         const accounting = accountingFor(rulesProfile);
         let accountingState = current.accounting;
@@ -895,7 +923,7 @@ export function createTrustedHostAuthority(
             return rejected("command-not-allowed", revision);
           const started = accounting.submit(accountingState, {
             activeSeatIds: playingSeats.map((seat) => seat.seatId),
-            dealerSeatId: current.dealerSeatId,
+            dealerSeatId,
             handId,
             type: "StartHand",
           });
@@ -913,6 +941,7 @@ export function createTrustedHostAuthority(
           custody: options.custody.startHand(
             playingSeats.map((seat) => seat.seatId),
           ),
+          dealerSeatId,
           handId,
           phase: "preflop",
           revision: revision + 1,
