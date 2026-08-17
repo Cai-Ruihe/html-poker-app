@@ -1,0 +1,943 @@
+{
+  "schema_version": 1,
+  "brand": "Our Poker Table",
+  "asset_version": "1.0.0",
+  "license": "Apache-2.0",
+  "scope": "Every file under assets/brand except asset-manifest.json",
+  "files": [
+    {
+      "path": "brand-tokens.json",
+      "bytes": 835,
+      "sha256": "5931a3e33c1ce2988c264beb9d3ae8f32f2e401dd3f83abf488949c94071a3db"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "bytes": 481,
+      "sha256": "ee9e6b69200370474d5e6c17a8aaa97e57509901ccd4104630ab2b94181d844f"
+    },
+    {
+      "path": "png/app-icons/app-icon-light-1024.png",
+      "bytes": 42232,
+      "sha256": "0d313951fec7cb8c6701c08e5ce629f272dd0665bbc2891db7774295f6fd095b",
+      "dimensions": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "path": "png/app-icons/app-icon-light-128.png",
+      "bytes": 2320,
+      "sha256": "45f27b47a4e45b33564258ad1a82ffa50a50a401f446254cb714211d27fb32a5",
+      "dimensions": [
+        128,
+        128
+      ]
+    },
+    {
+      "path": "png/app-icons/app-icon-light-16.png",
+      "bytes": 360,
+      "sha256": "cabd7cb7f9eae666155b2f961ae9774de954a1718740c8b997d5cd665def3ec3",
+      "dimensions": [
+        16,
+        16
+      ]
+    },
+    {
+      "path": "png/app-icons/app-icon-light-180.png",
+      "bytes": 4018,
+      "sha256": "1cb2fa8ce6b825149bbc796c112f929a00b06caa44435ec7992179596d7f689c",
+      "dimensions": [
+        180,
+        180
+      ]
+    },
+    {
+      "path": "png/app-icons/app-icon-light-192.png",
+      "bytes": 3972,
+      "sha256": "90763afb1cde6eaeae070a868032af39b47158c11def94fccdc9a88c74a95417",
+      "dimensions": [
+        192,
+        192
+      ]
+    },
+    {
+      "path": "png/app-icons/app-icon-light-256.png",
+      "bytes": 5548,
+      "sha256": "e233e99b383fbb2c9639f4204b9e6c8d9eaedb0b71bc181b19be5b009eab1a63",
+      "dimensions": [
+        256,
+        256
+      ]
+    },
+    {
+      "path": "png/app-icons/app-icon-light-32.png",
+      "bytes": 611,
+      "sha256": "ca01332b19c7529697fd6a82083a0cc46fced0c82ab69008bfd242585b24e33f",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "path": "png/app-icons/app-icon-light-48.png",
+      "bytes": 926,
+      "sha256": "07497a5600d1ea3a499fb47a5511539f7a72e927137edd1b966c710a98a145a8",
+      "dimensions": [
+        48,
+        48
+      ]
+    },
+    {
+      "path": "png/app-icons/app-icon-light-512.png",
+      "bytes": 15157,
+      "sha256": "4f5c3d4818ca79f24a376791b02df484a1129d9f46c87c2aeeb3cbf293535f21",
+      "dimensions": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "png/app-icons/app-icon-light-64.png",
+      "bytes": 1147,
+      "sha256": "31a6be42dc5dcc9de748ede365a0c4b8605c63e4ade58bbed660ee4bff2b1095",
+      "dimensions": [
+        64,
+        64
+      ]
+    },
+    {
+      "path": "png/app-icons/app-icon-maskable-192.png",
+      "bytes": 2900,
+      "sha256": "df3f69f9abbfb8e22ae15eb3c57b7b7c2fdf49d02776406311f80a145a1fa342",
+      "dimensions": [
+        192,
+        192
+      ]
+    },
+    {
+      "path": "png/app-icons/app-icon-maskable-512.png",
+      "bytes": 11592,
+      "sha256": "6e600fcb0827f0f462d4601bd3ee25fb83497ce4471d198d317128b690c05db7",
+      "dimensions": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "png/app-icons/app-icon-primary-1024.png",
+      "bytes": 42836,
+      "sha256": "262d67327985097dcce69d3933d7b57272d01bfe14d8012d8ef64afcff1f2ddc",
+      "dimensions": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "path": "png/app-icons/app-icon-primary-128.png",
+      "bytes": 2409,
+      "sha256": "1cc454cd8260beadb2e930cd0ae50d9ac480026a15d76e23ccc784f77e1be5e8",
+      "dimensions": [
+        128,
+        128
+      ]
+    },
+    {
+      "path": "png/app-icons/app-icon-primary-16.png",
+      "bytes": 363,
+      "sha256": "6fbf6e83da9fd7a953eae22724945aa5a0a2f9b7e858ec1c259eed85e2c8d944",
+      "dimensions": [
+        16,
+        16
+      ]
+    },
+    {
+      "path": "png/app-icons/app-icon-primary-180.png",
+      "bytes": 4107,
+      "sha256": "50674892ece0d91fbf7ac41d3330b1c5284942bef90df6abf55c1d94f189e659",
+      "dimensions": [
+        180,
+        180
+      ]
+    },
+    {
+      "path": "png/app-icons/app-icon-primary-192.png",
+      "bytes": 4047,
+      "sha256": "ea4e4b82d5dad3de360753f43854323016452bf10db412788c10035f84789abf",
+      "dimensions": [
+        192,
+        192
+      ]
+    },
+    {
+      "path": "png/app-icons/app-icon-primary-256.png",
+      "bytes": 5710,
+      "sha256": "4edc147574fb9ab61fb27fd6409f23439e692062104d2bc42d94621fb674fe72",
+      "dimensions": [
+        256,
+        256
+      ]
+    },
+    {
+      "path": "png/app-icons/app-icon-primary-32.png",
+      "bytes": 612,
+      "sha256": "9dfcb0a7cd4748884da47d4726c32cc9bc5cf3a6ed1d22facdadad9d50e66559",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "path": "png/app-icons/app-icon-primary-48.png",
+      "bytes": 951,
+      "sha256": "0c218703b177877b08d54ea22ed26e63bbe791b11cf71a072309b4b4ffee31a5",
+      "dimensions": [
+        48,
+        48
+      ]
+    },
+    {
+      "path": "png/app-icons/app-icon-primary-512.png",
+      "bytes": 15472,
+      "sha256": "527cee580cdc43d54cc01ae628f1053a0c94294d0b13a56e6f5087f6320f0654",
+      "dimensions": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "png/app-icons/app-icon-primary-64.png",
+      "bytes": 1173,
+      "sha256": "a4ef6dd4fec129a49ab2bd1eb2c41b755906956f06abdb117a60123037d36ab7",
+      "dimensions": [
+        64,
+        64
+      ]
+    },
+    {
+      "path": "png/lockups/horizontal-green-239w.png",
+      "bytes": 5287,
+      "sha256": "c551416f163d4483915518782eee6797d81cd7b68e84046f8f231c5e609a7a69",
+      "dimensions": [
+        239,
+        57
+      ]
+    },
+    {
+      "path": "png/lockups/horizontal-green-478w.png",
+      "bytes": 14094,
+      "sha256": "d63e77e9b5afa5346b93dd60713317b44d18559c20e09b2a2c6280def9bfaf17",
+      "dimensions": [
+        478,
+        114
+      ]
+    },
+    {
+      "path": "png/lockups/horizontal-green-transparent-239w.png",
+      "bytes": 5001,
+      "sha256": "d32b46e261e3fa2b88ceafa725b3455a9ec8ec576c7a13112735fb1d51f88366",
+      "dimensions": [
+        239,
+        57
+      ]
+    },
+    {
+      "path": "png/lockups/horizontal-green-transparent-478w.png",
+      "bytes": 13001,
+      "sha256": "789364fd43e0236fa7863389385182afb8c51d42600742f0b439411c975a9c7e",
+      "dimensions": [
+        478,
+        114
+      ]
+    },
+    {
+      "path": "png/lockups/horizontal-light-239w.png",
+      "bytes": 5572,
+      "sha256": "6affbf7a1ec270ff28ab83f784d39ba0d504ee751c3dd24e9de8d8dde78e9bdd",
+      "dimensions": [
+        239,
+        57
+      ]
+    },
+    {
+      "path": "png/lockups/horizontal-light-478w.png",
+      "bytes": 14837,
+      "sha256": "791893be9358fe3fc1513f3504220d225a2b5d7ae8b0300d0d7aea856a847e5c",
+      "dimensions": [
+        478,
+        114
+      ]
+    },
+    {
+      "path": "png/lockups/horizontal-light-transparent-239w.png",
+      "bytes": 5363,
+      "sha256": "adc7d580fc332b8556b2650e8b5bc1da6aae3e59d8f2e83a0bdafcef00b551a8",
+      "dimensions": [
+        239,
+        57
+      ]
+    },
+    {
+      "path": "png/lockups/horizontal-light-transparent-478w.png",
+      "bytes": 14105,
+      "sha256": "043c27a8c22299a29fcd8d30ec2c84e0c5ce01d7f5ef5be1219a1223fb15ced5",
+      "dimensions": [
+        478,
+        114
+      ]
+    },
+    {
+      "path": "png/lockups/horizontal-mono-black-transparent-239w.png",
+      "bytes": 3820,
+      "sha256": "3f8fbd426385561abe6c613c6536314e66ec558a574983e9e66a624ec6712b99",
+      "dimensions": [
+        239,
+        57
+      ]
+    },
+    {
+      "path": "png/lockups/horizontal-mono-black-transparent-478w.png",
+      "bytes": 10767,
+      "sha256": "cedbf6302849475d9633327b6195b618f16e161b03efb815061e74b162ad82b3",
+      "dimensions": [
+        478,
+        114
+      ]
+    },
+    {
+      "path": "png/lockups/horizontal-mono-white-transparent-239w.png",
+      "bytes": 3997,
+      "sha256": "b714888b9d4b2f5a851e97850cfa7d9a1c48e03391fb54d009a86f853139d6a8",
+      "dimensions": [
+        239,
+        57
+      ]
+    },
+    {
+      "path": "png/lockups/horizontal-mono-white-transparent-478w.png",
+      "bytes": 11080,
+      "sha256": "4d2c157d51d4a80b18c9e1ae480798e2ae5e78d0ab7d697ead14a0c75dcafc1e",
+      "dimensions": [
+        478,
+        114
+      ]
+    },
+    {
+      "path": "png/lockups/stacked-green-185w.png",
+      "bytes": 5539,
+      "sha256": "9501c8e7b91db82d152be8aeb985ca100d226915242f4088d1dfc7a57c439800",
+      "dimensions": [
+        185,
+        102
+      ]
+    },
+    {
+      "path": "png/lockups/stacked-green-369w.png",
+      "bytes": 13635,
+      "sha256": "fff9228171e568387ef1b784a29c787e78a0f9788b1ddf905b0121a12778fe54",
+      "dimensions": [
+        369,
+        204
+      ]
+    },
+    {
+      "path": "png/lockups/stacked-green-transparent-185w.png",
+      "bytes": 5085,
+      "sha256": "af27db07213bcdce80500d31d13d4e874a5e9ff07435277c3620f7050ed528ab",
+      "dimensions": [
+        185,
+        102
+      ]
+    },
+    {
+      "path": "png/lockups/stacked-green-transparent-369w.png",
+      "bytes": 11789,
+      "sha256": "f01a851fde426bf0d8a6bc428a7fe76163d0d97c923313ccc282e78de33e65d9",
+      "dimensions": [
+        369,
+        204
+      ]
+    },
+    {
+      "path": "png/lockups/stacked-light-185w.png",
+      "bytes": 5809,
+      "sha256": "faa75fdb350e6f5bafa12551acd74a84ccfd413ff0528a1416fdc5a9d97222c4",
+      "dimensions": [
+        185,
+        102
+      ]
+    },
+    {
+      "path": "png/lockups/stacked-light-369w.png",
+      "bytes": 13661,
+      "sha256": "168f756b8e547debc785fe664a94442098fda4a884c76ce81bcc42c7ac7d7722",
+      "dimensions": [
+        369,
+        204
+      ]
+    },
+    {
+      "path": "png/lockups/stacked-light-transparent-185w.png",
+      "bytes": 5478,
+      "sha256": "a3c0458a0f4ef9285b45f5ae9579260c10fb6d707a8725cf131cf108ce8e941c",
+      "dimensions": [
+        185,
+        102
+      ]
+    },
+    {
+      "path": "png/lockups/stacked-light-transparent-369w.png",
+      "bytes": 12585,
+      "sha256": "032262223655bdd8049bf3e2e77cca3e8787f63edc7c2a5cb11958712ca3a515",
+      "dimensions": [
+        369,
+        204
+      ]
+    },
+    {
+      "path": "png/social/avatar-green-1024.png",
+      "bytes": 42836,
+      "sha256": "262d67327985097dcce69d3933d7b57272d01bfe14d8012d8ef64afcff1f2ddc",
+      "dimensions": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "path": "png/social/avatar-light-1024.png",
+      "bytes": 42232,
+      "sha256": "0d313951fec7cb8c6701c08e5ce629f272dd0665bbc2891db7774295f6fd095b",
+      "dimensions": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "path": "png/social/open-graph-green-1200x630.png",
+      "bytes": 53716,
+      "sha256": "6f2e57aeeba2a22b46c955fa575710acf57f3c4141cfdfd624ece96813703ecc",
+      "dimensions": [
+        1200,
+        630
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-gold-1024.png",
+      "bytes": 17844,
+      "sha256": "e503df0c73b06a5b7393133112d9371aadb76e6dce1253740715f6870895ec38",
+      "dimensions": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-gold-128.png",
+      "bytes": 1458,
+      "sha256": "710521a3eabef4dd2e425f7f4f0bb69d4c2493c431d438db62ac0600a99b2a43",
+      "dimensions": [
+        128,
+        128
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-gold-256.png",
+      "bytes": 3060,
+      "sha256": "e65074594d2a214f66a8a216efea3a71b031cc6250a410b278883c59dbd1dd8c",
+      "dimensions": [
+        256,
+        256
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-gold-32.png",
+      "bytes": 466,
+      "sha256": "b4b5a5a8c78e838e22855841652cb7633c802e0e863f0b4cde9ce5eaea3b3291",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-gold-512.png",
+      "bytes": 7181,
+      "sha256": "1573692ebe5f405816053c8dc25eab55f16143ba5d72ac59689de59f004b98e5",
+      "dimensions": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-gold-64.png",
+      "bytes": 763,
+      "sha256": "c9f93a07b50803748ffc10eb00e64f1a961462e63daf22f761aa4e1cdbfda0ad",
+      "dimensions": [
+        64,
+        64
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-green-1024.png",
+      "bytes": 17804,
+      "sha256": "54cfe9196ab042fbc0b20c9869a38c3d7508f094f63e5f4f5ca8745011366873",
+      "dimensions": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-green-128.png",
+      "bytes": 1451,
+      "sha256": "90c9ed04f1000a93c218d5256f69e1a6b94086d517d0bda2f858ad6fd11120a1",
+      "dimensions": [
+        128,
+        128
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-green-256.png",
+      "bytes": 3026,
+      "sha256": "d785b54727eb5920beb63fca8dec84275a82e7362d56b485b2fe401b539ac8cb",
+      "dimensions": [
+        256,
+        256
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-green-32.png",
+      "bytes": 458,
+      "sha256": "7752171930f65f14dd1ac009f8140f1d99bd4edebc777c0bc187c129de586447",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-green-512.png",
+      "bytes": 7179,
+      "sha256": "2057ee98ea5e93eb41dc8de428884572a98af32a05868f50b26b40a248223c7a",
+      "dimensions": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-green-64.png",
+      "bytes": 757,
+      "sha256": "90a71f1614278404292afa45d0c29fa6de7a2dd73e8a8c72bec65b9a28c0cd13",
+      "dimensions": [
+        64,
+        64
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-ink-1024.png",
+      "bytes": 17545,
+      "sha256": "c62a3f9d8fd9ade227719408321e8e150858bd3dcfd8ad5ce388c0154340249f",
+      "dimensions": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-ink-128.png",
+      "bytes": 1418,
+      "sha256": "69971a3ae380556d73e017ae78c25a09e6ca88772dc217dabaa0e1c8c8405fd6",
+      "dimensions": [
+        128,
+        128
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-ink-256.png",
+      "bytes": 2986,
+      "sha256": "267051d03c01a15fd68465f87f6b9b4d06e21c2723d326442691967507066cf2",
+      "dimensions": [
+        256,
+        256
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-ink-32.png",
+      "bytes": 440,
+      "sha256": "68e1e6b808e28ba5cc85be7db1614a0b3af066630562c6f5a660503c6016ceac",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-ink-512.png",
+      "bytes": 7069,
+      "sha256": "062ccea0de3db6e8605c065635ca50531dc56a0686131413fd3ab8706b8ae703",
+      "dimensions": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-ink-64.png",
+      "bytes": 723,
+      "sha256": "7d92aa44a40e252a2141920994fcd478134a741638184e3818e5cef5005e9eb9",
+      "dimensions": [
+        64,
+        64
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-white-1024.png",
+      "bytes": 13811,
+      "sha256": "7b5a8f348a419c5b0b7492bcbc18cc0b84797e247c42fdb3ff6fdd14351ebe08",
+      "dimensions": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-white-128.png",
+      "bytes": 1192,
+      "sha256": "8072490d082e61dec9dd766ecb587e642756be07e55a4eb76723365349b6f8d1",
+      "dimensions": [
+        128,
+        128
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-white-256.png",
+      "bytes": 2516,
+      "sha256": "c62479620d44c5b1806ed45b0ab9dd5793b2fd81b83aece559407f04f891f325",
+      "dimensions": [
+        256,
+        256
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-white-32.png",
+      "bytes": 361,
+      "sha256": "66b54abec2eeb69030f85ba94240990eaea1fcb91f578b3accfa710b18613f3e",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-white-512.png",
+      "bytes": 5967,
+      "sha256": "7f804f181a36d3c3c2afaa9d3cbb37e35ab7a8e08d41fdf1d60491c0ee89699d",
+      "dimensions": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "png/symbol/symbol-white-64.png",
+      "bytes": 609,
+      "sha256": "e4a64931726bde20313f913702ffffa37a77d61ed38f18ff7d0c3102ceafc0d5",
+      "dimensions": [
+        64,
+        64
+      ]
+    },
+    {
+      "path": "README.md",
+      "bytes": 3325,
+      "sha256": "25e2e5b9578fffb552de13d6530bdbd4b983bfd87e30ebb98873ae4da498c573"
+    },
+    {
+      "path": "source/wordmark/wordmark-black.png",
+      "bytes": 8051,
+      "sha256": "3a0d8b6c5efef1df898b7aa26e7417cffc4474105860188e4c7821df24252f36",
+      "dimensions": [
+        346,
+        41
+      ]
+    },
+    {
+      "path": "source/wordmark/wordmark-ink.png",
+      "bytes": 8159,
+      "sha256": "f59dc20d29633ba47409240d8af14c848ee9ca0aa03de7e9b6c34f6e83339ceb",
+      "dimensions": [
+        346,
+        41
+      ]
+    },
+    {
+      "path": "source/wordmark/wordmark-offwhite-source.png",
+      "bytes": 8035,
+      "sha256": "f7409d559b047fb216d6d802254f54be7cd79588c9634392b145051de24d6502",
+      "dimensions": [
+        418,
+        128
+      ]
+    },
+    {
+      "path": "source/wordmark/wordmark-offwhite.png",
+      "bytes": 8102,
+      "sha256": "7ef1e91b5b5e3623df53e7c20fa95533ef77bbbaed615488fd297a56abc0944e",
+      "dimensions": [
+        346,
+        41
+      ]
+    },
+    {
+      "path": "source/wordmark/wordmark-white.png",
+      "bytes": 8117,
+      "sha256": "440542ba0f88b8a9782ae681d0895c54a33a2cb3944faf3f7731481a755f5289",
+      "dimensions": [
+        346,
+        41
+      ]
+    },
+    {
+      "path": "svg/app-icon-light.svg",
+      "bytes": 799,
+      "sha256": "0817a046680ba79f64c605a92a4e4b8bd6afd69f13dfd6fb9acee630f8524748",
+      "dimensions": [
+        256,
+        256
+      ]
+    },
+    {
+      "path": "svg/app-icon-maskable.svg",
+      "bytes": 828,
+      "sha256": "b8568209d2b9892c4c238ebf304037196b4ea9f8716163a17614d89a4aa89b66",
+      "dimensions": [
+        256,
+        256
+      ]
+    },
+    {
+      "path": "svg/app-icon-primary.svg",
+      "bytes": 801,
+      "sha256": "9dc30195344fa7a22f4c3d8aa9e0c1a98f8c5a7fae530da96b6bfef39371e081",
+      "dimensions": [
+        256,
+        256
+      ]
+    },
+    {
+      "path": "svg/favicon.svg",
+      "bytes": 789,
+      "sha256": "f46e085c925068a06add38b0af35e24c555ed9a004f8a9f2dffba1f27bb1e7de",
+      "dimensions": [
+        256,
+        256
+      ]
+    },
+    {
+      "path": "svg/horizontal-green-transparent.svg",
+      "bytes": 11736,
+      "sha256": "ee5e09132fc6609decabc38325607e3374696132c127c49f87ac2ce0418eda5b",
+      "dimensions": [
+        478,
+        114
+      ]
+    },
+    {
+      "path": "svg/horizontal-green.svg",
+      "bytes": 11773,
+      "sha256": "b8521009e0159732574326b6419cb1974ceb9c48f7e0013d86f92a9c6eca0bc3",
+      "dimensions": [
+        478,
+        114
+      ]
+    },
+    {
+      "path": "svg/horizontal-light-transparent.svg",
+      "bytes": 11806,
+      "sha256": "a95b806e792087faea2e06de457baf36e3cec888dba7fedbc524fb2bfda08736",
+      "dimensions": [
+        478,
+        114
+      ]
+    },
+    {
+      "path": "svg/horizontal-light.svg",
+      "bytes": 11849,
+      "sha256": "84ef63e1237e1ad3ac8bf3fc0aaa51977cc0b5f107453832a45bfa429c08d8e6",
+      "dimensions": [
+        478,
+        114
+      ]
+    },
+    {
+      "path": "svg/horizontal-mono-black-transparent.svg",
+      "bytes": 11656,
+      "sha256": "f707b4437e9ddb44f71fad0a86e122d721d1f0fee1de8af8f6d3a8057c9ca02c",
+      "dimensions": [
+        478,
+        114
+      ]
+    },
+    {
+      "path": "svg/horizontal-mono-white-transparent.svg",
+      "bytes": 11744,
+      "sha256": "f05fc93703a53145cc0cfef0260adb90dedf3887bd59554afe78c49dff7af5c5",
+      "dimensions": [
+        478,
+        114
+      ]
+    },
+    {
+      "path": "svg/product-watermark.svg",
+      "bytes": 788,
+      "sha256": "1466b0b55ec82c602538241af7095b1dcad76c29e2fdca770e08a7a2b62c0e45",
+      "dimensions": [
+        256,
+        256
+      ]
+    },
+    {
+      "path": "svg/stacked-green-transparent.svg",
+      "bytes": 11736,
+      "sha256": "36ea4c4dd499e757cf2018a51c02de7393f8432ac0d9dc761953e652854f65ab",
+      "dimensions": [
+        369,
+        204
+      ]
+    },
+    {
+      "path": "svg/stacked-green.svg",
+      "bytes": 11773,
+      "sha256": "ba3b7e845374e936ac864b96499fd5fe1850ce5a3994dc41830443195e4c8d78",
+      "dimensions": [
+        369,
+        204
+      ]
+    },
+    {
+      "path": "svg/stacked-light-transparent.svg",
+      "bytes": 11806,
+      "sha256": "97c29ce7d771ba66b82d2f93283890f00ea91d0a7044ae49e6816b8968635c52",
+      "dimensions": [
+        369,
+        204
+      ]
+    },
+    {
+      "path": "svg/stacked-light.svg",
+      "bytes": 11849,
+      "sha256": "679cf7953c18c917caabbbaa19aabba036d88a55e018d955d6463599d6a7f638",
+      "dimensions": [
+        369,
+        204
+      ]
+    },
+    {
+      "path": "svg/symbol-gold.svg",
+      "bytes": 735,
+      "sha256": "f3e5e9dbe85050ec6879db0705d696a4a221c3247f804a48c3904ff60f5fd6eb",
+      "dimensions": [
+        256,
+        256
+      ]
+    },
+    {
+      "path": "svg/symbol-green.svg",
+      "bytes": 739,
+      "sha256": "dca533112c2b355f19b5fe7c879ef2d8191ddd1b1dfdf6ad0dbe2eb3b7f0dfb0",
+      "dimensions": [
+        256,
+        256
+      ]
+    },
+    {
+      "path": "svg/symbol-ink.svg",
+      "bytes": 739,
+      "sha256": "8f78c887cef0074a747d302b091bec03226da0416c5e9244ad5d1708c3bff94a",
+      "dimensions": [
+        256,
+        256
+      ]
+    },
+    {
+      "path": "svg/symbol-white.svg",
+      "bytes": 741,
+      "sha256": "549d34fccf7f3190428162e6215d20b5ef573d401eb16c6358ccf23b0472288f",
+      "dimensions": [
+        256,
+        256
+      ]
+    },
+    {
+      "path": "web/apple-touch-icon-180.png",
+      "bytes": 4107,
+      "sha256": "50674892ece0d91fbf7ac41d3330b1c5284942bef90df6abf55c1d94f189e659",
+      "dimensions": [
+        180,
+        180
+      ]
+    },
+    {
+      "path": "web/favicon-16.png",
+      "bytes": 359,
+      "sha256": "5046a1a26d6c76bec857bf48c37dc4d2dd8314ab3d08f9a883a24a70d9381ba7",
+      "dimensions": [
+        16,
+        16
+      ]
+    },
+    {
+      "path": "web/favicon-32.png",
+      "bytes": 510,
+      "sha256": "706fea06bff67b87e486e9a452cdebe35f395c5de562ff9cbe68190f0aa6329b",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "path": "web/favicon-48.png",
+      "bytes": 919,
+      "sha256": "99c3738b3d93efd72d0811734fdc4382d726f8def7a0a5e830119221f35e0401",
+      "dimensions": [
+        48,
+        48
+      ]
+    },
+    {
+      "path": "web/favicon.ico",
+      "bytes": 15086,
+      "sha256": "84ca5ef286844266911ccc2880337ac0988d8c5d9bcd2156cc9a6710c3dccbb1"
+    },
+    {
+      "path": "web/favicon.svg",
+      "bytes": 789,
+      "sha256": "f46e085c925068a06add38b0af35e24c555ed9a004f8a9f2dffba1f27bb1e7de",
+      "dimensions": [
+        256,
+        256
+      ]
+    },
+    {
+      "path": "web/pwa-icon-192.png",
+      "bytes": 4047,
+      "sha256": "ea4e4b82d5dad3de360753f43854323016452bf10db412788c10035f84789abf",
+      "dimensions": [
+        192,
+        192
+      ]
+    },
+    {
+      "path": "web/pwa-icon-512.png",
+      "bytes": 15472,
+      "sha256": "527cee580cdc43d54cc01ae628f1053a0c94294d0b13a56e6f5087f6320f0654",
+      "dimensions": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "web/pwa-maskable-512.png",
+      "bytes": 11592,
+      "sha256": "6e600fcb0827f0f462d4601bd3ee25fb83497ce4471d198d317128b690c05db7",
+      "dimensions": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "web/site.webmanifest.example.json",
+      "bytes": 543,
+      "sha256": "1d2f1b6a3072247163322224022e6ada342c055d74f6540da6cecd879bb6fef7"
+    }
+  ]
+}

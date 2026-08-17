@@ -31,6 +31,19 @@ supports the conversation around the table instead of competing with it.
 The interaction principles may learn from Bold Poker's low-attention physical
 table experience, but HTML Poker uses original layouts, assets, and code.
 
+## Product identity
+
+The accepted product-facing name is **Our Poker Table**. The canonical v1
+symbol, lockups, palette, clearspace rules, and export inventory are maintained
+in the [brand guidelines](brand/README.md) and
+[brand asset package](../../assets/brand/README.md). The identity reuses this
+system's four-sided corner language, but branding stays subordinate to cards
+and play state on the quiet table surface.
+
+Repository, package, and deployment identifiers remain `html-poker-app` in the
+asset-only integration. Renaming them requires a separate compatibility and
+release migration.
+
 ## Design principles
 
 ### 1. Cards first; chrome later

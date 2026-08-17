@@ -21,6 +21,7 @@ The documentation is deliberately split by authority and reading purpose. Start 
 
 ## Design records
 
+- [Our Poker Table brand guidelines](design/brand/README.md) — accepted product-facing name, mark geometry, lockups, colors, clearspace, accessibility, asset links, and evidence limits.
 - [Shared visual system](design/SHARED-VISUAL-SYSTEM.md) — production-integrated Dark Green, Black Gold, and Deep Navy tokens; card, interaction, accessibility, and role-adaptation principles.
 - [Tablet UI and shared-table visual feedback](design/TABLET-UI-FEEDBACK-2026-08-16.md) — accepted owner direction, rejected patterns, revision-v6 evidence, production-integration receipt, and remaining physical-device gates.
 

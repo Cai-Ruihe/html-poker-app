@@ -30,6 +30,9 @@ Arrows mean “may call or provide an adapter to,” not “may inspect internal
 
 ```text
 html-poker-app/
+├── assets/
+│   ├── brand/                       # Canonical open-source identity sources and exports
+│   └── product/                     # Approved product renders used by public documentation
 ├── apps/
 │   └── web/                         # Browser shell and Normal/Airplane composition
 │       ├── public/                  # URL-only deployer config and notice bundle
@@ -50,6 +53,7 @@ html-poker-app/
 │   ├── journey/                     # Supported user journeys and modes
 │   └── security/                    # Privacy and adversarial tests
 ├── tools/
+│   ├── branding/                    # Brand-package integrity and manifest verification
 │   ├── documentation/               # Link, ID, manifest, and budget checks
 │   └── release/                     # Reproducible build and provenance tools
 ├── docs/                            # Normative and explanatory documentation
@@ -84,6 +88,13 @@ The Airplane adapter deliberately lives in the web app because it is a browser d
 ## Placement test
 
 Before adding code, ask which module owns the policy. If two callers would otherwise implement the same privacy, legality, recovery, or authority rule, deepen the owning module instead of creating a shared utility. A utility may format bytes or parse data; it must not become an unnamed policy module.
+
+Canonical brand sources and reusable exports live in `assets/brand/`. Runtime
+applications import or copy only the approved files they actually use; the
+complete marketing and high-resolution package does not enter every build by
+default. Brand rules and provenance live in `docs/design/brand/`. Approved
+product-proof renders live separately in `assets/product/` so screenshots do
+not become canonical logo sources or enter runtime bundles by accident.
 
 ## Creation rule
 
