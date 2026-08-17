@@ -1225,6 +1225,74 @@ function HostRootThemeButtons(props: TableSurfaceProps) {
   );
 }
 
+type HostControlIconKind =
+  | "appearance"
+  | "connection"
+  | "device"
+  | "diagnostics"
+  | "displays"
+  | "players";
+
+function HostControlIcon({ kind }: { readonly kind: HostControlIconKind }) {
+  const common = {
+    fill: "none",
+    stroke: "currentColor",
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    strokeWidth: 1.7,
+  };
+  return (
+    <span className="secondary-control-card__icon" aria-hidden="true">
+      <svg focusable="false" viewBox="0 0 24 24">
+        {kind === "players" ? (
+          <>
+            <circle {...common} cx="9" cy="8" r="3" />
+            <path {...common} d="M3.5 19c.7-4 2.5-6 5.5-6s4.8 2 5.5 6" />
+            <path
+              {...common}
+              d="M15 6.2a2.6 2.6 0 0 1 0 5.1M16.3 13.6c2.4.7 3.7 2.5 4.2 5.4"
+            />
+          </>
+        ) : null}
+        {kind === "displays" ? (
+          <>
+            <rect {...common} height="13" rx="2" width="19" x="2.5" y="3.5" />
+            <path {...common} d="M9 20.5h6M12 16.5v4" />
+          </>
+        ) : null}
+        {kind === "appearance" ? (
+          <>
+            <circle {...common} cx="12" cy="12" r="8.5" />
+            <path d="M12 3.5a8.5 8.5 0 0 0 0 17Z" fill="currentColor" />
+          </>
+        ) : null}
+        {kind === "device" ? (
+          <>
+            <rect {...common} height="20" rx="2.5" width="12" x="6" y="2" />
+            <path {...common} d="M10 18.5h4" />
+          </>
+        ) : null}
+        {kind === "diagnostics" ? (
+          <>
+            <path {...common} d="m3 17 5-5 4 3 8-9" />
+            <circle cx="3" cy="17" fill="currentColor" r="1.5" />
+            <circle cx="8" cy="12" fill="currentColor" r="1.5" />
+            <circle cx="12" cy="15" fill="currentColor" r="1.5" />
+            <circle cx="20" cy="6" fill="currentColor" r="1.5" />
+          </>
+        ) : null}
+        {kind === "connection" ? (
+          <>
+            <path {...common} d="M19.5 8A8 8 0 0 0 6 5.5L4 8" />
+            <path {...common} d="M4 4v4h4M4.5 16A8 8 0 0 0 18 18.5l2-2.5" />
+            <path {...common} d="M20 20v-4h-4" />
+          </>
+        ) : null}
+      </svg>
+    </span>
+  );
+}
+
 function HostControlCenter({
   onClose,
   ...props
@@ -1290,9 +1358,7 @@ function HostControlCenter({
             onClick={() => closeAndRun(props.onManagePlayers)}
             type="button"
           >
-            <span className="secondary-control-card__icon" aria-hidden="true">
-              ◎
-            </span>
+            <HostControlIcon kind="players" />
             <strong>Players &amp; seats</strong>
             <small>Invites, seat order, dealer and replacement</small>
             <em>
@@ -1307,26 +1373,20 @@ function HostControlCenter({
             onClick={() => closeAndRun(props.onManageDisplays)}
             type="button"
           >
-            <span className="secondary-control-card__icon" aria-hidden="true">
-              ▣
-            </span>
+            <HostControlIcon kind="displays" />
             <strong>Displays &amp; pairing</strong>
             <small>Tablet, TV and public table screens</small>
             <em>Manage on this host</em>
             <b aria-hidden="true">›</b>
           </button>
           <section className="secondary-control-card secondary-control-card--appearance">
-            <span className="secondary-control-card__icon" aria-hidden="true">
-              ◐
-            </span>
+            <HostControlIcon kind="appearance" />
             <strong>Appearance</strong>
             <small>One table colour on every screen</small>
             <HostRootThemeButtons {...props} />
           </section>
           <section className="secondary-control-card secondary-control-card--device">
-            <span className="secondary-control-card__icon" aria-hidden="true">
-              ▯
-            </span>
+            <HostControlIcon kind="device" />
             <strong>This device</strong>
             <small>Views and browser presentation</small>
             <div className="secondary-device-actions">
@@ -1358,9 +1418,7 @@ function HostControlCenter({
             </div>
           </section>
           <section className="secondary-control-card">
-            <span className="secondary-control-card__icon" aria-hidden="true">
-              ⌁
-            </span>
+            <HostControlIcon kind="diagnostics" />
             <strong>Diagnostics &amp; history</strong>
             <small>Privacy-filtered support evidence</small>
             <div className="secondary-device-actions">
@@ -1384,9 +1442,7 @@ function HostControlCenter({
             </div>
           </section>
           <section className="secondary-control-card">
-            <span className="secondary-control-card__icon" aria-hidden="true">
-              ↻
-            </span>
+            <HostControlIcon kind="connection" />
             <strong>Connection &amp; recovery</strong>
             <small>The authoritative browser remains the source of truth</small>
             <em>{props.connectionLabel}</em>

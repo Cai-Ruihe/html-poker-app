@@ -351,6 +351,12 @@ test("Phone host shown cards are compact and showdown marks exactly the winning 
     name: "Table control center",
   });
   await expect(rootControls).toBeVisible();
+  await expect(
+    rootControls.locator(".secondary-control-card__icon svg"),
+  ).toHaveCount(6);
+  await expect(
+    rootControls.locator(".secondary-control-card__icon"),
+  ).toHaveCount(6);
   await screenshotIfChromium(host, testInfo, "phone-host-control-center");
   const rootAccessibility = await new AxeBuilder({ page: host }).analyze();
   expect(rootAccessibility.violations).toEqual([]);

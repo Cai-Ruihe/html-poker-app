@@ -1049,9 +1049,17 @@ button.secondary-control-card:disabled {
   position: absolute;
   top: 24px;
   left: 23px;
+  width: 26px;
+  height: 26px;
   color: var(--table-ink-soft);
-  font-size: 28px;
   line-height: 1;
+}
+
+.secondary-control-card__icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }
 
 .secondary-control-card > strong {
