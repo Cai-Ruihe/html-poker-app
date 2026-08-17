@@ -6,7 +6,7 @@
 
 Use this route when internet is available for the initial page load and the goal is one consistent build across iPhones:
 
-1. On the laptop and every phone, open **https://cai-ruihe.github.io/html-poker-app/**. On iPhone, prefer a normal Safari tab over opening an HTML attachment from Files or a file-manager browser.
+1. On the laptop and every phone, open **https://cai-ruihe.github.io/our-poker-table/**. On iPhone, prefer a normal Safari tab over opening an HTML attachment from Files or a file-manager browser.
 2. Confirm every start screen says **Build 0.1.4-phase1**. Do not reuse an older saved table or mix this URL with a copied HTML file.
 3. Keep every device on the same non-isolating Wi-Fi. The laptop does not need an inbound port, public server, router forwarding, or the home's static public IP.
 4. Create a new table on the laptop and complete the two-QR pairing flow for each player. Use **Enlarge QR** before a phone scans the laptop's dense WebRTC offer.

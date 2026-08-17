@@ -11,9 +11,9 @@
 </p>
 
 <p align="center">
-  <a href="https://cai-ruihe.github.io/html-poker-app/">Open the same-Wi-Fi field build</a>
+  <a href="https://cai-ruihe.github.io/our-poker-table/">Open the same-Wi-Fi field build</a>
   &nbsp;·&nbsp;
-  <a href="https://cai-ruihe.github.io/html-poker-app/normal/">Open Normal Mode</a>
+  <a href="https://cai-ruihe.github.io/our-poker-table/normal/">Open Normal Mode</a>
   &nbsp;·&nbsp;
   <a href="#quick-start">Run it yourself</a>
 </p>
@@ -119,7 +119,7 @@ See the [Phase 1 local release-candidate record](docs/releases/PHASE-1-LOCAL-RC.
 
 The owner-authorized field build is published from `main` only after the configured CI and browser journey gates pass. GitHub's hosted Linux runner cannot expose a local ICE interface, so the three real Airplane peer-to-peer journeys remain mandatory local tests and are explicit hosted-CI skips rather than claimed passes:
 
-**https://cai-ruihe.github.io/html-poker-app/**
+**https://cai-ruihe.github.io/our-poker-table/**
 
 Open that exact HTTPS address on the host and every iPhone, confirm **Build
 0.1.4-phase1**, and create a fresh table. This removes copied-file version drift
@@ -134,7 +134,7 @@ For the short operating sequence and phone-replacement recovery, use the [Airpla
 
 The owner-authorized Normal field build is published at:
 
-**https://cai-ruihe.github.io/html-poker-app/normal/**
+**https://cai-ruihe.github.io/our-poker-table/normal/**
 
 Normal Mode uses ordinary one-use invitation links/QRs and a card-blind Connection Service. The current field service runs on the owner's laptop through an outbound TLS tunnel, so the laptop and its container runtime must remain awake. The operator token stays outside the repository and public site. This temporary service has no uptime guarantee; it is not the later permanent deployment claim.
 
@@ -230,6 +230,6 @@ does not itself grant trademark rights. See the
 
 ## Open-source boundary
 
-The source is public under Apache-2.0 at **https://github.com/Cai-Ruihe/html-poker-app**. Private Vulnerability Reporting, dependency alerts, and automatic security fixes are enabled for that repository. The Pages party build is an explicitly labelled field build; protected branch rules, release signing, an official versioned release, and any Connection Service deployment remain separate owner-controlled gates.
+The source is public under Apache-2.0 at **https://github.com/Cai-Ruihe/our-poker-table**. Private Vulnerability Reporting, dependency alerts, and automatic security fixes are enabled for that repository. The Pages party build is an explicitly labelled field build; protected branch rules, release signing, an official versioned release, and any Connection Service deployment remain separate owner-controlled gates.
 
 Bold Poker is an interaction reference only. HTML Poker is not affiliated with or endorsed by Bold Poker, and its code, branding, artwork, and exact interface expression are not copied.

@@ -40,9 +40,11 @@ in the [brand guidelines](brand/README.md) and
 system's four-sided corner language, but branding stays subordinate to cards
 and play state on the quiet table surface.
 
-Repository, package, and deployment identifiers remain `html-poker-app` in the
-asset-only integration. Renaming them requires a separate compatibility and
-release migration.
+The public GitHub repository and GitHub Pages project-site slug are
+`our-poker-table`. Internal npm workspace identifiers, the `@html-poker/*`
+package namespace, and the established local directory remain
+`html-poker-app`; keeping those implementation identifiers stable avoids
+unrelated Phase 1 build churn.
 
 ## Design principles
 

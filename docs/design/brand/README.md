@@ -16,9 +16,11 @@ feel like a quiet, well-made object placed on a real poker table: social,
 balanced, and free of casino spectacle. The canonical files live in the
 [brand asset package](../../../assets/brand/README.md).
 
-This decision does not rename repository, package, URL, or deployment
-identifiers. Those remain `html-poker-app` until a separately reviewed
-migration is authorized.
+The public GitHub repository and GitHub Pages project-site slug are
+`our-poker-table`. Internal npm workspace identifiers, the `@html-poker/*`
+package namespace, and the established local directory remain
+`html-poker-app` so the public identity migration does not create unrelated
+runtime churn.
 
 ## Brand idea
 
