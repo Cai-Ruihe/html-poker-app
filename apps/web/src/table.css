@@ -100,9 +100,8 @@
   background: color-mix(in srgb, var(--table-panel) 94%, transparent);
 }
 
-.table-surface .table-mark > span {
-  color: var(--table-panel);
-  background: var(--table-accent);
+.table-surface .table-mark__symbol {
+  flex: 0 0 auto;
 }
 
 .table-surface .table-status {

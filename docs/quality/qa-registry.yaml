@@ -121,6 +121,26 @@ stable_id_sources:
     pattern: "^[|] `([A-Z][A-Z0-9-]+-[0-9]{3})`"
     evidence: tests/journey/feedback-regressions.spec.ts
 
+brand_contract:
+  authority: docs/design/brand/README.md
+  canonical_assets: assets/brand
+  manifest_verifier: tools/branding/verify-brand-assets.mjs
+  product_name: Our Poker Table
+  retained_technical_identifiers: [html-poker-app, "@html-poker/*", html-poker]
+  required_surfaces:
+    - entry-header
+    - host-lobby-header
+    - player-join-header
+    - display-pairing-header
+    - in-hand-host-header
+    - browser-title
+    - favicon
+    - standalone-airplane-title
+  evidence:
+    - tests/journey/branding.spec.ts
+    - tests/journey/airplane.spec.ts
+    - tests/journey/feedback-regressions.spec.ts
+
 visual_contract:
   reference_viewport: { width: 1366, height: 1024 }
   viewports:
@@ -216,6 +236,376 @@ tablet_secondary_actions:
     - theme-dark-green
     - theme-deep-navy
 
+control_contract:
+  sources:
+    - apps/web/src/app.tsx
+    - packages/presentation/src/index.tsx
+  evidence_marker: exerciseControl
+  controls:
+    home-chip-mode-physical:
+      surface: Home
+      expected_result: Physical-chip rules are selected.
+      evidence: tests/journey/control-conformance.spec.ts
+    home-chip-mode-digital:
+      surface: Home
+      expected_result: Digital-chip settings and validation are shown.
+      evidence: tests/journey/control-conformance.spec.ts
+    home-create-table:
+      surface: Home
+      expected_result: A Trusted Host lobby is created.
+      evidence: tests/journey/control-conformance.spec.ts
+    home-join-airplane:
+      surface: Airplane Home
+      expected_result: The player Airplane pairing flow opens.
+      evidence: tests/journey/control-conformance.spec.ts
+    home-pair-display:
+      surface: Normal Mode Home
+      expected_result: The display-role pairing flow opens.
+      evidence: tests/journey/normal-relay.spec.ts
+    home-open-invitation:
+      surface: Home
+      expected_result: The pasted invitation opens the join form.
+      evidence: tests/journey/control-conformance.spec.ts
+    home-scan-invitation:
+      surface: Home
+      expected_result: The in-page invitation scanner opens.
+      evidence: tests/journey/control-conformance.spec.ts
+    qr-camera-close:
+      surface: QR scanner
+      expected_result: The active scanner closes.
+      evidence: tests/journey/control-conformance.spec.ts
+    qr-camera-file:
+      surface: QR scanner
+      expected_result: A saved QR image is decoded or a visible error is returned.
+      evidence: tests/journey/control-conformance.spec.ts
+    airplane-offer-enlarge:
+      surface: Airplane Host
+      expected_result: The selected role offer opens as an enlarged QR.
+      variants: [player, public-table, tv, table-control]
+      evidence: tests/journey/control-conformance.spec.ts
+    airplane-offer-prepare:
+      surface: Airplane Host
+      expected_result: A fresh one-use offer QR is rendered for the selected role.
+      variants: [player, public-table, tv, table-control]
+      evidence: tests/journey/control-conformance.spec.ts
+    airplane-answer-scan:
+      surface: Airplane Host
+      expected_result: The answer scanner opens for the selected role offer.
+      variants: [player, public-table, tv, table-control]
+      evidence: tests/journey/control-conformance.spec.ts
+    airplane-offer-enlarge-close:
+      surface: Airplane Host
+      expected_result: The enlarged offer returns to pairing controls.
+      evidence: tests/journey/control-conformance.spec.ts
+    host-open-join-window:
+      surface: Host administration
+      expected_result: New-seat invitation is re-enabled with a fresh link.
+      evidence: tests/journey/control-conformance.spec.ts
+    player-invitation-copy:
+      surface: Host invitation
+      expected_result: The active player invitation is copied.
+      evidence: tests/journey/control-conformance.spec.ts
+    player-invitation-refresh:
+      surface: Host invitation
+      expected_result: The old player invitation is replaced.
+      evidence: tests/journey/control-conformance.spec.ts
+    role-invitation-create:
+      surface: Host displays
+      expected_result: A role-limited invitation is created.
+      variants: [public-table, tv, table-control]
+      evidence: tests/journey/control-conformance.spec.ts
+    role-invitation-copy:
+      surface: Host displays
+      expected_result: The selected role invitation is copied.
+      variants: [public-table, tv, table-control]
+      evidence: tests/journey/control-conformance.spec.ts
+    role-invitation-replace:
+      surface: Host displays
+      expected_result: The selected role invitation is rotated.
+      variants: [public-table, tv, table-control]
+      evidence: tests/journey/control-conformance.spec.ts
+    normal-display-pair-file:
+      surface: Host displays
+      expected_result: A saved display request is decoded or rejected visibly.
+      evidence: tests/journey/normal-relay.spec.ts
+    relay-ticket-refresh:
+      surface: Host recovery
+      expected_result: A fresh table-limited relay ticket is installed.
+      evidence: tests/journey/relay-restart.spec.ts
+    roster-join-window-toggle:
+      surface: Host roster
+      expected_result: New-seat admission changes state.
+      evidence: tests/journey/control-conformance.spec.ts
+    roster-seat-move-up:
+      surface: Host roster
+      expected_result: The selected seat moves one place upward.
+      evidence: tests/journey/control-conformance.spec.ts
+    roster-seat-move-down:
+      surface: Host roster
+      expected_result: The selected seat moves one place downward.
+      evidence: tests/journey/control-conformance.spec.ts
+    roster-make-dealer:
+      surface: Host roster
+      expected_result: The selected eligible seat becomes dealer.
+      evidence: tests/journey/control-conformance.spec.ts
+    roster-replace-device:
+      surface: Host roster
+      expected_result: A seat-limited replacement invitation is created.
+      evidence: tests/journey/control-conformance.spec.ts
+    capability-revoke:
+      surface: Host capabilities
+      expected_result: The selected room surface loses access.
+      evidence: tests/journey/control-conformance.spec.ts
+    history-void-hand:
+      surface: Host corrections
+      expected_result: The active hand is completed as void with an audit event.
+      evidence: tests/journey/control-conformance.spec.ts
+    history-correction-event:
+      surface: Host corrections
+      expected_result: The target event for an annotation changes.
+      evidence: tests/journey/control-conformance.spec.ts
+    history-append-correction:
+      surface: Host corrections
+      expected_result: A correction note is appended to history.
+      evidence: tests/journey/control-conformance.spec.ts
+    device-view-host:
+      surface: Host device switcher
+      expected_result: Host Controls becomes the active view.
+      evidence: tests/journey/control-conformance.spec.ts
+    device-view-player:
+      surface: Host device switcher
+      expected_result: The host device shows its private player hand.
+      evidence: tests/journey/control-conformance.spec.ts
+    device-view-tablet:
+      surface: Host device switcher
+      expected_result: The card-first Tablet View becomes active.
+      evidence: tests/journey/control-conformance.spec.ts
+    host-join-own-device:
+      surface: Host lobby
+      expected_result: The Trusted Host device receives its own player seat.
+      evidence: tests/journey/control-conformance.spec.ts
+    host-deal-first-hand:
+      surface: Host lobby
+      expected_result: The first committed hand enters pre-flop.
+      evidence: tests/journey/control-conformance.spec.ts
+    administration-close:
+      surface: Host administration
+      expected_result: Player administration closes.
+      evidence: tests/journey/control-conformance.spec.ts
+    host-theme-choice:
+      surface: Host administration
+      expected_result: The selected table theme synchronizes.
+      variants: [dark-green, black-gold, deep-navy]
+      evidence: tests/journey/control-conformance.spec.ts
+    leave-dialog-cancel:
+      surface: Player leave confirmation
+      expected_result: The player remains at the table.
+      evidence: tests/journey/control-conformance.spec.ts
+    leave-dialog-confirm:
+      surface: Player leave confirmation
+      expected_result: The credential is revoked and Home opens.
+      evidence: tests/journey/control-conformance.spec.ts
+    player-join-table:
+      surface: Player invitation
+      expected_result: The invitation becomes a waiting or active seat.
+      evidence: tests/journey/control-conformance.spec.ts
+    player-return-next-hand:
+      surface: Player waiting
+      expected_result: Future sitting-out state is cleared.
+      evidence: tests/journey/control-conformance.spec.ts
+    player-refresh-waiting:
+      surface: Player waiting
+      expected_result: The current host revision is pulled without navigation.
+      evidence: tests/journey/control-conformance.spec.ts
+    player-leave-waiting:
+      surface: Player waiting
+      expected_result: Permanent-leave confirmation opens.
+      evidence: tests/journey/control-conformance.spec.ts
+    role-reconnect-error:
+      surface: Room-surface recovery
+      expected_result: A reconnect is attempted and a current result is rendered.
+      evidence: tests/journey/control-conformance.spec.ts
+    airplane-player-scan-offer:
+      surface: Airplane Player
+      expected_result: The host-offer scanner opens.
+      evidence: tests/journey/control-conformance.spec.ts
+    airplane-player-cancel:
+      surface: Airplane Player
+      expected_result: Pairing is discarded and Home returns.
+      evidence: tests/journey/control-conformance.spec.ts
+    airplane-player-join-after-scan:
+      surface: Airplane Player
+      expected_result: The paired channel attempts the seat join.
+      evidence: tests/journey/airplane.spec.ts
+    display-pair-cancel:
+      surface: Display pairing
+      expected_result: Pairing is discarded and Home returns.
+      evidence: tests/journey/normal-relay.spec.ts
+    display-pair-public:
+      surface: Display pairing
+      expected_result: A Public Table request QR is rendered.
+      evidence: tests/journey/normal-relay.spec.ts
+    display-pair-tv:
+      surface: Display pairing
+      expected_result: A TV request QR is rendered.
+      evidence: tests/journey/normal-relay.spec.ts
+    recovery-return-home:
+      surface: Host recovery stop
+      expected_result: The stale recovery fragment is removed and Home opens.
+      evidence: tests/journey/control-conformance.spec.ts
+    dealer-next-hand:
+      surface: Host dealer controls
+      expected_result: A new committed hand enters pre-flop.
+      evidence: tests/journey/control-conformance.spec.ts
+    dealer-review-settlement:
+      surface: Digital-chip dealer controls
+      expected_result: Settlement review is prepared without mutating stacks.
+      evidence: tests/journey/control-conformance.spec.ts
+    dealer-confirm-settlement:
+      surface: Digital-chip dealer controls
+      expected_result: Reviewed settlement updates stacks and completes the hand.
+      evidence: tests/journey/control-conformance.spec.ts
+    dealer-cancel-end-hand:
+      surface: Host dealer controls
+      expected_result: The early-end confirmation closes without ending the hand.
+      evidence: tests/journey/control-conformance.spec.ts
+    dealer-confirm-end-hand:
+      surface: Host dealer controls
+      expected_result: The physical-chip hand completes early.
+      evidence: tests/journey/control-conformance.spec.ts
+    dealer-open-end-hand:
+      surface: Host dealer controls
+      expected_result: The explicit early-end confirmation opens.
+      evidence: tests/journey/control-conformance.spec.ts
+    dealer-next-street:
+      surface: Host dealer controls
+      expected_result: Exactly the requested next street is committed.
+      variants: [preflop, flop, turn]
+      evidence: tests/journey/control-conformance.spec.ts
+    tablet-theme-choice:
+      surface: Tablet secondary controls
+      expected_result: The selected theme synchronizes and geometry is retained.
+      variants: [dark-green, black-gold, deep-navy]
+      evidence: tests/journey/control-conformance.spec.ts
+    table-reconnect:
+      surface: Player or Tablet recovery
+      expected_result: The current table revision is pulled successfully.
+      evidence: tests/journey/control-conformance.spec.ts
+    tablet-corner-open:
+      surface: Tablet quiet view
+      expected_result: The matching seat-facing quick panel opens.
+      variants: [upper-left, upper-right, lower-left, lower-right]
+      evidence: tests/journey/control-conformance.spec.ts
+    tablet-quick-more:
+      surface: Tablet quick controls
+      expected_result: The centered second-level controls open.
+      evidence: tests/journey/control-conformance.spec.ts
+    tablet-quick-close:
+      surface: Tablet quick controls
+      expected_result: Quick controls close to card-only quiet view.
+      evidence: tests/journey/control-conformance.spec.ts
+    tablet-next-card:
+      surface: Tablet quick controls
+      expected_result: Exactly one next street is committed and the panel closes.
+      evidence: tests/journey/control-conformance.spec.ts
+    tablet-next-hand:
+      surface: Tablet quick controls
+      expected_result: A complete drag or double-click ends or starts one hand and closes.
+      evidence: tests/journey/control-conformance.spec.ts
+    tablet-secondary-close:
+      surface: Tablet secondary controls
+      expected_result: Secondary controls close to quiet view.
+      evidence: tests/journey/control-conformance.spec.ts
+    tablet-manage-players:
+      surface: Tablet secondary controls
+      expected_result: Real roster administration opens and can mutate seat order.
+      evidence: tests/journey/control-conformance.spec.ts
+    tablet-manage-displays:
+      surface: Tablet secondary controls
+      expected_result: Real display and pairing administration opens.
+      evidence: tests/journey/control-conformance.spec.ts
+    tablet-view-player:
+      surface: Tablet secondary controls
+      expected_result: The host device switches to its private player hand.
+      evidence: tests/journey/control-conformance.spec.ts
+    tablet-view-host:
+      surface: Tablet secondary controls
+      expected_result: The host device switches to Host Controls.
+      evidence: tests/journey/control-conformance.spec.ts
+    tablet-fullscreen:
+      surface: Tablet secondary controls
+      expected_result: Fullscreen is requested or an explicit capability error is shown.
+      evidence: tests/journey/control-conformance.spec.ts
+    tablet-save-log:
+      surface: Tablet secondary controls
+      expected_result: A privacy-filtered diagnostics file downloads.
+      evidence: tests/journey/control-conformance.spec.ts
+    tablet-secondary-return:
+      surface: Tablet secondary controls
+      expected_result: Secondary controls close to quiet view.
+      evidence: tests/journey/control-conformance.spec.ts
+    player-bet-fold:
+      surface: Digital-chip player
+      expected_result: The acting player folds and action advances.
+      evidence: tests/journey/control-conformance.spec.ts
+    player-bet-check:
+      surface: Digital-chip player
+      expected_result: A legal check commits and action advances.
+      evidence: tests/journey/control-conformance.spec.ts
+    player-bet-call:
+      surface: Digital-chip player
+      expected_result: The call amount enters the pot and action advances.
+      evidence: tests/journey/control-conformance.spec.ts
+    player-bet-commit:
+      surface: Digital-chip player
+      expected_result: A legal bet-to or raise-to amount commits.
+      variants: [bet-to, raise-to]
+      evidence: tests/journey/control-conformance.spec.ts
+    player-bet-all-in:
+      surface: Digital-chip player
+      expected_result: The legal all-in amount commits and action advances.
+      evidence: tests/journey/control-conformance.spec.ts
+    player-reveal-private:
+      surface: Player hand
+      expected_result: Hole cards are uncovered only on that device.
+      evidence: tests/journey/control-conformance.spec.ts
+    player-hide-private:
+      surface: Player hand
+      expected_result: Hole cards are covered locally.
+      evidence: tests/journey/control-conformance.spec.ts
+    player-undo-fold:
+      surface: Player hand
+      expected_result: A provisional physical-chip fold returns to active.
+      evidence: tests/journey/control-conformance.spec.ts
+    player-fold:
+      surface: Player hand
+      expected_result: A provisional physical-chip fold is recorded.
+      evidence: tests/journey/control-conformance.spec.ts
+    player-show-cards:
+      surface: Player hand
+      expected_result: The two hole cards become public shown cards.
+      evidence: tests/journey/control-conformance.spec.ts
+    player-sit-out-toggle:
+      surface: Player hand
+      expected_result: Future sitting-out state follows the checkbox.
+      evidence: tests/journey/control-conformance.spec.ts
+    player-leave-active:
+      surface: Player hand
+      expected_result: Permanent-leave confirmation opens.
+      evidence: tests/journey/control-conformance.spec.ts
+    host-manage-players:
+      surface: Host table
+      expected_result: Real player administration opens.
+      evidence: tests/journey/control-conformance.spec.ts
+    host-developer-toggle:
+      surface: Host table
+      expected_result: Developer diagnostics visibility changes.
+      evidence: tests/journey/control-conformance.spec.ts
+    developer-save-log:
+      surface: Host developer diagnostics
+      expected_result: A privacy-filtered diagnostics file downloads.
+      evidence: tests/journey/control-conformance.spec.ts
+
 performance_contract:
   artifacts:
     normal_javascript_raw_bytes: 1100000
@@ -238,6 +628,7 @@ manual_evidence:
 
 release_blocking_commands:
   - pnpm qa:registry
+  - pnpm qa:controls
   - pnpm check
   - pnpm test:coverage
   - pnpm qa:browser

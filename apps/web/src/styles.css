@@ -1,19 +1,19 @@
 :root {
-  color: #19211f;
-  background: #f2f3ef;
+  color: #1d2321;
+  background: #f5f5f5;
   font-family: "Archivo Variable", "Avenir Next", "Segoe UI", sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --canvas: #f2f3ef;
+  --canvas: #f5f5f5;
   --surface: #ffffff;
   --surface-muted: #e8ebe6;
-  --ink: #19211f;
+  --ink: #1d2321;
   --ink-soft: #46514d;
   --quiet: #68716d;
   --rule: #cbd0cb;
   --rule-strong: #9da6a1;
-  --green: #1e5548;
-  --green-dark: #123d34;
+  --green: #194c3e;
+  --green-dark: #10382f;
   --green-soft: #d7e4df;
   --red: #b84337;
   --red-soft: #f4ded9;
@@ -89,45 +89,37 @@ button:disabled {
   gap: 1rem;
   min-height: 4.4rem;
   border-bottom: 1px solid var(--rule);
-  padding: 0.8rem clamp(1rem, 3vw, 3rem);
+  padding: 0.4rem clamp(1rem, 3vw, 3rem);
 }
 
 .brand-lockup {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  min-width: 0;
 }
 
-.brand-glyph,
-.table-mark > span {
-  display: grid;
-  width: 2.15rem;
-  aspect-ratio: 1;
-  place-items: center;
-  border-radius: 0.48rem;
-  color: white;
-  background: var(--green);
-  font-family: Georgia, serif;
-  font-size: 1.15rem;
-  transform: rotate(-2deg);
+.brand-lockup__wordmark {
+  display: block;
+  width: 239px;
+  height: 57px;
 }
 
-.brand-lockup > div {
-  display: grid;
-  gap: 0.08rem;
+.brand-lockup__compact {
+  display: none;
+  align-items: center;
+  gap: 0.65rem;
 }
 
-.brand-lockup strong {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.05rem;
-  letter-spacing: -0.015em;
+.brand-lockup__compact img {
+  width: 2.65rem;
+  height: 2.65rem;
 }
 
-.brand-lockup span:not(.brand-glyph) {
-  color: var(--quiet);
-  font-size: 0.68rem;
-  font-weight: 620;
-  letter-spacing: 0.025em;
+.brand-lockup__compact strong {
+  color: var(--ink);
+  font-size: 0.88rem;
+  font-weight: 760;
+  letter-spacing: -0.01em;
 }
 
 .build-label,
@@ -1483,9 +1475,10 @@ button:disabled {
   font-family: Georgia, serif;
 }
 
-.table-mark > span {
-  width: 1.8rem;
-  font-size: 0.9rem;
+.table-mark__symbol {
+  display: block;
+  width: 2.15rem;
+  height: 2.15rem;
 }
 
 .table-status {
@@ -2621,9 +2614,13 @@ button:disabled {
     font-size: 0.64rem;
   }
 
-  .brand-lockup span:not(.brand-glyph),
+  .brand-lockup__wordmark,
   .table-mark strong {
     display: none;
+  }
+
+  .brand-lockup__compact {
+    display: flex;
   }
 
   .home-intro h1 {

@@ -89,7 +89,7 @@ function decodePayload(code: string): AirplanePairingPayload {
     !code.startsWith(airplanePrefix) ||
     code.length > maximumPairingCodeLength
   ) {
-    throw new Error("This is not a supported HTML Poker Airplane QR.");
+    throw new Error("This is not a supported Our Poker Table Airplane QR.");
   }
   let parsed: unknown;
   try {

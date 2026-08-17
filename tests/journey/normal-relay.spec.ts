@@ -10,6 +10,8 @@ import {
   type TestInfo,
 } from "@playwright/test";
 
+import { exerciseControl } from "./control-qa";
+
 const relayPort = 18_787;
 const relayToken = "phase-1-test-operator-token";
 const appOrigin = `http://127.0.0.1:${process.env.HTML_POKER_TEST_PORT ?? "4173"}`;
@@ -369,8 +371,40 @@ test("an unpaired Normal TV receives its requested role only after host scan-pai
     const tv = await tvContext.newPage();
     await createConfiguredTable(host);
     await tv.goto("/");
-    await tv.getByRole("button", { name: "Pair this display" }).click();
-    await tv.getByRole("button", { name: "Pair as TV" }).click();
+    await exerciseControl(
+      "home-pair-display",
+      tv.locator('[data-qa-control="home-pair-display"]'),
+      (target) => target.click(),
+      () =>
+        expect(tv.locator('[data-qa-control="display-pair-tv"]')).toBeVisible(),
+    );
+    await exerciseControl(
+      "display-pair-cancel",
+      tv.locator('[data-qa-control="display-pair-cancel"]'),
+      (target) => target.click(),
+      () =>
+        expect(
+          tv.getByRole("heading", { name: "Create a table" }),
+        ).toBeVisible(),
+    );
+    await tv.locator('[data-qa-control="home-pair-display"]').click();
+    await exerciseControl(
+      "display-pair-public",
+      tv.locator('[data-qa-control="display-pair-public"]'),
+      (target) => target.click(),
+      () =>
+        expect(
+          tv.getByAltText("Public Table display pairing QR code"),
+        ).toBeVisible(),
+    );
+    await tv.goto("/");
+    await tv.locator('[data-qa-control="home-pair-display"]').click();
+    await exerciseControl(
+      "display-pair-tv",
+      tv.locator('[data-qa-control="display-pair-tv"]'),
+      (target) => target.click(),
+      () => expect(tv.getByAltText("TV display pairing QR code")).toBeVisible(),
+    );
     const requestSource = await tv
       .getByAltText("TV display pairing QR code")
       .getAttribute("src");
@@ -387,13 +421,18 @@ test("an unpaired Normal TV receives its requested role only after host scan-pai
     ).toBeVisible();
     await expect(tv.getByLabel("Dealer controls")).toHaveCount(0);
 
-    await host
-      .getByLabel("Scan display pairing QR")
-      .setInputFiles(dataUrlFile(requestSource, "tv-pairing-request.png"));
-
-    await expect(host.getByText("TV paired", { exact: true })).toBeVisible({
-      timeout: 15_000,
-    });
+    await exerciseControl(
+      "normal-display-pair-file",
+      host.locator('[data-qa-control="normal-display-pair-file"]'),
+      (target) =>
+        target.setInputFiles(
+          dataUrlFile(requestSource, "tv-pairing-request.png"),
+        ),
+      () =>
+        expect(host.getByText("TV paired", { exact: true })).toBeVisible({
+          timeout: 15_000,
+        }),
+    );
     await expect(
       tv.getByText("Connecting to the table", { exact: true }),
     ).toBeVisible({ timeout: 15_000 });

@@ -15,6 +15,10 @@ import type { CapabilityRole } from "@html-poker/identity-capabilities";
 import type { TableTheme } from "@html-poker/game-core";
 import { TableSurface } from "@html-poker/presentation";
 
+import brandHorizontalLight from "../../../assets/brand/svg/horizontal-light-transparent.svg?inline";
+import brandSymbolGold from "../../../assets/brand/svg/symbol-gold.svg?inline";
+import brandSymbolGreen from "../../../assets/brand/svg/symbol-green.svg?inline";
+
 import {
   BUILD_VERSION,
   createNormalDisplayPairingRequest,
@@ -46,6 +50,8 @@ interface ScreenWakeLockSentinel {
   readonly released: boolean;
   release(): Promise<void>;
 }
+
+const PRODUCT_NAME = "Our Poker Table";
 
 interface ScreenWakeLockManager {
   request(type: "screen"): Promise<ScreenWakeLockSentinel>;
@@ -121,13 +127,16 @@ function capabilityChecks(): readonly CapabilityCheck[] {
 function BrandBar({ aside }: { readonly aside?: ReactNode }) {
   return (
     <header className="brand-bar">
-      <div className="brand-lockup">
-        <span className="brand-glyph" aria-hidden="true">
-          ▰
-        </span>
-        <div>
-          <strong>HTML Poker</strong>
-          <span>Private cards · chips your choice</span>
+      <div aria-label={PRODUCT_NAME} className="brand-lockup" role="img">
+        <img
+          alt=""
+          aria-hidden="true"
+          className="brand-lockup__wordmark"
+          src={brandHorizontalLight}
+        />
+        <div className="brand-lockup__compact" aria-hidden="true">
+          <img alt="" src={brandSymbolGreen} />
+          <strong>{PRODUCT_NAME}</strong>
         </div>
       </div>
       {aside}
@@ -206,7 +215,7 @@ function Home({
       const url = new URL(rawValue.trim(), globalThis.location.href);
       if (!parseInvitation(url.hash)) {
         throw new Error(
-          "This is not a complete HTML Poker invitation URL. Ask the host for the current player link.",
+          "This is not a complete Our Poker Table invitation URL. Ask the host for the current player link.",
         );
       }
       if (!["http:", "https:"].includes(url.protocol)) {
@@ -273,6 +282,7 @@ function Home({
               <label>
                 <input
                   checked={chipMode === "physical"}
+                  data-qa-control="home-chip-mode-physical"
                   name="chip-mode"
                   onChange={() => setChipMode("physical")}
                   type="radio"
@@ -287,6 +297,7 @@ function Home({
               <label>
                 <input
                   checked={chipMode === "digital"}
+                  data-qa-control="home-chip-mode-digital"
                   name="chip-mode"
                   onChange={() => setChipMode("digital")}
                   type="radio"
@@ -372,6 +383,7 @@ function Home({
           ) : null}
           <button
             className="button button--primary button--wide"
+            data-qa-control="home-create-table"
             disabled={
               !ready ||
               busy ||
@@ -389,6 +401,7 @@ function Home({
           {onJoinAirplane ? (
             <button
               className="button button--quiet button--wide airplane-join-button"
+              data-qa-control="home-join-airplane"
               onClick={onJoinAirplane}
               type="button"
             >
@@ -398,6 +411,7 @@ function Home({
           {onPairDisplay ? (
             <button
               className="button button--quiet button--wide airplane-join-button"
+              data-qa-control="home-pair-display"
               onClick={onPairDisplay}
               type="button"
             >
@@ -434,6 +448,7 @@ function Home({
             <div className="button-row">
               <button
                 className="button button--primary"
+                data-qa-control="home-open-invitation"
                 disabled={!joinUrl.trim()}
                 onClick={() => openInvitation(joinUrl)}
                 type="button"
@@ -442,6 +457,7 @@ function Home({
               </button>
               <button
                 className="button button--quiet"
+                data-qa-control="home-scan-invitation"
                 onClick={() => setJoinScannerOpen(true)}
                 type="button"
               >
@@ -782,6 +798,7 @@ function QrCameraScanner({
             aria-label="Close camera"
             autoFocus
             className="qr-camera-close"
+            data-qa-control="qr-camera-close"
             onClick={onClose}
             type="button"
           >
@@ -805,6 +822,7 @@ function QrCameraScanner({
             <span>Use a saved QR image</span>
             <input
               accept="image/*"
+              data-qa-control="qr-camera-file"
               onChange={(event) => {
                 const file = event.target.files?.[0];
                 if (file) void readSavedImage(file);
@@ -895,6 +913,8 @@ function AirplaneHostPairingCard({
             />
             <button
               className="button button--quiet qr-expand-button"
+              data-qa-control="airplane-offer-enlarge"
+              data-qa-variant={role}
               onClick={() => setQrExpanded(true)}
               type="button"
             >
@@ -928,6 +948,8 @@ function AirplaneHostPairingCard({
         <div className="button-row">
           <button
             className="button button--primary"
+            data-qa-control="airplane-offer-prepare"
+            data-qa-variant={role}
             disabled={busy}
             onClick={() => void prepare()}
             type="button"
@@ -937,6 +959,8 @@ function AirplaneHostPairingCard({
           {offer ? (
             <button
               className="button button--quiet"
+              data-qa-control="airplane-answer-scan"
+              data-qa-variant={role}
               disabled={busy}
               onClick={() => setScannerOpen(true)}
               type="button"
@@ -975,6 +999,7 @@ function AirplaneHostPairingCard({
                 aria-label="Close enlarged QR"
                 autoFocus
                 className="qr-camera-close"
+                data-qa-control="airplane-offer-enlarge-close"
                 onClick={() => setQrExpanded(false)}
                 type="button"
               >
@@ -1033,6 +1058,7 @@ function InvitePanel({
           {!digitalJoinLocked ? (
             <button
               className="button button--quiet"
+              data-qa-control="host-open-join-window"
               onClick={() => void runtime.setJoinWindow(true)}
               type="button"
             >
@@ -1122,6 +1148,7 @@ function InvitePanel({
         <div className="button-row">
           <button
             className="button button--primary"
+            data-qa-control="player-invitation-copy"
             onClick={() => void copy()}
             type="button"
           >
@@ -1129,6 +1156,7 @@ function InvitePanel({
           </button>
           <button
             className="button button--quiet"
+            data-qa-control="player-invitation-refresh"
             onClick={() => void runtime.issueInvitation("player")}
             type="button"
           >
@@ -1182,6 +1210,8 @@ function RoleInvitationCard({
         </div>
         <button
           className="button button--quiet"
+          data-qa-control="role-invitation-create"
+          data-qa-variant={role}
           onClick={() => void runtime.issueInvitation(role)}
           type="button"
         >
@@ -1203,6 +1233,8 @@ function RoleInvitationCard({
         <div className="button-row">
           <button
             className="button button--primary"
+            data-qa-control="role-invitation-copy"
+            data-qa-variant={role}
             onClick={() => {
               void globalThis.navigator.clipboard.writeText(link).then(() => {
                 setCopied(true);
@@ -1215,6 +1247,8 @@ function RoleInvitationCard({
           </button>
           <button
             className="button button--quiet"
+            data-qa-control="role-invitation-replace"
+            data-qa-variant={role}
             onClick={() => void runtime.issueInvitation(role)}
             type="button"
           >
@@ -1277,6 +1311,7 @@ function NormalDisplayPairingCard({
         <input
           accept="image/*"
           capture="environment"
+          data-qa-control="normal-display-pair-file"
           disabled={busy}
           onChange={(event) => {
             const file = event.target.files?.[0];
@@ -1373,6 +1408,7 @@ function RelaySessionCard({
       </label>
       <button
         className="button button--quiet"
+        data-qa-control="relay-ticket-refresh"
         disabled={busy || !operatorToken.trim()}
         onClick={() => void refresh()}
         type="button"
@@ -1454,6 +1490,7 @@ function SeatRoster({
           {runtime && !digitalJoinLocked ? (
             <button
               className="text-button"
+              data-qa-control="roster-join-window-toggle"
               onClick={() =>
                 void runtime.setJoinWindow(!snapshot.roster.joinWindowOpen)
               }
@@ -1490,6 +1527,8 @@ function SeatRoster({
                     <>
                       <button
                         aria-label={`Move ${seat.displayName} up`}
+                        data-qa-control="roster-seat-move-up"
+                        data-qa-variant={seat.seatId}
                         disabled={index === 0}
                         onClick={() => onMove(seat.seatId, index - 1)}
                         type="button"
@@ -1498,6 +1537,8 @@ function SeatRoster({
                       </button>
                       <button
                         aria-label={`Move ${seat.displayName} down`}
+                        data-qa-control="roster-seat-move-down"
+                        data-qa-variant={seat.seatId}
                         disabled={index === orderedSeats.length - 1}
                         onClick={() => onMove(seat.seatId, index + 1)}
                         type="button"
@@ -1510,6 +1551,8 @@ function SeatRoster({
                   snapshot.projection?.phase === "complete" &&
                   snapshot.projection.dealerSeatId !== seat.seatId ? (
                     <button
+                      data-qa-control="roster-make-dealer"
+                      data-qa-variant={seat.seatId}
                       onClick={() => onRelocateDealer(seat.seatId)}
                       type="button"
                     >
@@ -1518,6 +1561,8 @@ function SeatRoster({
                   ) : null}
                   {onReplace ? (
                     <button
+                      data-qa-control="roster-replace-device"
+                      data-qa-variant={seat.seatId}
                       onClick={() => onReplace(seat.seatId)}
                       type="button"
                     >
@@ -1559,6 +1604,8 @@ function CapabilityAdministration({
               <span>{capability.role.replaceAll("-", " ")}</span>
               <button
                 className="text-button text-button--danger"
+                data-qa-control="capability-revoke"
+                data-qa-variant={capability.role}
                 onClick={() => onRevoke(capability.capabilityId)}
                 type="button"
               >
@@ -1625,6 +1672,7 @@ function RecoveryAdministration({
           </label>
           <button
             className="button button--danger button--small"
+            data-qa-control="history-void-hand"
             disabled={!voidReason.trim()}
             type="submit"
           >
@@ -1644,6 +1692,7 @@ function RecoveryAdministration({
           <label>
             <span>Event to annotate</span>
             <select
+              data-qa-control="history-correction-event"
               onChange={(event) => setCorrectionEventId(event.target.value)}
               value={correctionEventId}
             >
@@ -1664,6 +1713,7 @@ function RecoveryAdministration({
           </label>
           <button
             className="button button--quiet button--small"
+            data-qa-control="history-append-correction"
             disabled={!correctionEventId || !correctionReason.trim()}
             type="submit"
           >
@@ -1701,6 +1751,7 @@ function HostDeviceViewSwitcher({
     <nav className="host-device-switcher" aria-label="This device view">
       <button
         aria-pressed={activeView === "host"}
+        data-qa-control="device-view-host"
         onClick={() => onChange("host")}
         type="button"
       >
@@ -1709,6 +1760,7 @@ function HostDeviceViewSwitcher({
       {hasPlayer ? (
         <button
           aria-pressed={activeView === "player"}
+          data-qa-control="device-view-player"
           onClick={() => onChange("player")}
           type="button"
         >
@@ -1717,6 +1769,7 @@ function HostDeviceViewSwitcher({
       ) : null}
       <button
         aria-pressed={activeView === "table"}
+        data-qa-control="device-view-tablet"
         disabled={!tableReady}
         onClick={() => onChange("table")}
         type="button"
@@ -1779,6 +1832,7 @@ function JoinOwnDeviceCard({
         ) : null}
         <button
           className="button button--primary button--wide"
+          data-qa-control="host-join-own-device"
           disabled={!displayName.trim() || busy}
           type="submit"
         >
@@ -1899,6 +1953,7 @@ function HostLobby({
         </p>
         <button
           className="button button--primary"
+          data-qa-control="host-deal-first-hand"
           disabled={snapshot.roster.seats.length < 2 || busy}
           onClick={() => void start()}
           type="button"
@@ -2036,6 +2091,7 @@ function HostTable({
         />
       ) : null}
       <TableSurface
+        brandSymbolSrc={brandSymbolGold}
         busy={busy || actionGuard.busy}
         connectionLabel={snapshot.connectionLabel}
         developerMode={developerMode}
@@ -2092,6 +2148,7 @@ function HostTable({
         }
         onToggleDeveloperMode={() => setDeveloperMode(!developerMode)}
         projection={projection}
+        productName={PRODUCT_NAME}
       />
       {adminOpen && activeView === "host" ? (
         <aside
@@ -2106,6 +2163,7 @@ function HostTable({
             </div>
             <button
               aria-label="Close player administration"
+              data-qa-control="administration-close"
               onClick={() => setAdminOpen(false)}
               type="button"
             >
@@ -2182,6 +2240,8 @@ function TableThemePicker({
         {themes.map((theme) => (
           <button
             aria-pressed={value === theme.id}
+            data-qa-control="host-theme-choice"
+            data-qa-variant={theme.id}
             data-theme-option={theme.id}
             disabled={busy}
             key={theme.id}
@@ -2239,6 +2299,7 @@ function LeaveTableDialog({
           <button
             autoFocus
             className="button button--quiet"
+            data-qa-control="leave-dialog-cancel"
             disabled={busy}
             onClick={onCancel}
             type="button"
@@ -2247,6 +2308,7 @@ function LeaveTableDialog({
           </button>
           <button
             className="button button--danger"
+            data-qa-control="leave-dialog-confirm"
             disabled={busy}
             onClick={onConfirm}
             type="button"
@@ -2435,6 +2497,7 @@ function PlayerExperience({
             ) : null}
             <button
               className="button button--primary button--wide"
+              data-qa-control="player-join-table"
               disabled={!displayName.trim() || busy}
               type="submit"
             >
@@ -2501,6 +2564,7 @@ function PlayerExperience({
             {stayingOutNextHand ? (
               <button
                 className="button button--primary"
+                data-qa-control="player-return-next-hand"
                 disabled={busy}
                 onClick={() =>
                   perform({ sittingOut: false, type: "set-sitting-out" })
@@ -2512,6 +2576,7 @@ function PlayerExperience({
             ) : null}
             <button
               className="button button--quiet"
+              data-qa-control="player-refresh-waiting"
               disabled={busy}
               onClick={() => void reconnect()}
               type="button"
@@ -2520,6 +2585,7 @@ function PlayerExperience({
             </button>
             <button
               className="waiting-seat-leave"
+              data-qa-control="player-leave-waiting"
               disabled={busy}
               onClick={() => setLeaveConfirmOpen(true)}
               type="button"
@@ -2543,6 +2609,7 @@ function PlayerExperience({
   return (
     <>
       <TableSurface
+        brandSymbolSrc={brandSymbolGold}
         busy={busy}
         connectionLabel={snapshot.connectionLabel}
         {...((error ?? snapshot.error)
@@ -2563,6 +2630,7 @@ function PlayerExperience({
         }
         onUndoFold={() => perform({ type: "undo-fold" })}
         projection={playerProjection}
+        productName={PRODUCT_NAME}
       />
       {leaveConfirmOpen ? (
         <LeaveTableDialog
@@ -2646,6 +2714,7 @@ function RoleExperience({ runtime }: { readonly runtime: TableClientRuntime }) {
           <p>{error ?? snapshot.error ?? "Ask the host for a fresh link."}</p>
           <button
             className="button button--primary"
+            data-qa-control="role-reconnect-error"
             onClick={() => {
               setError(undefined);
               void runtime.reconnect().catch((caught: unknown) => {
@@ -2700,6 +2769,7 @@ function RoleExperience({ runtime }: { readonly runtime: TableClientRuntime }) {
 
   return (
     <TableSurface
+      brandSymbolSrc={brandSymbolGold}
       busy={actionGuard.busy}
       connectionLabel={snapshot.connectionLabel}
       {...((error ?? snapshot.error)
@@ -2719,6 +2789,7 @@ function RoleExperience({ runtime }: { readonly runtime: TableClientRuntime }) {
       onStartNextHand={() => perform({ type: "start-next-hand" })}
       onReconnect={() => runtime.reconnect()}
       projection={snapshot.projection}
+      productName={PRODUCT_NAME}
     />
   );
 }
@@ -2803,6 +2874,7 @@ function AirplaneJoin({
           ) : (
             <button
               className="airplane-scan-target"
+              data-qa-control="airplane-player-scan-offer"
               disabled={busy}
               onClick={() => setScannerOpen(true)}
               type="button"
@@ -2831,6 +2903,7 @@ function AirplaneJoin({
         <div className="button-row">
           <button
             className="button button--quiet"
+            data-qa-control="airplane-player-cancel"
             onClick={() => {
               pairing?.runtime.close();
               onCancel();
@@ -2842,6 +2915,7 @@ function AirplaneJoin({
           {pairing ? (
             <button
               className="button button--primary"
+              data-qa-control="airplane-player-join-after-scan"
               disabled={
                 busy ||
                 (pairing.runtime.role === "player" && !displayName.trim())
@@ -2945,6 +3019,7 @@ function NormalDisplayJoin({
         <div className="button-row">
           <button
             className="button button--quiet"
+            data-qa-control="display-pair-cancel"
             onClick={() => {
               pairing?.cancel();
               onCancel();
@@ -2955,6 +3030,7 @@ function NormalDisplayJoin({
           </button>
           <button
             className="button button--quiet"
+            data-qa-control="display-pair-public"
             onClick={() => prepare("public-table")}
             type="button"
           >
@@ -2962,6 +3038,7 @@ function NormalDisplayJoin({
           </button>
           <button
             className="button button--primary"
+            data-qa-control="display-pair-tv"
             onClick={() => prepare("tv")}
             type="button"
           >
@@ -3240,6 +3317,7 @@ export function App() {
           <p>{bootError}</p>
           <button
             className="button button--quiet"
+            data-qa-control="recovery-return-home"
             onClick={() => {
               const url = new URL(globalThis.location.href);
               url.hash = "";

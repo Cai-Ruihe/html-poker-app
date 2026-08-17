@@ -10,6 +10,8 @@ import {
   type TestInfo,
 } from "@playwright/test";
 
+import { exerciseControl } from "./control-qa";
+
 test.describe.configure({ mode: "default" });
 
 const airplanePath = path.join(
@@ -119,10 +121,15 @@ async function pairPlayer(
     host.getByText("Direct channel paired. The other device can now join."),
   ).toBeVisible({ timeout: 12_000 });
   await player.getByLabel("Display name").fill(displayName);
-  await player.getByRole("button", { name: "Join after host scans" }).click();
-  await expect(
-    player.getByRole("heading", { name: "You have a seat" }),
-  ).toBeVisible();
+  await exerciseControl(
+    "airplane-player-join-after-scan",
+    player.locator('[data-qa-control="airplane-player-join-after-scan"]'),
+    (target) => target.click(),
+    () =>
+      expect(
+        player.getByRole("heading", { name: "You have a seat" }),
+      ).toBeVisible(),
+  );
   await expect(host.getByText(displayName, { exact: true })).toBeVisible();
 }
 
@@ -143,6 +150,9 @@ test("standalone artifact boots from file with no external request", async ({
   expect(source).toContain("airplaneMode:true");
   expect(source).toContain("html-poker-third-party-licenses");
   expect(source).toContain("html-poker-project-license");
+  expect(source).toContain(
+    "<title>Our Poker Table Airplane — Standalone digital dealer</title>",
+  );
   expect(await context.cookies()).toEqual([]);
 });
 

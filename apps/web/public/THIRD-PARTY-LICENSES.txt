@@ -1,4 +1,4 @@
-HTML Poker App - Third-Party Licenses
+Our Poker Table - Third-Party Licenses
 
 This notice bundle accompanies the Normal static build and is embedded in the
 Airplane artifact. Review the locked production inventory with:

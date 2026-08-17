@@ -2,6 +2,8 @@ import { spawn, type ChildProcess } from "node:child_process";
 
 import { expect, test, type Browser, type TestInfo } from "@playwright/test";
 
+import { exerciseControl } from "./control-qa";
+
 const relayPort = 18_788;
 const relayToken = "phase-1-restart-probe-token";
 const appOrigin = `http://127.0.0.1:${process.env.HTML_POKER_TEST_PORT ?? "4173"}`;
@@ -107,10 +109,15 @@ test("a stale invitation explains Connection Service recreation", async ({
     );
 
     await host.getByLabel("Private relay host token").fill(relayToken);
-    await host.getByRole("button", { name: "Refresh relay ticket" }).click();
-    await expect(
-      host.getByText("Relay ticket refreshed", { exact: true }),
-    ).toBeVisible();
+    await exerciseControl(
+      "relay-ticket-refresh",
+      host.locator('[data-qa-control="relay-ticket-refresh"]'),
+      (target) => target.click(),
+      () =>
+        expect(
+          host.getByText("Relay ticket refreshed", { exact: true }),
+        ).toBeVisible(),
+    );
     const refreshedInvitation = await host
       .getByLabel("Player invitation link")
       .inputValue();

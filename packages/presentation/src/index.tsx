@@ -21,6 +21,7 @@ export type PresentationMode = "host" | "player" | "tablet" | "tv" | "public";
 type ActionResult = boolean | void | Promise<boolean | void>;
 
 export interface TableSurfaceProps {
+  readonly brandSymbolSrc: string;
   readonly busy: boolean;
   readonly connectionLabel: string;
   readonly developerMode?: boolean;
@@ -50,6 +51,7 @@ export interface TableSurfaceProps {
   readonly onToggleDeveloperMode?: () => void;
   readonly onUndoFold?: () => void;
   readonly projection: PublicProjection | SeatProjection;
+  readonly productName: string;
 }
 
 const suitDetails = {
@@ -486,17 +488,23 @@ function ActionButton({
   danger = false,
   disabled,
   onClick,
+  qaControl,
+  qaVariant,
   quiet = false,
 }: {
   readonly children: ReactNode;
   readonly danger?: boolean;
   readonly disabled: boolean;
   readonly onClick: () => void;
+  readonly qaControl: string;
+  readonly qaVariant?: string;
   readonly quiet?: boolean;
 }) {
   return (
     <button
       className={`action${danger ? " action--danger" : ""}${quiet ? " action--quiet" : ""}`}
+      data-qa-control={qaControl}
+      {...(qaVariant ? { "data-qa-variant": qaVariant } : {})}
       disabled={disabled}
       onClick={onClick}
       type="button"
@@ -530,6 +538,7 @@ function DealerControls(props: TableSurfaceProps) {
         <ActionButton
           disabled={props.busy || !props.onStartNextHand}
           onClick={() => props.onStartNextHand?.()}
+          qaControl="dealer-next-hand"
         >
           Deal next hand
         </ActionButton>
@@ -543,6 +552,7 @@ function DealerControls(props: TableSurfaceProps) {
           <ActionButton
             disabled={props.busy || !props.onPrepareSettlement}
             onClick={() => props.onPrepareSettlement?.()}
+            qaControl="dealer-review-settlement"
           >
             Review settlement
           </ActionButton>
@@ -555,6 +565,7 @@ function DealerControls(props: TableSurfaceProps) {
           <ActionButton
             disabled={props.busy || !props.onConfirmSettlement}
             onClick={() => props.onConfirmSettlement?.()}
+            qaControl="dealer-confirm-settlement"
           >
             Confirm settlement
           </ActionButton>
@@ -570,6 +581,7 @@ function DealerControls(props: TableSurfaceProps) {
         <ActionButton
           disabled={props.busy}
           onClick={() => setConfirmEnd(false)}
+          qaControl="dealer-cancel-end-hand"
           quiet
         >
           Keep playing
@@ -581,6 +593,7 @@ function DealerControls(props: TableSurfaceProps) {
             setConfirmEnd(false);
             props.onEndHand?.();
           }}
+          qaControl="dealer-confirm-end-hand"
         >
           End this hand
         </ActionButton>
@@ -592,6 +605,7 @@ function DealerControls(props: TableSurfaceProps) {
       <ActionButton
         disabled={props.busy || !props.onEndHand}
         onClick={() => setConfirmEnd(true)}
+        qaControl="dealer-open-end-hand"
         quiet
       >
         End hand
@@ -600,6 +614,8 @@ function DealerControls(props: TableSurfaceProps) {
         <ActionButton
           disabled={props.busy || !props.onRevealStreet}
           onClick={() => props.onRevealStreet?.(progression.street)}
+          qaControl="dealer-next-street"
+          qaVariant={props.projection.phase}
         >
           {progression.label}
         </ActionButton>
@@ -631,6 +647,8 @@ function TableThemeButtons(props: TableSurfaceProps) {
           aria-label={theme.label}
           aria-pressed={props.projection.tableTheme === theme.id}
           data-qa-action={theme.qaAction}
+          data-qa-control="tablet-theme-choice"
+          data-qa-variant={theme.id}
           data-theme-choice={theme.id}
           disabled={props.busy}
           key={theme.id}
@@ -653,6 +671,7 @@ function ReconnectAction({
     <button
       className="reconnect-action"
       data-qa-action="reconnect"
+      data-qa-control="table-reconnect"
       disabled={!onReconnect}
       onClick={() => void onReconnect?.()}
       type="button"
@@ -844,6 +863,8 @@ function TabletControls(props: TableSurfaceProps) {
         <button
           aria-label={`Open table controls from ${label}`}
           className={`table-corner table-corner--${id}`}
+          data-qa-control="tablet-corner-open"
+          data-qa-variant={id}
           data-table-corner={id}
           key={id}
           onClick={() => {
@@ -890,6 +911,7 @@ function TabletControls(props: TableSurfaceProps) {
               <button
                 aria-label="More table controls"
                 className="icon-action icon-action--more"
+                data-qa-control="tablet-quick-more"
                 onClick={() => {
                   setCorner(undefined);
                   setMoreOpen(true);
@@ -905,6 +927,7 @@ function TabletControls(props: TableSurfaceProps) {
               <button
                 aria-label="Close table controls"
                 className="icon-action icon-action--close"
+                data-qa-control="tablet-quick-close"
                 onClick={() => setCorner(undefined)}
                 type="button"
               >
@@ -914,6 +937,7 @@ function TabletControls(props: TableSurfaceProps) {
             <div className="tablet-quick-panel__actions">
               <button
                 className="next-card-action"
+                data-qa-control="tablet-next-card"
                 disabled={!progression || props.busy || !props.onRevealStreet}
                 onClick={() =>
                   void invoke(
@@ -941,6 +965,7 @@ function TabletControls(props: TableSurfaceProps) {
                       : "Drag the gold handle to the arrow"
                   }
                   className="next-hand-slider"
+                  data-qa-control="tablet-next-hand"
                   data-slider-travel="92"
                   onDoubleClick={() => void commitNextHand()}
                   onKeyDown={controlSliderFromKeyboard}
@@ -996,6 +1021,7 @@ function TabletControls(props: TableSurfaceProps) {
                 aria-label="Close more controls"
                 className="icon-action icon-action--close"
                 data-qa-action="close-secondary"
+                data-qa-control="tablet-secondary-close"
                 onClick={() => setMoreOpen(false)}
                 type="button"
               >
@@ -1007,6 +1033,7 @@ function TabletControls(props: TableSurfaceProps) {
               <button
                 className="secondary-control-card"
                 data-qa-action="manage-players"
+                data-qa-control="tablet-manage-players"
                 disabled={!props.onManagePlayers}
                 onClick={() => openHostAdministration(props.onManagePlayers)}
                 type="button"
@@ -1044,6 +1071,7 @@ function TabletControls(props: TableSurfaceProps) {
               <button
                 className="secondary-control-card"
                 data-qa-action="manage-displays"
+                data-qa-control="tablet-manage-displays"
                 disabled={!props.onManageDisplays}
                 onClick={() => openHostAdministration(props.onManageDisplays)}
                 type="button"
@@ -1076,6 +1104,7 @@ function TabletControls(props: TableSurfaceProps) {
                   {props.onMyHand ? (
                     <button
                       data-qa-action="my-hand"
+                      data-qa-control="tablet-view-player"
                       onClick={() => {
                         props.onMyHand?.();
                         closeSecondary();
@@ -1088,6 +1117,7 @@ function TabletControls(props: TableSurfaceProps) {
                   {props.onHostControls ? (
                     <button
                       data-qa-action="host-controls"
+                      data-qa-control="tablet-view-host"
                       onClick={() => {
                         props.onHostControls?.();
                         closeSecondary();
@@ -1099,6 +1129,7 @@ function TabletControls(props: TableSurfaceProps) {
                   ) : null}
                   <button
                     data-qa-action="fullscreen"
+                    data-qa-control="tablet-fullscreen"
                     onClick={() => void toggleFullscreen()}
                     type="button"
                   >
@@ -1134,6 +1165,7 @@ function TabletControls(props: TableSurfaceProps) {
                   <button
                     className="secondary-inline-action"
                     data-qa-action="save-log"
+                    data-qa-control="tablet-save-log"
                     onClick={() => props.onDownloadLog?.()}
                     type="button"
                   >
@@ -1152,6 +1184,7 @@ function TabletControls(props: TableSurfaceProps) {
             <button
               className="secondary-controls__return"
               data-qa-action="return-table"
+              data-qa-control="tablet-secondary-return"
               onClick={closeSecondary}
               type="button"
             >
@@ -1210,6 +1243,7 @@ function BettingControls(props: {
           danger
           disabled={props.busy || !props.onBettingAction}
           onClick={() => props.onBettingAction?.({ type: "fold" })}
+          qaControl="player-bet-fold"
           quiet
         >
           Fold
@@ -1219,6 +1253,7 @@ function BettingControls(props: {
         <ActionButton
           disabled={props.busy || !props.onBettingAction}
           onClick={() => props.onBettingAction?.({ type: "check" })}
+          qaControl="player-bet-check"
         >
           Check
         </ActionButton>
@@ -1227,6 +1262,7 @@ function BettingControls(props: {
         <ActionButton
           disabled={props.busy || !props.onBettingAction}
           onClick={() => props.onBettingAction?.({ type: "call" })}
+          qaControl="player-bet-call"
         >
           Call {call.amount}
         </ActionButton>
@@ -1262,6 +1298,8 @@ function BettingControls(props: {
                 type: "bet-or-raise-to",
               })
             }
+            qaControl="player-bet-commit"
+            qaVariant={amountAction.type}
           >
             Commit
           </ActionButton>
@@ -1271,6 +1309,7 @@ function BettingControls(props: {
         <ActionButton
           disabled={props.busy || !props.onBettingAction}
           onClick={() => props.onBettingAction?.({ type: "all-in" })}
+          qaControl="player-bet-all-in"
           quiet
         >
           All in {"to" in allIn ? allIn.to : ""}
@@ -1339,6 +1378,7 @@ function PrivateHand(
           <button
             aria-label="Reveal my cards privately"
             className="card-cover"
+            data-qa-control="player-reveal-private"
             onClick={() => setCardsVisibleOnDevice(true)}
             type="button"
           >
@@ -1352,6 +1392,7 @@ function PrivateHand(
           <ActionButton
             disabled={false}
             onClick={() => setCardsVisibleOnDevice(false)}
+            qaControl="player-hide-private"
             quiet
           >
             Hide my cards
@@ -1373,6 +1414,7 @@ function PrivateHand(
             <ActionButton
               disabled={props.busy}
               onClick={() => props.onUndoFold?.()}
+              qaControl="player-undo-fold"
             >
               Undo fold
             </ActionButton>
@@ -1383,6 +1425,7 @@ function PrivateHand(
               danger
               disabled={props.busy || !props.onFold}
               onClick={() => props.onFold?.()}
+              qaControl="player-fold"
               quiet
             >
               Fold
@@ -1390,6 +1433,7 @@ function PrivateHand(
             <ActionButton
               disabled={props.busy || !props.onShowCards}
               onClick={() => props.onShowCards?.()}
+              qaControl="player-show-cards"
             >
               Show cards to table
             </ActionButton>
@@ -1399,6 +1443,7 @@ function PrivateHand(
       <label className="sit-out-control">
         <input
           checked={props.futureSittingOut ?? false}
+          data-qa-control="player-sit-out-toggle"
           disabled={props.busy}
           onChange={(event) => props.onToggleSittingOut?.(event.target.checked)}
           type="checkbox"
@@ -1408,6 +1453,7 @@ function PrivateHand(
       {props.onLeaveTable ? (
         <button
           className="leave-table-action"
+          data-qa-control="player-leave-active"
           disabled={props.busy}
           onClick={() => void props.onLeaveTable?.()}
           type="button"
@@ -1432,8 +1478,12 @@ export function TableSurface(props: TableSurfaceProps) {
       {props.mode === "host" ? (
         <header className="table-bar">
           <div className="table-mark">
-            <span aria-hidden="true">▰</span>
-            <strong>HTML Poker</strong>
+            <img
+              alt={props.productName}
+              className="table-mark__symbol"
+              src={props.brandSymbolSrc}
+            />
+            <strong>{props.productName}</strong>
           </div>
           <div className="table-bar__right">
             <div className="table-status" aria-live="polite">
@@ -1447,6 +1497,7 @@ export function TableSurface(props: TableSurfaceProps) {
                   <button
                     aria-expanded={props.hostPlayerAdministrationOpen ?? false}
                     className="tool-button"
+                    data-qa-control="host-manage-players"
                     onClick={props.onManagePlayers}
                     type="button"
                   >
@@ -1457,6 +1508,7 @@ export function TableSurface(props: TableSurfaceProps) {
                   <button
                     aria-pressed={props.developerMode ?? false}
                     className="tool-button"
+                    data-qa-control="host-developer-toggle"
                     onClick={props.onToggleDeveloperMode}
                     type="button"
                   >
@@ -1538,7 +1590,11 @@ export function TableSurface(props: TableSurfaceProps) {
           <span>Hand ID</span>
           <code>{props.projection.handId ?? "No active hand"}</code>
           {props.onDownloadLog ? (
-            <button onClick={props.onDownloadLog} type="button">
+            <button
+              data-qa-control="developer-save-log"
+              onClick={props.onDownloadLog}
+              type="button"
+            >
               Save log
             </button>
           ) : null}

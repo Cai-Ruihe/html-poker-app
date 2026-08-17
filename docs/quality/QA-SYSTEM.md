@@ -1,6 +1,6 @@
 # Product QA system
 
-This is the durable operating manual for HTML Poker quality assurance. It is independent of a chat history or agent context window and is normative under [ADR-0008](../adr/0008-traceable-release-blocking-qa.md).
+This is the durable operating manual for Our Poker Table quality assurance. It is independent of a chat history or agent context window and is normative under [ADR-0008](../adr/0008-traceable-release-blocking-qa.md). The public repository uses `our-poker-table`; the local workspace, npm/package namespace, and protocol identifiers intentionally retain their established `html-poker-*` compatibility names.
 
 ## Authority model
 
@@ -27,6 +27,19 @@ This is the durable operating manual for HTML Poker quality assurance. It is ind
 | Deployed read-back | the public URL serves the intended candidate and manifest | long-term uptime or China readiness |
 
 No layer may be used as a substitute for a different layer.
+
+## Brand identity protocol
+
+The accepted identity authority is [DESIGN-OUR-POKER-TABLE-BRAND-V1](../design/brand/README.md); screenshots and chat history are not asset sources. `assets/brand/` is the canonical package, and `pnpm brand:verify` blocks release when any source-controlled brand file differs from its SHA-256 manifest.
+
+For every release:
+
+1. Browser-visible product naming and public repository/Pages links use **Our Poker Table** and `our-poker-table`. The local workspace, root npm identifier, `@html-poker/*` packages, and existing protocol identifiers retain `html-poker-*` unless a separate implementation-level migration is approved.
+2. Entry, lobby, join, and pairing headers use the supplied light-surface lockup at its approved minimum or the supplied symbol below that width. The wordmark is never retyped, auto-traced, stretched, recolored, or reconstructed from a guessed font.
+3. In-hand dark surfaces use the supplied gold symbol. Quiet Tablet/Public/TV play remains card-first; branding may not add a toolbar, title block, or decorative distraction to the quiet surface.
+4. Browser title, favicon, and standalone Airplane title are asserted. The Airplane artifact must embed its identity and still make zero external requests.
+5. Phone Home and Host screenshots remain release baselines, while `tests/journey/branding.spec.ts` asserts the semantic identity and removal of the former UI-facing name.
+6. Theme and logo colors use Brand Green `#194C3E`, Table Felt `#003F33`, UI Gold `#D4B86E`, Warm Paper `#F5F5F5`, and Ink `#1D2321` only in the pairings approved by the brand guide.
 
 ## Visual conformance protocol
 

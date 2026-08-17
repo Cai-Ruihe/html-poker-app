@@ -13,11 +13,13 @@ const thirdPartyLicensesPath = path.join(
   "THIRD-PARTY-LICENSES.txt",
 );
 const projectLicensePath = path.join(root, "LICENSE");
+const faviconPath = path.join(root, "assets", "brand", "web", "favicon.svg");
 
-let [html, thirdPartyLicenses, projectLicense] = await Promise.all([
+let [html, thirdPartyLicenses, projectLicense, favicon] = await Promise.all([
   readFile(inputPath, "utf8"),
   readFile(thirdPartyLicensesPath, "utf8"),
   readFile(projectLicensePath, "utf8"),
+  readFile(faviconPath),
 ]);
 const moduleMatch = html.match(
   /<script type="module" crossorigin src="\.\/(assets\/[^"]+\.js)"><\/script>/u,
@@ -81,8 +83,13 @@ html = html
     "<script>globalThis.__HTML_POKER_CONFIG__={airplaneMode:true};</script>",
   )
   .replace(
-    "<title>HTML Poker — Digital dealer for physical tables</title>",
-    "<title>HTML Poker Airplane — Standalone digital dealer</title>",
+    /<link\s+[^>]*\brel="icon"[^>]*>/u,
+    `<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,${favicon.toString("base64")}">`,
+  )
+  .replace(/\s*<link\s+[^>]*\brel="apple-touch-icon"[^>]*>/u, "")
+  .replace(
+    "<title>Our Poker Table — Digital dealer for physical tables</title>",
+    "<title>Our Poker Table Airplane — Standalone digital dealer</title>",
   )
   .replace(
     "</body>",
