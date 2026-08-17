@@ -2,8 +2,9 @@
 id: PRD-M06
 kind: module
 status: current
-last_reconciled: 2026-08-16
+last_reconciled: 2026-08-17
 decision_ids:
+  - BRAND-IDENTITY-V1
   - PHASE1-TABLE-SIZE
   - NET-DISPLAY-REVERSE-QR
   - MODE-SEPARATION
@@ -84,6 +85,7 @@ Each mode has its own renderer over a shared semantic design system. Renderers c
 - Dark Green, Black Gold, and Deep Navy share identical geometry and synchronize to every role-filtered projection. Device-local accessibility overrides remain local.
 - Cards use the built-in warm-ivory old-school renderer with dimensional shading. Future skins may replace assets only as complete validated packs; Airplane Mode always retains the built-in fallback.
 - Quiet Tablet, TV, and Public Table surfaces omit the application header, Board label/counter, table oval, permanent player tiles, and dealer toolbar. They retain low-key seat state plus distinct D, SB, and BB tokens.
+- The product-facing name is **Our Poker Table**. Brand asset version 1.0 uses the approved four-rotation corner-and-dot symbol, Brand Green on light surfaces, and UI Gold on Brand Green; repository and package identifiers remain unchanged until a separately authorized migration.
 - Fold is provisional until its safe boundary. Show has no secrecy undo.
 - Visual seat movement never changes logical action/dealer/blind order.
 - The default style uses original assets and interaction principles inspired by Bold Poker, not copied layouts/artwork.

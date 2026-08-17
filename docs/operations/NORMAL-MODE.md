@@ -6,7 +6,7 @@
 
 The CI-gated Normal web artifact is published at:
 
-**https://cai-ruihe.github.io/html-poker-app/normal/**
+**https://cai-ruihe.github.io/our-poker-table/normal/**
 
 The current Connection Service runs in the `html-poker-normal-service` container on the owner's laptop. An outbound `html-poker-normal-tunnel` container supplies trusted HTTPS/WSS without opening a router or laptop port. Keep the laptop and OrbStack awake while playing.
 

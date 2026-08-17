@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="Our Poker Table favicon" shape-rendering="geometricPrecision"><rect x="8" y="8" width="240" height="240" rx="54" fill="#194C3E"/>
+    <defs>
+      <g id="corner-module" fill="none" stroke="#D4B86E" stroke-width="16" stroke-linecap="butt" opacity="1">
+        <path d="M144 48H183.724A24.276 24.276 0 0 1 208 72.276V111.448"/>
+        <circle cx="208" cy="128" r="8" fill="#D4B86E" stroke="none"/>
+      </g>
+    </defs>
+    <g>
+      <use href="#corner-module"/>
+      <use href="#corner-module" transform="rotate(90 128 128)"/>
+      <use href="#corner-module" transform="rotate(180 128 128)"/>
+      <use href="#corner-module" transform="rotate(270 128 128)"/>
+    </g>
+</svg>

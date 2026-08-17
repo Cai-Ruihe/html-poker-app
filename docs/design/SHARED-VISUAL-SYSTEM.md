@@ -31,6 +31,21 @@ supports the conversation around the table instead of competing with it.
 The interaction principles may learn from Bold Poker's low-attention physical
 table experience, but HTML Poker uses original layouts, assets, and code.
 
+## Product identity
+
+The accepted product-facing name is **Our Poker Table**. The canonical v1
+symbol, lockups, palette, clearspace rules, and export inventory are maintained
+in the [brand guidelines](brand/README.md) and
+[brand asset package](../../assets/brand/README.md). The identity reuses this
+system's four-sided corner language, but branding stays subordinate to cards
+and play state on the quiet table surface.
+
+The public GitHub repository and GitHub Pages project-site slug are
+`our-poker-table`. Internal npm workspace identifiers, the `@html-poker/*`
+package namespace, and the established local directory remain
+`html-poker-app`; keeping those implementation identifiers stable avoids
+unrelated Phase 1 build churn.
+
 ## Design principles
 
 ### 1. Cards first; chrome later

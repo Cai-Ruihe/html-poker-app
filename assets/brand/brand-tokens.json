@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "brand": "Our Poker Table",
+  "colors": {
+    "brand_green": "#194C3E",
+    "table_felt": "#003F33",
+    "ui_gold": "#D4B86E",
+    "warm_paper": "#F5F5F5",
+    "ink": "#1D2321"
+  },
+  "typography": {
+    "interface_and_body": "\"Archivo Variable\", \"Avenir Next\", \"Segoe UI\", sans-serif",
+    "editorial_and_card_display": "Georgia, \"Times New Roman\", serif",
+    "wordmark": "Use supplied artwork only; original font specification is unknown."
+  },
+  "logo_geometry": {
+    "view_box": "0 0 256 256",
+    "path": "M145 44H186.586A25.414 25.414 0 0 1 212 69.414V110.422",
+    "stroke": 8.664,
+    "dot_center": [212, 122],
+    "dot_radius": 6,
+    "rotations": [0, 90, 180, 270]
+  },
+  "horizontal_lockup": {
+    "optical_alignment_delta_px": 0,
+    "symbol_wordmark_gap_px_at_native_export": 20
+  }
+}
