@@ -27,6 +27,8 @@ All notable project changes will be documented here. The format follows [Keep a 
 
 ### Changed
 
+- Adopted **Our Poker Table** as the canonical public product identity and migrated the public repository and GitHub Pages project-site routes to `Cai-Ruihe/our-poker-table`. The durable local `html-poker-app` workspace, root npm identifier, `@html-poker/*` package namespace, and protocol identifiers remain unchanged for compatibility.
+- Recorded that the naming/route migration is not an application release: at migration read-back the renamed Pages route still served `0.1.3-phase1` from source revision `07cf6ede1fa1ddd4eda09059cfd3d64018cde297`.
 - Bumped the visible Phase 1 build identity to `0.1.4-phase1` for the corrective UI, lifecycle, and QA release.
 
 - Applied the approved dark-first visual system across Player, Host, Tablet,

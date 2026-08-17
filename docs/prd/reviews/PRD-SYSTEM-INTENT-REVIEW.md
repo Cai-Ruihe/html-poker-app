@@ -1,5 +1,7 @@
 # PRD system intent review
 
+> **Historical receipt:** This review records the repository state on 2026-08-14 and is preserved rather than rewritten. Its “local only,” naming, GitHub, and publication statements are not current. For current public identity and distribution authority, use [M09 — Release and Distribution](../modules/M09-RELEASE-DISTRIBUTION.md): the owner-authorized **Our Poker Table** repository/Pages migration landed on 2026-08-17, while retained `html-poker-*` implementation identifiers remain unchanged.
+
 - **Status:** Pass
 - **Reviewed:** 2026-08-14
 - **Surface:** Master/phase/module PRDs, authority records, context manifest, research evidence, architecture/governance documents, and open-source repository scaffolding

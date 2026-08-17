@@ -2,7 +2,7 @@
 id: PRD-M09
 kind: module
 status: current
-last_reconciled: 2026-08-14
+last_reconciled: 2026-08-17
 decision_ids:
   - GOV-LICENCE
   - GOV-OFFICIAL-CORE
@@ -22,7 +22,7 @@ router: ../manifest.yaml
 
 ## Context capsule
 
-This module turns reviewed source into immutable Official Normal and Airplane artifacts and documents how deployers host/configure them without using Ruihe's infrastructure. Its interface is a release manifest: version, source revision, artifact digests, protocol/rules/schema ranges, provenance, dependency inventory, signatures, migrations, and compatibility. It proves provenance—not that a running host is honest.
+This module owns the canonical public identity and turns reviewed source into immutable Official Normal and Airplane artifacts. It documents how deployers host/configure them without using Ruihe's infrastructure. Its interface is a release manifest: version, source revision, artifact digests, protocol/rules/schema ranges, provenance, dependency inventory, signatures, migrations, and compatibility. It proves provenance—not that a running host is honest.
 
 ## Problem Statement
 
@@ -39,6 +39,7 @@ Produce two self-contained release targets from one source revision: an HTTPS No
 - Service-worker staging, migration compatibility, rollback/downgrade defenses, and visible build ID.
 - Official Release versus Custom Host labeling and distribution documentation.
 - Open-source licence/notices and deployer-owned configuration boundary.
+- Canonical public repository and Pages routes, their migration behavior, and the boundary between public names and retained technical identifiers.
 
 ### Does not own
 
@@ -60,22 +61,26 @@ Produce two self-contained release targets from one source revision: an HTTPS No
 ## Implementation Decisions
 
 - Use Apache-2.0 for project-owned code and preserve licence/notice obligations. Skin asset licences are separate Phase 3 metadata.
-- Keep the Normal build provider-neutral and static-hostable. GitHub Pages or another free tier may be evaluated at deployment, but provider choice remains separate from the Connection Service and must pass the target-region tests.
+- The canonical public identity is **Our Poker Table** in [`Cai-Ruihe/our-poker-table`](https://github.com/Cai-Ruihe/our-poker-table). The canonical Pages root is `https://cai-ruihe.github.io/our-poker-table/`; Normal Mode is `https://cai-ruihe.github.io/our-poker-table/normal/`.
+- Keep the durable local workspace at `/Users/ruihecai/Developer/html-poker-app`, the root npm workspace identifier as `html-poker-app`, the `@html-poker/*` namespace, and existing protocol identifiers unchanged unless a future owner decision separately authorizes an implementation-level migration. Distribution naming is owned here; M06 and the brand package continue to own product-facing visual identity.
+- GitHub redirects the old repository and Git transport URLs, but GitHub Pages does not redirect the former project-site path. Documentation, invitations, release notes, and handoffs must use the canonical `our-poker-table` Pages routes and treat the old Pages routes as invalid.
+- The owner-authorized repository/Pages rename landed in [PR #7](https://github.com/Cai-Ruihe/our-poker-table/pull/7) at merge commit `28e7943b6472226f84ee24b693ed192338969989`. A name or route migration is provenance evidence, not an Official Release. At the migration read-back, the renamed Pages route still served `0.1.3-phase1` from source revision `07cf6ede1fa1ddd4eda09059cfd3d64018cde297`.
+- Keep the Normal build provider-neutral and static-hostable. GitHub Pages is the current owner-authorized field-build host; any future provider choice remains separate from the Connection Service and must pass target-region tests.
 - Commit lockfiles and pin build inputs. Release metadata includes source revision, build environment/provenance, dependency inventory, artifact digest, signature, build/protocol/rules/schema versions, and release date.
 - Treat a new service worker as waiting; never activate/migrate during an active table.
 - A signature identifies an artifact from the official process. It cannot attest an unlocked/modified host, extension, operating system, or administrator.
 - Official clients may join a Custom Host only after a clear one-time warning. Protocol compatibility is not a fairness guarantee.
 - Do not embed Ruihe's server addresses/credentials as public defaults. Provide deployment examples using operator-supplied configuration.
-- GitHub publication, branch protection, release signing identity, and hosting provider activation are separate explicit external-operation gates.
+- Repository publication and the Pages route migration are complete. Branch protection, release signing identity, Official Release approval, future hosting-provider changes, and Connection Service deployment remain separate explicit external-operation gates.
 
 ## Testing Decisions
 
-Test reproducibility/determinism to the chosen level, dependency/artifact substitution, altered top-level HTML, signature/digest mismatch, downgrade/freeze/mixed assets, service-worker activation during play, incompatible schema migration, revoked builds, Normal/Airplane parity, offline external-request scan, secret scan, licence inventory, and fresh-clone documentation paths.
+Test reproducibility/determinism to the chosen level, dependency/artifact substitution, altered top-level HTML, signature/digest mismatch, downgrade/freeze/mixed assets, service-worker activation during play, incompatible schema migration, revoked builds, Normal/Airplane parity, offline external-request scan, secret scan, licence inventory, and fresh-clone documentation paths. Before any public claim, read back the canonical repository and both Pages routes, reject stale former Pages links, and verify that the deployed manifest's version and source revision match the intended candidate.
 
 ## Out of Scope
 
-Choosing a final hosting vendor now, subsidizing community infrastructure, remote attestation of the running host, silently auto-updating tables, or publishing to GitHub without explicit authorization/read-back.
+Choosing a permanent managed hosting vendor, subsidizing community infrastructure, remote attestation of the running host, silently auto-updating tables, or treating a repository/route rename as an application release.
 
 ## Further Notes
 
-Free static hosting is feasible, but operational readiness depends on domain, China testing, release signing, and optional Connection Service deployment. These are deployment choices, not a central poker backend.
+The public GitHub repository and Pages field-build routes are active. Operational readiness still depends on candidate-matched manifests, China testing, release signing, and optional Connection Service deployment. These are deployment choices and evidence gates, not a central poker backend.

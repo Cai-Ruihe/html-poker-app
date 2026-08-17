@@ -15,7 +15,7 @@ The owner may delegate non-core decisions, but delegation must be written and sc
 
 ## Official Core and forks
 
-“Official Core” means code accepted into and released from the owner-designated repository. It is a governance and provenance designation, not a restriction on the Apache-2.0 licence.
+“Official Core” means code accepted into and released from the owner-designated repository, currently [`Cai-Ruihe/our-poker-table`](https://github.com/Cai-Ruihe/our-poker-table). It is a governance and provenance designation, not a restriction on the Apache-2.0 licence.
 
 Apache-2.0 allows independent parties to copy, modify, redistribute, and use the project commercially under its terms. They do not need permission to change their forks. Those changes do not enter, control, or represent the official repository without Project Owner approval, and the licence does not grant rights to project names or trademarks beyond customary attribution.
 
@@ -33,7 +33,7 @@ Evidence should separate facts, inferences, and unknowns. Established industry o
 ## Pull requests and releases
 
 - No contributor can merge their own security-sensitive change without another qualified review, and no Official Core change merges without Project Owner approval.
-- Protected branches, required checks, signed or provenance-verifiable releases, and least-privilege maintainer access are launch gates once the GitHub repository exists.
+- The public repository exists, but protected branches, required checks, signed or provenance-verifiable releases, and least-privilege maintainer access remain launch/release gates. A repository rename or Pages-route migration does not satisfy them.
 - Releases are cut only from reviewed commits and must satisfy the phase gates in [ROADMAP.md](ROADMAP.md) and the [release checklist](docs/releasing/RELEASE-CHECKLIST.md).
 - The owner may decline a change that is correct in isolation but weakens coherence, accessibility, privacy, maintainability, or the minimal table experience.
 

@@ -2,7 +2,7 @@
 id: PRD-000
 kind: master
 status: current
-last_reconciled: 2026-08-14
+last_reconciled: 2026-08-17
 decision_ids:
   - SCOPE-PLAY-MONEY
   - PHASE1-DEAL-ONLY
@@ -22,11 +22,11 @@ decision_ids:
 router: manifest.yaml
 ---
 
-# Master PRD — Browser Poker Table
+# Master PRD — Our Poker Table
 
 ## Context capsule
 
-Build an elegant, account-free HTML Texas Hold'em table for nearby social play. Phones hold private cards; a tablet, TV, or computer may show and control the public table. The active browser host is the Phase 1 poker authority. Normal Mode connects through direct peer-to-peer, then the deployer's private relay, then its optional cloud relay. Airplane Mode works from a preloaded standalone HTML artifact on a private local Wi-Fi network. Play chips never represent money.
+Build **Our Poker Table**, an elegant, account-free HTML Texas Hold'em table for nearby social play. Phones hold private cards; a tablet, TV, or computer may show and control the public table. The active browser host is the Phase 1 poker authority. Normal Mode connects through direct peer-to-peer, then the deployer's private relay, then its optional cloud relay. Airplane Mode works from a preloaded standalone HTML artifact on a private local Wi-Fi network. Play chips never represent money.
 
 This document routes work. Load the relevant [Phase PRD](#roadmap) and [Module PRD](#module-map) for details.
 
@@ -77,7 +77,7 @@ Deferred roadmap options include Mental Poker, remote-first human play, tourname
 | M06 | [Presentation & Interaction](modules/M06-PRESENTATION-INTERACTION.md) | Player, Tablet, TV, Public Table, gestures and accessibility |
 | M07 | [Persistence, Recovery & History](modules/M07-PERSISTENCE-RECOVERY-HISTORY.md) | Commit/replay, reconnect, checkpoints and histories |
 | M08 | [Diagnostics & Red Team](modules/M08-DIAGNOSTICS-RED-TEAM.md) | Redacted diagnostics and phase security attacks |
-| M09 | [Release & Distribution](modules/M09-RELEASE-DISTRIBUTION.md) | Static hosting, immutable builds, version/update trust |
+| M09 | [Release & Distribution](modules/M09-RELEASE-DISTRIBUTION.md) | Public identity/routes, static hosting, immutable builds, version/update trust |
 | M10 | [Digital Accounting](modules/M10-DIGITAL-ACCOUNTING.md) | Play-chip actions, pots, settlement and exports |
 | M11 | [Community Skins](modules/M11-COMMUNITY-SKINS.md) | Data-only appearance packages and validation |
 | M12 | [AI Players](modules/M12-AI-PLAYERS.md) | SeatController, GTO-guided trainer/replay, AI Gateway, styles and provider gates |
@@ -89,6 +89,7 @@ Deferred roadmap options include Mental Poker, remote-first human play, tourname
 - Every table pins a compatible build, protocol, and Rules Profile for its lifetime.
 - Public, control, diagnostic, and per-seat private projections are generated at authority; secrets are never merely hidden with CSS.
 - All infrastructure is deployer-owned and optional. The base human game has no required account, analytics, AI, or central poker engine.
+- The public product/repository identity is **Our Poker Table** at `Cai-Ruihe/our-poker-table`; the established local workspace, npm workspace identifier, `@html-poker/*` package namespace, and protocol identifiers remain compatibility names. M09 owns the exact public routes and release-claim boundary.
 - Apache-2.0 is the intended project-code licence; only owner-approved changes become Official Core releases.
 
 ## Testing Decisions
