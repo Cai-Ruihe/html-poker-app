@@ -218,7 +218,10 @@ function quietSeatPosition(index: number, count: number): number {
 }
 
 function seatCanHoldPosition(seat: PublicProjection["seats"][number]): boolean {
-  return seat.status !== "sitting-out" && seat.status !== "waiting";
+  // Between hands, a ready player is deliberately `waiting` but still owns a
+  // logical dealer position. Sitting out is the only participation state that
+  // must not display D/SB/BB.
+  return seat.status !== "sitting-out";
 }
 
 function SeatStateGlyph({
