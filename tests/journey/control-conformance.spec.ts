@@ -807,7 +807,11 @@ test("Tablet quick and secondary controls all produce their registered outcomes"
   await host
     .getByRole("button", { name: "Join my own table on this device" })
     .click();
+  await expect(
+    host.getByRole("heading", { name: "You have a seat" }),
+  ).toBeVisible();
   await control(host, "device-view-host").click();
+  await expect(host.getByLabel("Player invitation link")).toBeVisible();
   await joinPlayer(host, context, "Bob");
   await host.getByRole("button", { name: "Deal first hand" }).click();
   await control(host, "device-view-tablet").click();
