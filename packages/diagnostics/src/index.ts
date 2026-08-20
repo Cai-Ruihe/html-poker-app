@@ -78,16 +78,48 @@ export type DiagnosticRoute =
 export type DiagnosticResult = "accepted" | "rejected" | "error";
 export type DiagnosticCapabilityScope =
   "trusted-host" | "player" | "public-table" | "tv" | "table-control";
+/** Safe command label: command arguments, cards, names, seat IDs and secrets are excluded. */
+export type DiagnosticCommandKind =
+  | "CreateTable"
+  | "StartHand"
+  | "RevealStreet"
+  | "FoldCards"
+  | "RetractFold"
+  | "FinalizeFold"
+  | "ShowCards"
+  | "MuckCards"
+  | "EndHand"
+  | "RelocateDealer"
+  | "VoidHand"
+  | "RegisterSeat"
+  | "SetSeatParticipation"
+  | "RecordCorrection"
+  | "SubmitBettingAction"
+  | "PrepareSettlement"
+  | "ConfirmSettlement"
+  | "SetTableTheme"
+  | "SetCardStyle";
+export type DiagnosticHandPhase =
+  | "lobby"
+  | "preflop"
+  | "flop"
+  | "turn"
+  | "river"
+  | "showdown"
+  | "settlement-pending"
+  | "complete";
 
 export interface DiagnosticEventInput {
   readonly actorPseudonym: string;
   readonly buildVersion: string;
   readonly capabilityScope: DiagnosticCapabilityScope;
   readonly commandId?: string;
+  readonly commandKind?: DiagnosticCommandKind;
   readonly durationMs?: number;
   readonly errorClass?: string;
   readonly eventType: DiagnosticEventType;
   readonly handId?: string;
+  readonly handPhase?: DiagnosticHandPhase;
   readonly protocolVersion: number;
   readonly result: DiagnosticResult;
   readonly revision?: number;
@@ -121,10 +153,12 @@ const allowedKeys = new Set<keyof DiagnosticEventInput>([
   "buildVersion",
   "capabilityScope",
   "commandId",
+  "commandKind",
   "durationMs",
   "errorClass",
   "eventType",
   "handId",
+  "handPhase",
   "protocolVersion",
   "result",
   "revision",
@@ -153,6 +187,37 @@ const scopes = new Set<DiagnosticCapabilityScope>([
   "public-table",
   "tv",
   "table-control",
+]);
+const commandKinds = new Set<DiagnosticCommandKind>([
+  "CreateTable",
+  "StartHand",
+  "RevealStreet",
+  "FoldCards",
+  "RetractFold",
+  "FinalizeFold",
+  "ShowCards",
+  "MuckCards",
+  "EndHand",
+  "RelocateDealer",
+  "VoidHand",
+  "RegisterSeat",
+  "SetSeatParticipation",
+  "RecordCorrection",
+  "SubmitBettingAction",
+  "PrepareSettlement",
+  "ConfirmSettlement",
+  "SetTableTheme",
+  "SetCardStyle",
+]);
+const handPhases = new Set<DiagnosticHandPhase>([
+  "lobby",
+  "preflop",
+  "flop",
+  "turn",
+  "river",
+  "showdown",
+  "settlement-pending",
+  "complete",
 ]);
 
 function boundedString(value: unknown, maximum: number): value is string {
@@ -186,8 +251,10 @@ function validEvent(event: DiagnosticEventInput): boolean {
         event.durationMs >= 0 &&
         event.durationMs <= 3_600_000)) &&
     (event.commandId === undefined || boundedString(event.commandId, 96)) &&
+    (event.commandKind === undefined || commandKinds.has(event.commandKind)) &&
     (event.errorClass === undefined || boundedString(event.errorClass, 64)) &&
-    (event.handId === undefined || boundedString(event.handId, 64))
+    (event.handId === undefined || boundedString(event.handId, 64)) &&
+    (event.handPhase === undefined || handPhases.has(event.handPhase))
   );
 }
 

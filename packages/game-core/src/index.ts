@@ -44,6 +44,14 @@ export function isTableTheme(value: unknown): value is TableTheme {
   return ["dark-green", "black-gold", "deep-navy"].includes(String(value));
 }
 
+/** A built-in deck presentation, deliberately separate from the deferred
+ * community-skin package protocol. */
+export type CardStyle = "classic" | "four-colour";
+
+export function isCardStyle(value: unknown): value is CardStyle {
+  return ["classic", "four-colour"].includes(String(value));
+}
+
 export type BettingActionIntent =
   | { readonly type: "all-in" | "call" | "check" | "fold" }
   | { readonly to: number; readonly type: "bet-or-raise-to" };
@@ -122,7 +130,8 @@ export type CommandPayload =
     }
   | { readonly type: "PrepareSettlement" }
   | { readonly type: "ConfirmSettlement" }
-  | { readonly tableTheme: TableTheme; readonly type: "SetTableTheme" };
+  | { readonly tableTheme: TableTheme; readonly type: "SetTableTheme" }
+  | { readonly cardStyle: CardStyle; readonly type: "SetCardStyle" };
 
 export interface CommandEnvelope {
   readonly actor: Actor;
@@ -167,7 +176,8 @@ export type EventType =
   | "ShowdownStarted"
   | "SettlementProposed"
   | "SettlementConfirmed"
-  | "TableThemeChanged";
+  | "TableThemeChanged"
+  | "CardStyleChanged";
 
 export interface EventSummary {
   readonly type: EventType;
@@ -232,6 +242,7 @@ export interface PersistedAuthorityState {
   readonly accounting?: AccountingState;
   readonly acceptedCommands: Readonly<Record<string, AcceptedCommand>>;
   readonly authorityEpoch: string;
+  readonly cardStyle?: CardStyle;
   readonly custody?: CustodyState;
   readonly dealerSeatId: string;
   readonly handId?: string;
@@ -281,6 +292,7 @@ export interface ShowdownProjection {
 export interface PublicProjection {
   readonly accounting?: AccountingProjection;
   readonly board: readonly Card[];
+  readonly cardStyle: CardStyle;
   readonly dealerSeatId: string;
   readonly handId?: string;
   readonly phase: HandPhase;
@@ -361,9 +373,14 @@ const categoryDetails: ReadonlyArray<
 ];
 
 const defaultTableTheme: TableTheme = "dark-green";
+const defaultCardStyle: CardStyle = "classic";
 
 function tableThemeOf(state: PersistedAuthorityState): TableTheme {
   return isTableTheme(state.tableTheme) ? state.tableTheme : defaultTableTheme;
+}
+
+function cardStyleOf(state: PersistedAuthorityState): CardStyle {
+  return isCardStyle(state.cardStyle) ? state.cardStyle : defaultCardStyle;
 }
 
 function isHost(actor: Actor): actor is HostActor {
@@ -668,6 +685,7 @@ export function createTrustedHostAuthority(
       state.tableId === options.tableId &&
       state.authorityEpoch === options.authorityEpoch &&
       (state.tableTheme === undefined || isTableTheme(state.tableTheme)) &&
+      (state.cardStyle === undefined || isCardStyle(state.cardStyle)) &&
       accountingMatchesProfile &&
       state.seats.length >= 2 &&
       state.seats.length <= 10 &&
@@ -742,6 +760,7 @@ export function createTrustedHostAuthority(
     const publicProjection: PublicProjection = {
       ...(accountingProjection ? { accounting: accountingProjection } : {}),
       board: [...board],
+      cardStyle: cardStyleOf(current),
       dealerSeatId: current.dealerSeatId,
       ...(current.handId ? { handId: current.handId } : {}),
       phase: current.phase,
@@ -871,6 +890,7 @@ export function createTrustedHostAuthority(
           ...(accountingState ? { accounting: accountingState } : {}),
           acceptedCommands: {},
           authorityEpoch: options.authorityEpoch,
+          cardStyle: defaultCardStyle,
           dealerSeatId: command.payload.dealerSeatId,
           history: [],
           phase: "lobby",
@@ -1460,6 +1480,22 @@ export function createTrustedHostAuthority(
           tableTheme: command.payload.tableTheme,
         };
         events = [{ type: "TableThemeChanged" }];
+        break;
+      }
+      case "SetCardStyle": {
+        if (
+          !current ||
+          !isHost(command.actor) ||
+          !isCardStyle(command.payload.cardStyle)
+        ) {
+          return rejected("command-not-allowed", revision);
+        }
+        next = {
+          ...current,
+          cardStyle: command.payload.cardStyle,
+          revision: revision + 1,
+        };
+        events = [{ type: "CardStyleChanged" }];
         break;
       }
     }

@@ -6,6 +6,7 @@ import {
   type Page,
   type TestInfo,
 } from "@playwright/test";
+import { exerciseControl } from "./control-qa";
 
 async function joinPlayer(
   host: Page,
@@ -284,7 +285,10 @@ test("Player catches up to new hands, can return from sit-out, and can leave per
     .filter({ hasText: "Alice" });
   await expect(sittingOutSeat).toBeVisible();
   await expect(sittingOutSeat.locator(".dealer-chip")).toHaveCount(0);
-  await host.getByRole("button", { name: "Table View" }).click();
+  await host
+    .getByLabel("This device view")
+    .getByRole("button", { name: "Table View" })
+    .click();
   const sittingOutEdge = host.locator('[data-seat-edge-status="sitting out"]');
   await expect(sittingOutEdge).toBeVisible();
   await expect(sittingOutEdge.locator(".position-token")).toHaveCount(0);
@@ -408,6 +412,58 @@ test("Phone host cards stay compact while Table View shown cards are full, and s
   expect(second.x + second.width).toBeLessThanOrEqual(
     miniBox.x + miniBox.width + 0.5,
   );
+  const compactGlyphGeometry = await Promise.all(
+    compactCards.map(async (card) => ({
+      card: await card.boundingBox(),
+      rank: await card.locator(".card__corner--top .card__rank").boundingBox(),
+      suit: await card
+        .locator(".card__corner--top .card__corner-suit")
+        .boundingBox(),
+    })),
+  );
+  const firstGlyph = compactGlyphGeometry[0];
+  const secondGlyph = compactGlyphGeometry[1];
+  if (
+    !firstGlyph?.card ||
+    !firstGlyph.rank ||
+    !firstGlyph.suit ||
+    !secondGlyph?.card ||
+    !secondGlyph.rank ||
+    !secondGlyph.suit
+  ) {
+    throw new Error("Compact-card glyphs did not render.");
+  }
+  for (const glyph of compactGlyphGeometry) {
+    if (!glyph.card || !glyph.rank || !glyph.suit) continue;
+    expect(
+      Math.abs(
+        glyph.rank.x +
+          glyph.rank.width / 2 -
+          (glyph.card.x + glyph.card.width / 2),
+      ),
+    ).toBeLessThan(1);
+    expect(
+      Math.abs(
+        glyph.suit.x +
+          glyph.suit.width / 2 -
+          (glyph.card.x + glyph.card.width / 2),
+      ),
+    ).toBeLessThan(1);
+  }
+  expect(
+    Math.abs(
+      firstGlyph.rank.y -
+        firstGlyph.card.y -
+        (secondGlyph.rank.y - secondGlyph.card.y),
+    ),
+  ).toBeLessThan(1);
+  expect(
+    Math.abs(
+      firstGlyph.suit.y -
+        firstGlyph.card.y -
+        (secondGlyph.suit.y - secondGlyph.card.y),
+    ),
+  ).toBeLessThan(1);
   const shownSeatDecoration = await miniHand
     .locator("xpath=..")
     .evaluate((seat) => {
@@ -442,6 +498,36 @@ test("Phone host cards stay compact while Table View shown cards are full, and s
     expect(compactStyle.rankSize).toBeGreaterThanOrEqual(16);
     expect(compactStyle.decoration).toBe("none");
   }
+  // Host Controls is a phone control surface: its five community cards use
+  // the same one-rank/one-suit reading pattern, with every glyph centred to
+  // the common card geometry. Tablet and TV keep their full physical faces.
+  const hostBoardCards = host.locator(".public-table [data-board-card]");
+  await expect(hostBoardCards).toHaveCount(5);
+  for (const card of await hostBoardCards.all()) {
+    await expect(card).toHaveClass(/card--minimal/);
+    await expect(card.locator(".card__corner--bottom")).toBeHidden();
+    await expect(card.locator(".card__pip")).toBeHidden();
+    const hostGlyph = await card.evaluate((element) => {
+      const cardBox = element.getBoundingClientRect();
+      const rankBox = element
+        .querySelector<HTMLElement>(".card__rank")!
+        .getBoundingClientRect();
+      const suitBox = element
+        .querySelector<HTMLElement>(".card__corner-suit")!
+        .getBoundingClientRect();
+      return {
+        cardCenter: cardBox.width / 2,
+        rankCenter: rankBox.left + rankBox.width / 2 - cardBox.left,
+        suitCenter: suitBox.left + suitBox.width / 2 - cardBox.left,
+      };
+    });
+    expect(Math.abs(hostGlyph.rankCenter - hostGlyph.cardCenter)).toBeLessThan(
+      1,
+    );
+    expect(Math.abs(hostGlyph.suitCenter - hostGlyph.cardCenter)).toBeLessThan(
+      1,
+    );
+  }
   expect(
     await host.evaluate(() =>
       Math.max(0, document.documentElement.scrollWidth - innerWidth),
@@ -450,6 +536,69 @@ test("Phone host cards stay compact while Table View shown cards are full, and s
   await expect(
     host.getByRole("button", { name: "End hand", exact: true }),
   ).toBeEnabled();
+
+  await alice.setViewportSize({ height: 915, width: 412 });
+  const playerBoardCards = alice.locator(".player-board [data-board-card]");
+  await expect(playerBoardCards).toHaveCount(5);
+  for (const card of await playerBoardCards.all()) {
+    await expect(card.locator(".card__corner--bottom")).toBeHidden();
+    await expect(card.locator(".card__pip")).toBeHidden();
+    const minimalFace = await card.evaluate((element) => {
+      const rank = element.querySelector<HTMLElement>(".card__rank");
+      const suit = element.querySelector<HTMLElement>(".card__corner-suit");
+      if (!rank || !suit)
+        throw new Error("Minimal player card face is missing.");
+      const cardBox = element.getBoundingClientRect();
+      const rankBox = rank.getBoundingClientRect();
+      const suitBox = suit.getBoundingClientRect();
+      return {
+        rankSize: Number.parseFloat(getComputedStyle(rank).fontSize),
+        suitSize: Number.parseFloat(getComputedStyle(suit).fontSize),
+        rankCenter: rankBox.left + rankBox.width / 2 - cardBox.left,
+        suitCenter: suitBox.left + suitBox.width / 2 - cardBox.left,
+        cardCenter: cardBox.width / 2,
+      };
+    });
+    expect(minimalFace.rankSize).toBeGreaterThanOrEqual(24);
+    expect(minimalFace.suitSize).toBeGreaterThanOrEqual(20);
+    expect(
+      Math.abs(minimalFace.rankCenter - minimalFace.cardCenter),
+    ).toBeLessThan(1);
+    expect(
+      Math.abs(minimalFace.suitCenter - minimalFace.cardCenter),
+    ).toBeLessThan(1);
+  }
+  const cardBoxes = await Promise.all(
+    (await playerBoardCards.all()).map((card) => card.boundingBox()),
+  );
+  expect(cardBoxes.every(Boolean)).toBe(true);
+  for (let index = 1; index < cardBoxes.length; index += 1) {
+    const previous = cardBoxes[index - 1];
+    const current = cardBoxes[index];
+    if (!previous || !current)
+      throw new Error("Player board cards did not render.");
+    expect(current.x).toBeGreaterThanOrEqual(previous.x + previous.width);
+  }
+  const privateCardGlyph = alice.locator(".seat-state-glyph--cards").first();
+  const glyphLayers = await privateCardGlyph
+    .locator(":scope > span")
+    .evaluateAll((layers) =>
+      layers.map((layer) => {
+        const style = getComputedStyle(layer);
+        return { backgroundColor: style.backgroundColor, zIndex: style.zIndex };
+      }),
+    );
+  expect(glyphLayers).toHaveLength(2);
+  expect(glyphLayers[0]?.backgroundColor).not.toBe("rgba(0, 0, 0, 0)");
+  expect(glyphLayers[1]?.backgroundColor).not.toBe("rgba(0, 0, 0, 0)");
+  expect(Number(glyphLayers[1]?.zIndex)).toBeGreaterThan(
+    Number(glyphLayers[0]?.zIndex),
+  );
+  await screenshotIfChromium(
+    alice,
+    testInfo,
+    "phone-player-board-minimal-cards",
+  );
 
   await screenshotIfChromium(host, testInfo, "phone-host-showdown");
   const accessibility = await new AxeBuilder({ page: host }).analyze();
@@ -466,6 +615,34 @@ test("Phone host cards stay compact while Table View shown cards are full, and s
   await expect(
     rootControls.locator(".secondary-control-card__icon"),
   ).toHaveCount(6);
+  const controlCenterIcons = rootControls.locator(
+    ".secondary-control-card__icon",
+  );
+  for (const kind of [
+    "players",
+    "displays",
+    "appearance",
+    "device",
+    "diagnostics",
+    "connection",
+  ]) {
+    await expect(
+      rootControls.locator(`[data-control-center-icon="${kind}"]`),
+    ).toHaveCount(1);
+  }
+  const iconSizes = await controlCenterIcons.evaluateAll((elements) =>
+    elements.map((element) => {
+      const style = getComputedStyle(element);
+      return {
+        height: Number.parseFloat(style.height),
+        width: Number.parseFloat(style.width),
+      };
+    }),
+  );
+  for (const size of iconSizes) {
+    expect(size.width).toBeGreaterThanOrEqual(40);
+    expect(size.height).toBeGreaterThanOrEqual(40);
+  }
   await screenshotIfChromium(host, testInfo, "phone-host-control-center");
   const rootAccessibility = await new AxeBuilder({ page: host }).analyze();
   expect(rootAccessibility.violations).toEqual([]);
@@ -474,7 +651,16 @@ test("Phone host cards stay compact while Table View shown cards are full, and s
     .click();
 
   await host.setViewportSize({ height: 1_024, width: 1_366 });
-  await host.getByRole("button", { name: "Table View" }).click();
+  await host.getByRole("button", { name: "Open table control center" }).click();
+  await expect(rootControls).toBeVisible();
+  await screenshotIfChromium(host, testInfo, "tablet-host-control-center");
+  await rootControls
+    .getByRole("button", { name: "Close table control center" })
+    .click();
+  await host
+    .getByLabel("This device view")
+    .getByRole("button", { name: "Table View" })
+    .click();
   const quietCards = host.locator(".quiet-shown-hand .card--quiet-shown");
   await expect(quietCards).toHaveCount(2);
   const quietCardStyle = await quietCards.first().evaluate((element) => ({
@@ -490,6 +676,150 @@ test("Phone host cards stay compact while Table View shown cards are full, and s
     quietCards.first().locator(".card__corner--bottom"),
   ).toBeVisible();
   await expect(quietCards.first().locator(".card__pip")).toBeVisible();
+  await expect(quietCards.locator('[data-court-rank="K"]')).toBeVisible();
+  await screenshotIfChromium(host, testInfo, "tablet-private-card-status");
+});
+
+test("DECK-APPEARANCE-001: Trusted Host synchronizes the built-in deck appearance while phone board cards remain concise", async ({
+  context,
+  page: host,
+}, testInfo: TestInfo) => {
+  await host.setViewportSize({ height: 852, width: 393 });
+  await host.addInitScript(() => {
+    // A deterministic shuffle makes this a real four-suit browser check, not
+    // a one-card colour assertion. It is isolated to this QA browser context.
+    let nextByte = 31;
+    Object.defineProperty(globalThis.crypto, "getRandomValues", {
+      configurable: true,
+      value: <T extends ArrayBufferView>(values: T): T => {
+        const bytes = new Uint8Array(
+          values.buffer,
+          values.byteOffset,
+          values.byteLength,
+        );
+        // Card custody asks for exactly one random byte per Fisher-Yates swap.
+        // Leave unrelated UUID, IV, and diagnostics entropy alone so their
+        // implementation cannot shift the deck QA fixture.
+        if (bytes.length !== 1) return values;
+        for (let index = 0; index < bytes.length; index += 1) {
+          bytes[index] = nextByte;
+          nextByte = (nextByte + 1) % 251;
+        }
+        return values;
+      },
+    });
+  });
+  const { alice } = await createTable(host, context);
+  await alice.setViewportSize({ height: 852, width: 393 });
+  await host.getByRole("button", { name: "Deal the flop" }).click();
+  await host.getByRole("button", { name: "Deal the turn" }).click();
+  await host.getByRole("button", { name: "Deal the river" }).click();
+  await expect(alice.locator(".player-board [data-board-card]")).toHaveCount(5);
+
+  await host.getByRole("button", { name: "Open table control center" }).click();
+  const controlCenter = host.getByRole("dialog", {
+    name: "Table control center",
+  });
+  await expect(
+    controlCenter.getByRole("group", { name: "Deck appearance" }),
+  ).toBeVisible();
+  await exerciseControl(
+    "card-style-four-colour",
+    controlCenter.getByRole("button", { name: "Four Colour" }),
+    (target) => target.click(),
+    () =>
+      expect(host.locator(".table-surface")).toHaveAttribute(
+        "data-card-style",
+        "four-colour",
+      ),
+  );
+  await expect(host.locator(".table-surface")).toHaveAttribute(
+    "data-card-style",
+    "four-colour",
+  );
+  await expect(alice.locator(".table-surface")).toHaveAttribute(
+    "data-card-style",
+    "four-colour",
+  );
+
+  const fourColourFaces = await alice
+    .locator(".player-board [data-board-card]")
+    .evaluateAll((elements) =>
+      elements.map((element) => ({
+        color: getComputedStyle(element).color,
+        suit: [...element.classList].find((name) =>
+          name.startsWith("card--suit-"),
+        ),
+      })),
+    );
+  const expectedFourColour: Record<string, string> = {
+    "card--suit-c": "rgb(32, 127, 89)",
+    "card--suit-d": "rgb(39, 120, 197)",
+    "card--suit-h": "rgb(201, 59, 67)",
+    "card--suit-s": "rgb(27, 36, 48)",
+  };
+  const visibleSuitColours = new Map(
+    fourColourFaces.flatMap(({ color, suit }) =>
+      suit ? [[suit, color] as const] : [],
+    ),
+  );
+  // A random real hand need not contain all four suits. It must still show
+  // distinct colours for every suit that is actually present, and the same
+  // browser/CSS build must expose the complete four-suit mapping below.
+  expect(visibleSuitColours.size).toBeGreaterThanOrEqual(2);
+  for (const [suit, colour] of visibleSuitColours) {
+    expect(colour).toBe(expectedFourColour[suit]);
+  }
+  const allSuitColours = await alice.evaluate((expected) => {
+    const fixture = document.createElement("div");
+    fixture.className = "table-surface";
+    fixture.dataset.cardStyle = "four-colour";
+    fixture.style.cssText = "position:fixed; left:-9999px; top:-9999px";
+    const suits = Object.keys(expected);
+    for (const suit of suits) {
+      const card = document.createElement("div");
+      card.className = `card card--suit-${suit.slice(-1)}`;
+      fixture.append(card);
+    }
+    document.body.append(fixture);
+    const colours = suits.map((suit, index) => [
+      suit,
+      getComputedStyle(fixture.children[index]!).color,
+    ]);
+    fixture.remove();
+    return Object.fromEntries(colours);
+  }, expectedFourColour);
+  expect(allSuitColours).toEqual(expectedFourColour);
+  await screenshotIfChromium(alice, testInfo, "phone-four-colour-deck");
+
+  await exerciseControl(
+    "card-style-classic",
+    controlCenter.getByRole("button", { name: "Classic" }),
+    (target) => target.click(),
+    () =>
+      expect(host.locator(".table-surface")).toHaveAttribute(
+        "data-card-style",
+        "classic",
+      ),
+  );
+  await expect(host.locator(".table-surface")).toHaveAttribute(
+    "data-card-style",
+    "classic",
+  );
+  await expect(alice.locator(".table-surface")).toHaveAttribute(
+    "data-card-style",
+    "classic",
+  );
+  // Full-size Classic court illustrations are covered by the component
+  // contract. At this browser seam, the relevant user-facing guarantee is
+  // that the Player Experience rail remains deliberately rank-and-suit only.
+  await expect(
+    alice.locator('.player-board [data-court-rank="Q"]'),
+  ).toHaveCount(0);
+  await expect(
+    alice.locator(".player-board [data-board-card] .card__pip").first(),
+  ).toBeHidden();
+  await screenshotIfChromium(alice, testInfo, "phone-deck-appearance");
 });
 
 test("registered phone, tablet, desktop, and TV viewports remain free of clipping and horizontal overflow", async ({

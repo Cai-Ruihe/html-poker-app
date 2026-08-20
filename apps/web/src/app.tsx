@@ -12,7 +12,7 @@ import { DecodeHintType } from "@zxing/library";
 import jsQR from "jsqr";
 
 import type { CapabilityRole } from "@html-poker/identity-capabilities";
-import type { TableTheme } from "@html-poker/game-core";
+import type { CardStyle, TableTheme } from "@html-poker/game-core";
 import { TableSurface } from "@html-poker/presentation";
 
 import brandHorizontalLight from "../../../assets/brand/svg/horizontal-light-transparent.svg?inline";
@@ -2193,6 +2193,9 @@ function HostTable({
           : {})}
         onStartNextHand={() =>
           performDealerAction(() => runtime.startNextHand())
+        }
+        onCardStyleChange={(cardStyle: CardStyle) =>
+          performDealerAction(() => runtime.setCardStyle(cardStyle))
         }
         onTableView={() => onViewChange("table")}
         onTableThemeChange={(tableTheme) =>

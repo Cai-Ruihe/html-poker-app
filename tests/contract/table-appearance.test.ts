@@ -28,7 +28,7 @@ function command(
 }
 
 describe("synchronized table appearance", () => {
-  it("defaults, authorizes, projects, and recovers the selected table theme", async () => {
+  it("defaults, authorizes, projects, and recovers the selected table appearance", async () => {
     const store = createMemoryTableStore<PersistedAuthorityState>();
     const first = createTrustedHostAuthority({
       authorityEpoch: "epoch-1",
@@ -48,7 +48,10 @@ describe("synchronized table appearance", () => {
       }),
     );
 
-    expect(first.project({ kind: "public" }).tableTheme).toBe("dark-green");
+    expect(first.project({ kind: "public" })).toMatchObject({
+      cardStyle: "classic",
+      tableTheme: "dark-green",
+    });
     await expect(
       first.submit(
         command(
@@ -76,6 +79,33 @@ describe("synchronized table appearance", () => {
     });
     expect(first.project({ kind: "public" }).tableTheme).toBe("black-gold");
 
+    await expect(
+      first.submit(
+        command(
+          "seat-card-style",
+          2,
+          { cardStyle: "four-colour", type: "SetCardStyle" },
+          { kind: "seat", seatId: "seat-a" },
+        ),
+      ),
+    ).resolves.toMatchObject({
+      code: "command-not-allowed",
+      status: "rejected",
+    });
+    await expect(
+      first.submit(
+        command("host-card-style", 2, {
+          cardStyle: "four-colour",
+          type: "SetCardStyle",
+        }),
+      ),
+    ).resolves.toMatchObject({
+      events: [{ type: "CardStyleChanged" }],
+      revision: 3,
+      status: "accepted",
+    });
+    expect(first.project({ kind: "public" }).cardStyle).toBe("four-colour");
+
     const recovered = createTrustedHostAuthority({
       authorityEpoch: "epoch-1",
       custody: createCardCustody({ shuffler: (deck) => deck }),
@@ -84,9 +114,10 @@ describe("synchronized table appearance", () => {
       tableId: "table-1",
     });
     await expect(recovered.recover()).resolves.toEqual({
-      revision: 2,
+      revision: 3,
       status: "recovered",
     });
     expect(recovered.project({ kind: "public" }).tableTheme).toBe("black-gold");
+    expect(recovered.project({ kind: "public" }).cardStyle).toBe("four-colour");
   });
 });

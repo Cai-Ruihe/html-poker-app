@@ -13,6 +13,7 @@ import type {
   HandPhase,
   PublicProjection,
   SeatProjection,
+  CardStyle,
   TableTheme,
 } from "@html-poker/game-core";
 
@@ -46,6 +47,7 @@ export interface TableSurfaceProps {
   readonly onRevealStreet?: (street: Street) => ActionResult;
   readonly onShowCards?: () => void;
   readonly onStartNextHand?: () => ActionResult;
+  readonly onCardStyleChange?: (style: CardStyle) => ActionResult;
   readonly onTableView?: () => void;
   readonly onTableThemeChange?: (theme: TableTheme) => ActionResult;
   readonly onToggleSittingOut?: (sittingOut: boolean) => void;
@@ -81,20 +83,134 @@ function cardDetails(card: Card) {
   };
 }
 
+function CourtFace({
+  rank,
+  suit,
+}: {
+  readonly rank: "J" | "K" | "Q";
+  readonly suit: string;
+}) {
+  const name = rank === "K" ? "King" : rank === "Q" ? "Queen" : "Jack";
+  return (
+    <svg
+      aria-label={`${name} court illustration`}
+      className="card__court"
+      data-court-rank={rank}
+      role="img"
+      viewBox="0 0 120 150"
+    >
+      <title>{name}</title>
+      <path
+        d="M18 136 28 82c3-16 17-25 32-25s29 9 32 25l10 54Z"
+        fill="currentColor"
+        opacity=".16"
+      />
+      <path
+        d="M20 136 30 82c3-16 16-25 30-25s27 9 30 25l10 54"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        d="M37 135 42 103h36l5 32M29 102h62M45 116h30"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+      />
+      <ellipse
+        cx="60"
+        cy="63"
+        fill="currentColor"
+        opacity=".16"
+        rx="20"
+        ry="23"
+      />
+      <path
+        d="M43 69c0-17 7-27 17-27s17 10 17 27c0 13-7 24-17 24S43 82 43 69Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3.5"
+      />
+      <path
+        d="M51 70h3M66 70h3M55 81c3 2 7 2 10 0"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="3"
+      />
+      {rank === "K" ? (
+        <path
+          d="M37 45 41 21l12 14 7-19 7 19 12-14 4 24Z"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="4"
+        />
+      ) : rank === "Q" ? (
+        <path
+          d="m37 45 7-19 8 10 8-16 8 16 8-10 7 19"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="4"
+        />
+      ) : (
+        <>
+          <path
+            d="M34 43h52l-7-18H41Z"
+            fill="none"
+            stroke="currentColor"
+            strokeLinejoin="round"
+            strokeWidth="4"
+          />
+          <path
+            d="M48 25v18M72 25v18"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+          />
+        </>
+      )}
+      <path
+        d="M60 93v42M48 101l12 9 12-9"
+        fill="none"
+        stroke="currentColor"
+        strokeLinejoin="round"
+        strokeWidth="3"
+      />
+      <text x="60" y="127" textAnchor="middle">
+        {suit}
+      </text>
+    </svg>
+  );
+}
+
 export function PlayingCard({
   card,
   compact = false,
+  cardStyle = "classic",
   emphasis,
   marker,
+  minimal = false,
   quietShown = false,
 }: {
   readonly card: Card;
+  readonly cardStyle?: CardStyle;
   readonly compact?: boolean;
   readonly emphasis?: "best" | "unused";
   readonly marker: "board" | "private" | "shown";
+  readonly minimal?: boolean;
   readonly quietShown?: boolean;
 }) {
   const details = cardDetails(card);
+  const displayRank =
+    cardStyle === "classic" && details.rank === "T" ? "10" : details.rank;
+  const hasCourtFace =
+    cardStyle === "classic" &&
+    !minimal &&
+    ["J", "Q", "K"].includes(details.rank);
   const markerProps =
     marker === "private"
       ? { "data-private-card": "true" }
@@ -104,21 +220,31 @@ export function PlayingCard({
   return (
     <span
       aria-label={details.accessibleName}
-      className={`card${details.isRed ? " card--red" : ""}${compact ? " card--compact" : ""}${quietShown ? " card--quiet-shown" : ""}${emphasis ? ` card--${emphasis}` : ""}`}
+      className={`card card--${cardStyle} card--suit-${card[1]}${details.isRed ? " card--red" : ""}${compact ? " card--compact" : ""}${minimal ? " card--minimal" : ""}${quietShown ? " card--quiet-shown" : ""}${emphasis ? ` card--${emphasis}` : ""}`}
       data-card={card}
       {...(emphasis === "best" ? { "data-best-five-card": "true" } : {})}
       role="img"
       {...markerProps}
     >
       <span className="card__corner card__corner--top" aria-hidden="true">
-        <span className="card__rank">{details.rank}</span>
+        <span className="card__rank">{displayRank}</span>
         <span className="card__corner-suit">{details.suit}</span>
       </span>
-      <span className="card__pip" aria-hidden="true">
-        {details.suit}
+      <span
+        className={`card__pip${hasCourtFace ? " card__pip--court" : ""}`}
+        aria-hidden="true"
+      >
+        {hasCourtFace ? (
+          <CourtFace
+            rank={details.rank as "J" | "K" | "Q"}
+            suit={details.suit}
+          />
+        ) : (
+          details.suit
+        )}
       </span>
       <span className="card__corner card__corner--bottom" aria-hidden="true">
-        <span className="card__rank">{details.rank}</span>
+        <span className="card__rank">{displayRank}</span>
         <span className="card__corner-suit">{details.suit}</span>
       </span>
     </span>
@@ -142,9 +268,13 @@ function phaseLabel(phase: HandPhase): string {
 function BoardRail({
   bestCards,
   board,
+  cardStyle = "classic",
+  minimal = false,
 }: {
   readonly bestCards?: ReadonlySet<Card>;
   readonly board: readonly Card[];
+  readonly cardStyle?: CardStyle;
+  readonly minimal?: boolean;
 }) {
   return (
     <section className="dealer-rail" aria-label="Community cards">
@@ -155,6 +285,8 @@ function BoardRail({
           return card ? (
             <PlayingCard
               card={card}
+              cardStyle={cardStyle}
+              minimal={minimal}
               {...(bestCards?.size
                 ? { emphasis: bestCards.has(card) ? "best" : "unused" }
                 : {})}
@@ -218,10 +350,9 @@ function quietSeatPosition(index: number, count: number): number {
 }
 
 function seatCanHoldPosition(seat: PublicProjection["seats"][number]): boolean {
-  // Between hands, a ready player is deliberately `waiting` but still owns a
-  // logical dealer position. Sitting out is the only participation state that
-  // must not display D/SB/BB.
-  return seat.status !== "sitting-out";
+  // A visible table marker is a promise that this seat is in the next hand.
+  // Neither a sitting-out seat nor a waiting/recovering seat may carry D/SB/BB.
+  return seat.status !== "sitting-out" && seat.status !== "waiting";
 }
 
 function SeatStateGlyph({
@@ -269,8 +400,10 @@ function SeatStateGlyph({
 }
 
 function QuietSeatGrid({
+  cardStyle = "classic",
   projection,
 }: {
+  readonly cardStyle?: CardStyle;
   readonly projection: PublicProjection | SeatProjection;
 }) {
   const { bigBlindSeatId, smallBlindSeatId } = blindSeatIds(projection);
@@ -310,6 +443,7 @@ function QuietSeatGrid({
                 {seat.holeCards.map((card) => (
                   <PlayingCard
                     card={card}
+                    cardStyle={cardStyle}
                     quietShown
                     {...(winners.has(seat.seatId) && seat.evaluation
                       ? {
@@ -344,14 +478,16 @@ function QuietSeatGrid({
 }
 
 function SeatGrid({
+  cardStyle = "classic",
   projection,
   mode,
 }: {
+  readonly cardStyle?: CardStyle;
   readonly mode: PresentationMode;
   readonly projection: PublicProjection | SeatProjection;
 }) {
   if (["player", "public", "tablet", "tv"].includes(mode)) {
-    return <QuietSeatGrid projection={projection} />;
+    return <QuietSeatGrid cardStyle={cardStyle} projection={projection} />;
   }
   const selfSeatId =
     projection.view === "seat" ? projection.self.seatId : undefined;
@@ -400,6 +536,7 @@ function SeatGrid({
               {seat.holeCards.map((card) => (
                 <PlayingCard
                   card={card}
+                  cardStyle={cardStyle}
                   compact
                   {...(winners.has(seat.seatId) && seat.evaluation
                     ? {
@@ -676,6 +813,38 @@ function TableThemeButtons(props: TableSurfaceProps) {
           <span aria-hidden="true" />
         </button>
       ))}
+    </div>
+  );
+}
+
+function CardStyleButtons(props: TableSurfaceProps) {
+  if (!props.onCardStyleChange) return null;
+  return (
+    <div
+      className="surface-card-style-picker"
+      role="group"
+      aria-label="Deck appearance"
+    >
+      <button
+        aria-pressed={props.projection.cardStyle === "classic"}
+        data-qa-action="card-style-classic"
+        data-qa-control="card-style-classic"
+        disabled={props.busy}
+        onClick={() => void props.onCardStyleChange?.("classic")}
+        type="button"
+      >
+        Classic
+      </button>
+      <button
+        aria-pressed={props.projection.cardStyle === "four-colour"}
+        data-qa-action="card-style-four-colour"
+        data-qa-control="card-style-four-colour"
+        disabled={props.busy}
+        onClick={() => void props.onCardStyleChange?.("four-colour")}
+        type="button"
+      >
+        Four Colour
+      </button>
     </div>
   );
 }
@@ -1107,12 +1276,7 @@ function TabletControls(props: TableSurfaceProps) {
                 onClick={() => openHostAdministration(props.onManagePlayers)}
                 type="button"
               >
-                <span
-                  className="secondary-control-card__icon"
-                  aria-hidden="true"
-                >
-                  ◎
-                </span>
+                <HostControlIcon kind="players" />
                 <strong>Players &amp; seats</strong>
                 <small>Invites, seat order, dealer, replacement</small>
                 <em>
@@ -1123,19 +1287,15 @@ function TabletControls(props: TableSurfaceProps) {
                 <b aria-hidden="true">›</b>
               </button>
               <section className="secondary-control-card secondary-control-card--appearance">
-                <span
-                  className="secondary-control-card__icon"
-                  aria-hidden="true"
-                >
-                  ◐
-                </span>
+                <HostControlIcon kind="appearance" />
                 <strong>Appearance</strong>
-                <small>One table colour on every screen</small>
+                <small>Table colour and deck on every screen</small>
                 {props.onTableThemeChange ? (
                   <TableThemeButtons {...props} />
                 ) : (
                   <em>Selected by the Trusted Host</em>
                 )}
+                <CardStyleButtons {...props} />
               </section>
               <button
                 className="secondary-control-card"
@@ -1145,12 +1305,7 @@ function TabletControls(props: TableSurfaceProps) {
                 onClick={() => openHostAdministration(props.onManageDisplays)}
                 type="button"
               >
-                <span
-                  className="secondary-control-card__icon"
-                  aria-hidden="true"
-                >
-                  ▣
-                </span>
+                <HostControlIcon kind="displays" />
                 <strong>Displays &amp; pairing</strong>
                 <small>Tablet, TV and public table screens</small>
                 <em>
@@ -1161,12 +1316,7 @@ function TabletControls(props: TableSurfaceProps) {
                 <b aria-hidden="true">›</b>
               </button>
               <section className="secondary-control-card secondary-control-card--device">
-                <span
-                  className="secondary-control-card__icon"
-                  aria-hidden="true"
-                >
-                  ▯
-                </span>
+                <HostControlIcon kind="device" />
                 <strong>This device</strong>
                 <small>Views and browser presentation</small>
                 <div className="secondary-device-actions">
@@ -1207,12 +1357,7 @@ function TabletControls(props: TableSurfaceProps) {
                 </div>
               </section>
               <section className="secondary-control-card">
-                <span
-                  className="secondary-control-card__icon"
-                  aria-hidden="true"
-                >
-                  ↻
-                </span>
+                <HostControlIcon kind="connection" />
                 <strong>Connection &amp; recovery</strong>
                 <small>Catch up with the Trusted Host now</small>
                 {props.onReconnect ? (
@@ -1222,12 +1367,7 @@ function TabletControls(props: TableSurfaceProps) {
                 )}
               </section>
               <section className="secondary-control-card">
-                <span
-                  className="secondary-control-card__icon"
-                  aria-hidden="true"
-                >
-                  ⌁
-                </span>
+                <HostControlIcon kind="diagnostics" />
                 <strong>Diagnostics &amp; history</strong>
                 <small>Privacy-filtered support evidence</small>
                 {props.onDownloadLog ? (
@@ -1303,53 +1443,76 @@ function HostControlIcon({ kind }: { readonly kind: HostControlIconKind }) {
     stroke: "currentColor",
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
-    strokeWidth: 1.7,
+    strokeWidth: 2.15,
   };
   return (
-    <span className="secondary-control-card__icon" aria-hidden="true">
-      <svg focusable="false" viewBox="0 0 24 24">
+    <span
+      aria-hidden="true"
+      className="secondary-control-card__icon"
+      data-control-center-icon={kind}
+    >
+      <svg focusable="false" viewBox="0 0 32 32">
         {kind === "players" ? (
           <>
-            <circle {...common} cx="9" cy="8" r="3" />
-            <path {...common} d="M3.5 19c.7-4 2.5-6 5.5-6s4.8 2 5.5 6" />
+            <circle {...common} cx="11" cy="10" r="3.5" />
             <path
               {...common}
-              d="M15 6.2a2.6 2.6 0 0 1 0 5.1M16.3 13.6c2.4.7 3.7 2.5 4.2 5.4"
+              d="M4.5 25c.9-4.5 3.1-6.8 6.5-6.8s5.6 2.3 6.5 6.8"
+            />
+            <path
+              {...common}
+              d="M20 8.2a3 3 0 0 1 0 5.8M21.4 18.6c3 .8 4.9 2.9 5.4 6.4"
             />
           </>
         ) : null}
         {kind === "displays" ? (
           <>
-            <rect {...common} height="13" rx="2" width="19" x="2.5" y="3.5" />
-            <path {...common} d="M9 20.5h6M12 16.5v4" />
+            <rect {...common} height="15" rx="2.5" width="22" x="3" y="4" />
+            <path {...common} d="M11 25h10M16 19v6" />
+            <rect {...common} height="11" rx="1.7" width="7" x="21" y="14" />
           </>
         ) : null}
         {kind === "appearance" ? (
           <>
-            <circle {...common} cx="12" cy="12" r="8.5" />
-            <path d="M12 3.5a8.5 8.5 0 0 0 0 17Z" fill="currentColor" />
+            <path
+              {...common}
+              d="M16 4C8.8 4 3 8.8 3 15.3 3 21.2 7.7 26 13.5 26h2.2c1.6 0 2.4-1.3 2.4-2.5 0-1.5-1.2-2.2-1.2-3.6 0-1.6 1.2-2.9 3-2.9H22c4 0 7-2.5 7-6.2C29 6.9 23.2 4 16 4Z"
+            />
+            <circle cx="9.5" cy="13" fill="currentColor" r="1.7" />
+            <circle cx="13.5" cy="9" fill="currentColor" r="1.7" />
+            <circle cx="8.5" cy="18.2" fill="currentColor" r="1.7" />
           </>
         ) : null}
         {kind === "device" ? (
           <>
-            <rect {...common} height="20" rx="2.5" width="12" x="6" y="2" />
-            <path {...common} d="M10 18.5h4" />
+            <rect {...common} height="25" rx="3.5" width="16" x="8" y="3.5" />
+            <path {...common} d="M13 23.5h6M12 8h8" />
           </>
         ) : null}
         {kind === "diagnostics" ? (
           <>
-            <path {...common} d="m3 17 5-5 4 3 8-9" />
-            <circle cx="3" cy="17" fill="currentColor" r="1.5" />
-            <circle cx="8" cy="12" fill="currentColor" r="1.5" />
-            <circle cx="12" cy="15" fill="currentColor" r="1.5" />
-            <circle cx="20" cy="6" fill="currentColor" r="1.5" />
+            <path
+              {...common}
+              d="M8 3.5h11l5 5v20H8a3 3 0 0 1-3-3v-19a3 3 0 0 1 3-3Z"
+            />
+            <path
+              {...common}
+              d="M19 3.5v6h5M9 20h2.8l2.1-4.5 3.1 7 1.8-3.2H22"
+            />
           </>
         ) : null}
         {kind === "connection" ? (
           <>
-            <path {...common} d="M19.5 8A8 8 0 0 0 6 5.5L4 8" />
-            <path {...common} d="M4 4v4h4M4.5 16A8 8 0 0 0 18 18.5l2-2.5" />
-            <path {...common} d="M20 20v-4h-4" />
+            <path {...common} d="M25.8 11A10.5 10.5 0 0 0 7.7 7.5L5.5 10" />
+            <path
+              {...common}
+              d="M5.5 5.2V10h4.8M6.2 21A10.5 10.5 0 0 0 24.3 24.5l2.2-2.5"
+            />
+            <path {...common} d="M26.5 26.8V22h-4.8" />
+            <path
+              {...common}
+              d="M11.3 15.8h9.4M14 12.8l-3 3 3 3M18 12.8l3 3-3 3"
+            />
           </>
         ) : null}
       </svg>
@@ -1446,8 +1609,9 @@ function HostControlCenter({
           <section className="secondary-control-card secondary-control-card--appearance">
             <HostControlIcon kind="appearance" />
             <strong>Appearance</strong>
-            <small>One table colour on every screen</small>
+            <small>Table colour and deck on every screen</small>
             <HostRootThemeButtons {...props} />
+            <CardStyleButtons {...props} />
           </section>
           <section className="secondary-control-card secondary-control-card--device">
             <HostControlIcon kind="device" />
@@ -1665,6 +1829,7 @@ function PrivateHand(
   const selfIsLeader =
     props.projection.showdown?.leaders.includes(props.projection.self.seatId) ??
     false;
+  const cardStyle: CardStyle = props.projection.cardStyle ?? "classic";
 
   useEffect(() => {
     setCardsVisibleOnDevice(false);
@@ -1696,6 +1861,7 @@ function PrivateHand(
         {props.projection.self.holeCards.map((card) => (
           <PlayingCard
             card={card}
+            cardStyle={cardStyle}
             {...(selfIsLeader && selfEvaluation
               ? {
                   emphasis: selfEvaluation.bestFive.includes(card)
@@ -1804,11 +1970,13 @@ export function TableSurface(props: TableSurfaceProps) {
   const isPlayer = props.mode === "player" && props.projection.view === "seat";
   const isQuietPublic = ["public", "tablet", "tv"].includes(props.mode);
   const tableTheme = props.projection.tableTheme ?? "dark-green";
+  const cardStyle: CardStyle = props.projection.cardStyle ?? "classic";
   const bestCards = winningBestCards(props.projection);
   return (
     <main
       className={`table-surface table-surface--${props.mode}${hostRootOpen ? " table-surface--host-root-open" : ""}`}
       data-page-fullscreen={pageFullscreen ? "true" : "false"}
+      data-card-style={cardStyle}
       data-theme={tableTheme}
     >
       {props.mode === "host" ? (
@@ -1897,8 +2065,14 @@ export function TableSurface(props: TableSurfaceProps) {
           <BoardRail
             {...(bestCards ? { bestCards } : {})}
             board={props.projection.board}
+            cardStyle={cardStyle}
+            minimal={props.mode === "host"}
           />
-          <SeatGrid mode={props.mode} projection={props.projection} />
+          <SeatGrid
+            cardStyle={cardStyle}
+            mode={props.mode}
+            projection={props.projection}
+          />
           <SettlementPanel projection={props.projection} />
           {props.projection.showdown ? (
             <p className="showdown-note" aria-live="polite">
@@ -1916,8 +2090,14 @@ export function TableSurface(props: TableSurfaceProps) {
           <BoardRail
             {...(bestCards ? { bestCards } : {})}
             board={props.projection.board}
+            cardStyle={cardStyle}
+            minimal
           />
-          <SeatGrid mode="player" projection={props.projection} />
+          <SeatGrid
+            cardStyle={cardStyle}
+            mode="player"
+            projection={props.projection}
+          />
         </section>
       ) : null}
 

@@ -318,6 +318,14 @@ host_root_actions:
     - theme-deep-navy
     - toggle-developer
 
+deck_appearance:
+  source: packages/presentation/src/index.tsx
+  evidence:
+    - tests/journey/feedback-regressions.spec.ts
+  normal_mode_controls:
+    - card-style-classic
+    - card-style-four-colour
+
 control_contract:
   sources:
     - apps/web/src/app.tsx
@@ -332,6 +340,14 @@ control_contract:
       surface: Home
       expected_result: Digital-chip settings and validation are shown.
       evidence: tests/journey/control-conformance.spec.ts
+    card-style-classic:
+      surface: Host Table control center
+      expected_result: The table uses the synchronized Classic deck presentation.
+      evidence: tests/journey/feedback-regressions.spec.ts
+    card-style-four-colour:
+      surface: Host Table control center
+      expected_result: The table uses the synchronized Four Colour deck presentation.
+      evidence: tests/journey/feedback-regressions.spec.ts
     home-create-table:
       surface: Home
       expected_result: A Trusted Host lobby is created.

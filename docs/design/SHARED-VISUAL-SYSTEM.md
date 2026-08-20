@@ -166,7 +166,18 @@ than treating those three measurements as blanket accessibility proof.
 
 ## Playing cards
 
-The default deck is an original old-school vector treatment:
+The built-in deck presentation is selected by the Trusted Host and synchronizes
+to every Normal Mode role. This is a small core appearance choice, not the
+deferred Community Skins package system.
+
+- **Classic** is the default: an original old-school vector treatment with
+  court faces for J/Q/K, `10` rather than `T`, near-black clubs/spades, and
+  restrained red hearts/diamonds.
+- **Four Colour** keeps the same card geometry and modern digital ranks, but
+  uses a distinct stable colour for every suit: heart red, diamond blue, club
+  green, and spade near-black.
+
+Classic cards use:
 
 - warm ivory paper, not bright white;
 - a restrained diagonal/radial paper gradient;
@@ -180,7 +191,7 @@ Cards grow as large as the role and viewport safely allow. Community cards are
 the dominant object on Tablet, Public Table, and TV. Private hole cards are the
 dominant object on Player phones.
 
-A future skin may replace the complete deck with compact vector assets. The
+A future Community Skin may replace the complete deck with compact vector assets. The
 client must fetch and cache a complete validated deck pack before play; it must
 not request individual cards after a deal, because per-card network requests
 could reveal the hand or board through metadata. Airplane Mode always includes

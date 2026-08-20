@@ -9,6 +9,7 @@ import {
   isBettingActionIntent,
   isRulesProfile,
   type BettingActionIntent,
+  type CardStyle,
   type CommandEnvelope,
   type PersistedAuthorityState,
   type PublicProjection,
@@ -283,6 +284,7 @@ type CapabilityResponsePayload =
       readonly status: "projection";
     }
   | {
+      readonly cardStyle: CardStyle;
       readonly futureSittingOut?: boolean;
       readonly role: CapabilityRole;
       readonly relayRoutes?: RelayRouteConfiguration;
@@ -2135,6 +2137,18 @@ export class HostTableRuntime {
     });
   }
 
+  async setCardStyle(cardStyle: CardStyle): Promise<void> {
+    await this.runExclusive(async () => {
+      const receipt = await this.submitHostInternal({
+        cardStyle,
+        type: "SetCardStyle",
+      });
+      if (receipt.status === "rejected") {
+        throw new Error(`Deck appearance rejected: ${receipt.code}`);
+      }
+    });
+  }
+
   async voidHand(reason: string): Promise<void> {
     await this.runExclusive(async () => {
       const receipt = await this.submitHostInternal(
@@ -2528,6 +2542,9 @@ export class HostTableRuntime {
     const tableTheme = this.authority
       ? this.authority.project({ kind: "public" }).tableTheme
       : "dark-green";
+    const cardStyle = this.authority
+      ? this.authority.project({ kind: "public" }).cardStyle
+      : "classic";
     if (role === "player") {
       const seat = this.identity
         .roster()
@@ -2544,6 +2561,7 @@ export class HostTableRuntime {
           role,
           seat,
           status: "waiting",
+          cardStyle,
           tableTheme,
         };
       }
@@ -2572,6 +2590,7 @@ export class HostTableRuntime {
           role,
           seat,
           status: "waiting",
+          cardStyle,
           tableTheme,
         };
       }
@@ -2583,6 +2602,7 @@ export class HostTableRuntime {
           : {}),
         role,
         status: "waiting",
+        cardStyle,
         tableTheme,
       };
     }
@@ -2766,14 +2786,17 @@ export class HostTableRuntime {
     eventType: "command" | "lifecycle" | "recovery" | "support-export",
     result: "accepted" | "rejected" | "error",
     errorClass?: string,
+    commandKind?: CommandEnvelope["payload"]["type"],
   ): void {
     this.diagnostics.record({
       actorPseudonym: "trusted-host",
       buildVersion: BUILD_VERSION,
       capabilityScope: "trusted-host",
+      ...(commandKind ? { commandKind } : {}),
       ...(errorClass ? { errorClass: errorClass.slice(0, 64) } : {}),
       eventType,
       ...(this.projection?.handId ? { handId: this.projection.handId } : {}),
+      ...(this.projection ? { handPhase: this.projection.phase } : {}),
       protocolVersion: PROTOCOL_VERSION,
       result,
       ...(this.projection ? { revision: this.projection.revision } : {}),
@@ -2857,6 +2880,7 @@ export class HostTableRuntime {
       "command",
       receipt.status === "accepted" ? "accepted" : "rejected",
       receipt.status === "rejected" ? receipt.code : undefined,
+      payload.type,
     );
     if (receipt.status === "accepted") {
       this.refreshProjection();
@@ -2886,6 +2910,7 @@ export class HostTableRuntime {
       "command",
       receipt.status === "accepted" ? "accepted" : "rejected",
       receipt.status === "rejected" ? receipt.code : undefined,
+      payload.type,
     );
     if (receipt.status === "accepted") {
       this.refreshProjection();
@@ -2911,6 +2936,7 @@ export class HostTableRuntime {
 }
 
 export interface ClientRuntimeSnapshot {
+  readonly cardStyle: CardStyle;
   readonly connectionLabel: string;
   readonly error?: string;
   readonly futureSittingOut: boolean;
@@ -2980,6 +3006,7 @@ export class TableClientRuntime {
   private readonly slotId: string;
   private status: ClientRuntimeSnapshot["status"] = "joining";
   private tableTheme: TableTheme = "dark-green";
+  private cardStyle: CardStyle = "classic";
 
   private constructor(options: ClientRuntimeOptions) {
     this.airplanePairing = options.airplanePairing;
@@ -3248,6 +3275,7 @@ export class TableClientRuntime {
   snapshot(): ClientRuntimeSnapshot {
     return {
       connectionLabel: this.endpoint.connectionLabel(),
+      cardStyle: this.cardStyle,
       ...(this.error ? { error: this.error } : {}),
       futureSittingOut: this.futureSittingOut,
       ...(this.projection
@@ -3310,6 +3338,7 @@ export class TableClientRuntime {
       if (response.status === "waiting") {
         this.seat = response.seat;
         this.tableTheme = response.tableTheme;
+        this.cardStyle = response.cardStyle;
         this.futureSittingOut =
           response.role === "player"
             ? (response.futureSittingOut ??
@@ -3320,6 +3349,7 @@ export class TableClientRuntime {
         this.status = "waiting";
       } else {
         this.tableTheme = response.projection.tableTheme;
+        this.cardStyle = response.projection.cardStyle;
         this.futureSittingOut =
           response.role === "player" ? response.futureSittingOut : false;
         this.projection = response.projection;

@@ -239,6 +239,40 @@
   color: #b62e36;
 }
 
+/* Deck appearance is a table-owned setting. Classic keeps the familiar
+   red/black deck; Four Colour makes suit identity readable at a glance while
+   preserving the same card geometry. */
+.table-surface[data-card-style="four-colour"] .card--suit-h {
+  color: #c93b43;
+}
+
+.table-surface[data-card-style="four-colour"] .card--suit-d {
+  color: #2778c5;
+}
+
+.table-surface[data-card-style="four-colour"] .card--suit-c {
+  color: #207f59;
+}
+
+.table-surface[data-card-style="four-colour"] .card--suit-s {
+  color: #1b2430;
+}
+
+.table-surface .card__court {
+  position: absolute;
+  z-index: 1;
+  inset: 15% 11% 11%;
+  width: 78%;
+  height: 78%;
+}
+
+.table-surface .card__court text {
+  fill: currentColor;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
+  font-weight: 700;
+}
+
 .table-surface .card--best {
   border-color: var(--table-accent);
   box-shadow:
@@ -370,6 +404,19 @@
   font-size: clamp(2.5rem, 7vw, 7.4rem);
   line-height: 1;
   transform: translate(-50%, -50%);
+}
+
+.table-surface .card__pip--court {
+  display: grid;
+  width: 74%;
+  height: 74%;
+  place-items: center;
+}
+
+.table-surface .card__pip--court .card__court {
+  position: static;
+  width: 100%;
+  height: 100%;
 }
 
 .table-surface .card-space {
@@ -540,6 +587,8 @@
   aspect-ratio: 0.7;
   border: 2px solid currentColor;
   border-radius: 0.24rem;
+  background: var(--table-felt-deep);
+  isolation: isolate;
 }
 
 .seat-state-glyph--cards > span::after {
@@ -553,10 +602,19 @@
 
 .seat-state-glyph--cards > span:first-child {
   left: 0.42rem;
+  z-index: 1;
   transform: rotate(-12deg);
 }
 .seat-state-glyph--cards > span:last-child {
   right: 0.36rem;
+  z-index: 2;
+  /* The front card must be an opaque physical layer: it intentionally covers
+     the rear card rather than reading as a pair of transparent outlines. */
+  background: color-mix(
+    in srgb,
+    var(--table-felt-deep) 84%,
+    var(--table-panel-raised)
+  );
   transform: rotate(12deg);
 }
 
@@ -1154,11 +1212,50 @@ button.secondary-control-card:disabled {
   line-height: 1;
 }
 
+.secondary-controls .secondary-control-card__icon {
+  top: 20px;
+  left: 20px;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid var(--table-rule);
+  border-radius: 11px;
+  color: var(--table-accent);
+  background: color-mix(in srgb, var(--table-panel) 78%, transparent);
+}
+
+.secondary-controls .secondary-control-card {
+  padding-left: 80px;
+}
+
 .secondary-control-card__icon svg {
   display: block;
   width: 100%;
   height: 100%;
   overflow: visible;
+}
+
+.host-control-center .secondary-control-card {
+  padding-left: 94px;
+}
+
+.host-control-center .secondary-control-card__icon {
+  top: 22px;
+  left: 22px;
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border: 1px solid var(--table-rule);
+  border-radius: 14px;
+  color: var(--table-accent);
+  background: color-mix(in srgb, var(--table-panel) 78%, transparent);
+}
+
+.host-control-center .secondary-control-card__icon svg {
+  width: 36px;
+  height: 36px;
 }
 
 .secondary-control-card > strong {
@@ -1193,7 +1290,8 @@ button.secondary-control-card:disabled {
 }
 
 .secondary-device-actions,
-.surface-theme-picker {
+.surface-theme-picker,
+.surface-card-style-picker {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -1224,6 +1322,25 @@ button.secondary-control-card:disabled {
   border-radius: 9px;
   background: transparent;
   cursor: pointer;
+}
+
+.surface-card-style-picker button {
+  min-height: 34px;
+  border: 1px solid var(--table-rule);
+  border-radius: 9px;
+  padding: 7px 10px;
+  color: var(--table-ink);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 760;
+}
+
+.surface-card-style-picker button[aria-pressed="true"] {
+  border-color: var(--table-accent);
+  color: var(--table-felt-deep);
+  background: var(--table-accent);
 }
 
 .surface-theme-picker button[aria-pressed="true"] {
@@ -1453,7 +1570,7 @@ button.secondary-control-card:disabled {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.04rem;
+  gap: 0;
   line-height: 1;
   text-align: center;
 }
@@ -1461,19 +1578,23 @@ button.secondary-control-card:disabled {
 .table-surface .mini-hand .card--compact .card__rank {
   display: block;
   width: 100%;
-  font-size: 1.08rem;
+  font-size: 1.22rem;
   font-weight: 700;
   letter-spacing: -0.03em;
-  line-height: 0.9;
+  line-height: 1;
   text-align: center;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings:
+    "lnum" 1,
+    "tnum" 1;
 }
 
 .table-surface .mini-hand .card--compact .card__corner-suit {
   display: block;
   width: 100%;
   margin-top: 0;
-  font-size: 0.92rem;
-  line-height: 0.9;
+  font-size: 1.08rem;
+  line-height: 1;
   text-align: center;
 }
 
@@ -1488,6 +1609,90 @@ button.secondary-control-card:disabled {
   width: min(68rem, calc(100% - 2rem));
   border-color: var(--table-rule);
   padding-bottom: 2rem;
+}
+
+/* The board below a phone player's controls is a reading rail, not a table
+   display: one rank and one suit per card keep five cards legible on Android. */
+.table-surface .player-board .card--minimal .card__corner--top {
+  inset: 0;
+  display: grid;
+  min-width: 0;
+  grid-template-rows: 1em 1em;
+  align-content: center;
+  align-items: center;
+  justify-content: center;
+  gap: 0.08rem;
+  line-height: 1;
+  text-align: center;
+}
+
+.table-surface .player-board .card--minimal .card__rank {
+  display: grid;
+  width: 100%;
+  place-items: center;
+  font-size: clamp(1.5rem, 7.1vw, 1.9rem);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings:
+    "lnum" 1,
+    "tnum" 1;
+  line-height: 1;
+}
+
+.table-surface .player-board .card--minimal .card__corner-suit {
+  display: grid;
+  width: 100%;
+  place-items: center;
+  margin-top: 0;
+  font-size: clamp(1.3rem, 6.1vw, 1.65rem);
+  line-height: 1;
+}
+
+.table-surface .player-board .card--minimal .card__corner--bottom,
+.table-surface .player-board .card--minimal .card__pip {
+  display: none;
+}
+
+/* Host Controls uses the same concise rank-and-suit rail as a phone player.
+   This is a control surface, not the shared table: preserve the physical-card
+   treatment for Tablet and TV, while keeping five cards immediately readable
+   on a small host screen. */
+.table-surface--host .public-table .card--minimal .card__corner--top {
+  inset: 0;
+  display: grid;
+  min-width: 0;
+  grid-template-rows: 1em 1em;
+  align-content: center;
+  align-items: center;
+  justify-content: center;
+  gap: 0.08rem;
+  line-height: 1;
+  text-align: center;
+}
+
+.table-surface--host .public-table .card--minimal .card__rank {
+  display: grid;
+  width: 100%;
+  place-items: center;
+  font-size: clamp(1.25rem, 6vw, 1.7rem);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings:
+    "lnum" 1,
+    "tnum" 1;
+  line-height: 1;
+}
+
+.table-surface--host .public-table .card--minimal .card__corner-suit {
+  display: grid;
+  width: 100%;
+  place-items: center;
+  margin-top: 0;
+  font-size: clamp(1.05rem, 5.1vw, 1.45rem);
+  line-height: 1;
+}
+
+.table-surface--host .public-table .card--minimal .card__corner--bottom,
+.table-surface--host .public-table .card--minimal .card__pip {
+  display: none;
 }
 .table-surface .player-board .dealer-rail {
   width: min(34rem, 100%);

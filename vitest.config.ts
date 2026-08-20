@@ -20,7 +20,11 @@ export default defineConfig({
         statements: 80,
       },
     },
-    include: ["packages/**/*.test.ts", "tests/contract/**/*.test.ts"],
+    include: [
+      "packages/**/*.test.ts",
+      "tests/contract/**/*.test.ts",
+      "tests/contract/**/*.test.tsx",
+    ],
     restoreMocks: true,
   },
 });

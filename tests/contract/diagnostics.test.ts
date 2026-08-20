@@ -45,9 +45,11 @@ describe("redacted diagnostics", () => {
         buildVersion: "0.1.0",
         capabilityScope: "player",
         commandId: "command-1",
+        commandKind: "RevealStreet",
         durationMs: 12,
         eventType: "command",
         handId: "018bcfe5-6800-7000-8000-000000000001",
+        handPhase: "flop",
         protocolVersion: 1,
         result: "accepted",
         revision: 3,
@@ -55,6 +57,10 @@ describe("redacted diagnostics", () => {
         tablePseudonym,
       }),
     ).toEqual({ status: "accepted" });
+
+    const firstExport = log.export();
+    expect(firstExport).toContain('"commandKind":"RevealStreet"');
+    expect(firstExport).toContain('"handPhase":"flop"');
 
     now += 31 * 24 * 60 * 60 * 1_000;
     log.record({
