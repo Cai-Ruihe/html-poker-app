@@ -621,6 +621,14 @@ test("every host Tablet secondary action is exercised and player administration 
   await invokeSecondary("theme-dark-green");
   await invokeSecondary("theme-deep-navy");
   await invokeSecondary("theme-black-gold");
+  await invokeSecondary("card-style-four-colour");
+  for (const screen of [host, alice, bob]) {
+    await expect(screen.locator(".table-surface")).toHaveAttribute(
+      "data-card-style",
+      "four-colour",
+    );
+  }
+  await invokeSecondary("card-style-classic");
   for (const screen of [host, alice, bob]) {
     await expect(screen.locator(".table-surface")).toHaveAttribute(
       "data-theme",
