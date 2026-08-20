@@ -523,18 +523,29 @@ test("Host lobby, roster, invitations, diagnostics, and corrections verify their
     (target) => target.click(),
     () => expect(eventSelect).toContainText("CorrectionRecorded"),
   );
+  // A dealer is selected between hands; the marker is only visible once that
+  // seat participates in the next hand.
   await exerciseControl(
     "roster-make-dealer",
     control(bobRoster, "roster-make-dealer"),
     (target) => target.click(),
     () =>
       expect(
-        host
-          .locator(".seat-tile")
-          .filter({ hasText: "Bob" })
-          .getByLabel("Dealer"),
+        host.getByText("Hand complete", { exact: true }).first(),
       ).toBeVisible(),
   );
+  await host
+    .getByRole("button", { name: "Close player administration" })
+    .click();
+  await host.getByRole("button", { name: "Deal next hand" }).click();
+  await expect(
+    host.getByText("Pre-flop", { exact: true }).first(),
+  ).toBeVisible();
+  await expect(
+    host.locator(".seat-tile").filter({ hasText: "Bob" }).getByLabel("Dealer"),
+  ).toBeVisible();
+  await control(host, "host-manage-players").click();
+  await expect(administration).toBeVisible();
   const tabletCapability = administration
     .locator(".capability-list li")
     .filter({ hasText: "table control" });

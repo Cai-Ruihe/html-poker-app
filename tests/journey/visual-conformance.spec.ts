@@ -578,6 +578,8 @@ test("every host Tablet secondary action is exercised and player administration 
   const { alice, bob } = await createTable(host, context);
   await host.getByRole("button", { name: "Table View" }).click();
   const expectedActionIds = [
+    "card-style-classic",
+    "card-style-four-colour",
     "close-secondary",
     "fullscreen",
     "host-controls",

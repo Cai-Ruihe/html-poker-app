@@ -508,8 +508,17 @@ test("off-table administration moves seats, voids, corrects, and relocates the d
     "CorrectionRecorded",
   );
 
+  // Dealer selection is made between hands. Its marker appears only once the
+  // selected seat is actually participating in the next hand.
   const bobRosterItem = host.locator(".roster li").filter({ hasText: "Bob" });
   await bobRosterItem.getByRole("button", { name: "Make dealer" }).click();
+  await host
+    .getByRole("button", { name: "Close player administration" })
+    .click();
+  await host.getByRole("button", { name: "Deal next hand" }).click();
+  await expect(
+    host.getByText("Pre-flop", { exact: true }).first(),
+  ).toBeVisible();
   await expect(
     host.locator(".seat-tile").filter({ hasText: "Bob" }).getByLabel("Dealer"),
   ).toBeVisible();
