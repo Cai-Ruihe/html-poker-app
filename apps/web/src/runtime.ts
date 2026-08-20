@@ -44,7 +44,7 @@ import {
   type HostAirplanePairing,
 } from "./airplane";
 
-export const BUILD_VERSION = "0.1.4-phase1";
+export const BUILD_VERSION = "0.1.5-phase1";
 export const PROTOCOL_VERSION = 2;
 
 const requestTimeoutMs = 7_500;

@@ -161,7 +161,7 @@ test("the Airplane start screen has no unexplained red ornaments", async ({
 }) => {
   const page = await openAirplanePage(context);
   await expect(
-    page.getByText("Build 0.1.4-phase1", { exact: true }),
+    page.getByText("Build 0.1.5-phase1", { exact: true }),
   ).toBeVisible();
   expect(await unexplainedRedDecorations(page)).toEqual([]);
 });

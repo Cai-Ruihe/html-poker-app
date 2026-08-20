@@ -6,6 +6,16 @@ All notable project changes will be documented here. The format follows [Keep a 
 
 ### Fixed
 
+- Preserved the full Tablet community-card geometry at showdown, kept revealed
+  player cards at their physical seats, enlarged those cards for the table,
+  and moved the best-five explanation directly beneath the unchanged board.
+- Made quiet-table status symbols seat-facing rather than counter-rotated for
+  a screen spectator; corrected fullscreen-only iPad corner clearance, edge
+  flush controls, and close-glyph centering.
+- Forced the warm card system and diagnostics to retain the chosen table theme
+  instead of accepting browser/OS dark-mode recolouring, and versioned the
+  opaque iOS Home Screen icon URL so repaired shortcuts fetch a new source.
+
 - Replaced browser-native Normal Mode network errors with actionable relay recovery guidance, and blocked configured Pages publication when the selected relay fails DNS, health, exact-origin CORS, or invalid-token rejection checks.
 - Rebuilt the approved Tablet quick controls with the exact short custom slider, continuous four-pixel gold thread, equal four-corner orientation, and centered complete secondary panel; removed the native-range artifact and incomplete strip that escaped the earlier interaction-only gate.
 - Connected Tablet **Players & seats** and **Displays & pairing** to the real host administration surface and added a machine-enforced action inventory whose journeys invoke every available secondary action and assert its result.
@@ -27,6 +37,9 @@ All notable project changes will be documented here. The format follows [Keep a 
 - Made the enlarged Airplane QR explicitly direct phones to the poker app's in-page scanner and reject the standalone Camera path that cannot interpret encrypted WebRTC offers.
 
 ### Changed
+
+- Bumped the visible Phase 1 build identity to `0.1.5-phase1` for the
+  fullscreen/tablet correction release.
 
 - Adopted **Our Poker Table** as the canonical public product identity and migrated the public repository and GitHub Pages project-site routes to `Cai-Ruihe/our-poker-table`. The durable local `html-poker-app` workspace, root npm identifier, `@html-poker/*` package namespace, and protocol identifiers remain unchanged for compatibility.
 - Recorded that the naming/route migration is not an application release: at migration read-back the renamed Pages route still served `0.1.3-phase1` from source revision `07cf6ede1fa1ddd4eda09059cfd3d64018cde297`.

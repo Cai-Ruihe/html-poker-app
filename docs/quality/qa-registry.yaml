@@ -181,7 +181,23 @@ visual_contract:
     - { id: desktop, width: 1440, height: 1000 }
     - { id: tv, width: 1920, height: 1080 }
   themes: [dark-green, black-gold, deep-navy]
-  tablet_states: [quiet, lower-quick, upper-quick, secondary, manage-players]
+  tablet_states:
+    [
+      quiet,
+      lower-quick,
+      upper-quick,
+      fullscreen-quick,
+      showdown,
+      secondary,
+      manage-players,
+    ]
+  fullscreen:
+    applies_to: tablet-page-fullscreen-only
+    protected_launcher_corner: upper-left
+    panel_edge_flush: true
+  showdown:
+    preserve_quiet_board_geometry: true
+    explanation: directly-below-board
   geometry:
     quick_panel: { width: 650, height: 244, tolerance: 2 }
     utility_target: { width: 52, height: 52, tolerance: 1 }
@@ -232,7 +248,15 @@ visual_baselines:
         test: tests/journey/visual-conformance.spec.ts,
       }
     - {
+        name: tablet-showdown-stable,
+        test: tests/journey/visual-conformance.spec.ts,
+      }
+    - {
         name: tablet-quick-upper-right,
+        test: tests/journey/visual-conformance.spec.ts,
+      }
+    - {
+        name: tablet-quick-fullscreen-upper-left,
         test: tests/journey/visual-conformance.spec.ts,
       }
     - {

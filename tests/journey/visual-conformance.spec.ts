@@ -78,6 +78,37 @@ async function closeQuickPanel(host: Page): Promise<void> {
   await expect(host.locator("[data-control-facing]")).toHaveCount(0);
 }
 
+type PhysicalCorner =
+  "lower left" | "lower right" | "upper left" | "upper right";
+
+async function expectFlushToPhysicalCorner(
+  target: Locator,
+  corner: PhysicalCorner,
+  label: string,
+): Promise<void> {
+  const targetBox = await box(target);
+  if (corner.includes("left")) {
+    expectNear(targetBox.x, 0, 1, `${label} left edge`);
+  } else {
+    expectNear(
+      targetBox.x + targetBox.width,
+      referenceViewport.width,
+      1,
+      `${label} right edge`,
+    );
+  }
+  if (corner.includes("upper")) {
+    expectNear(targetBox.y, 0, 1, `${label} upper edge`);
+  } else {
+    expectNear(
+      targetBox.y + targetBox.height,
+      referenceViewport.height,
+      1,
+      `${label} lower edge`,
+    );
+  }
+}
+
 async function installDeterministicEntropy(page: Page): Promise<void> {
   await page.addInitScript(() => {
     // Stable host entropy makes the full card artwork screenshot-testable.
@@ -170,6 +201,18 @@ test("Tablet quiet and quick-control states conform to approved geometry", async
     expect(targetBox.width).toBeGreaterThanOrEqual(52);
     expect(targetBox.height).toBeGreaterThanOrEqual(52);
   }
+  for (const corner of [
+    "upper left",
+    "upper right",
+    "lower left",
+    "lower right",
+  ] as const) {
+    await expectFlushToPhysicalCorner(
+      host.getByRole("button", { name: `Open table controls from ${corner}` }),
+      corner,
+      `normal Tablet ${corner} launcher`,
+    );
+  }
 
   await prepareScreenshot(host);
   await screenshotIfChromium(host, testInfo, "tablet-quiet-dark-green");
@@ -194,20 +237,48 @@ test("Tablet quiet and quick-control states conform to approved geometry", async
     } else {
       expect(transform).toBe("none");
     }
+    await expectFlushToPhysicalCorner(
+      panel,
+      corner,
+      `normal Tablet ${corner} quick panel`,
+    );
     if (corner === "upper right") {
-      const upperRightPanelBox = await box(panel);
-      expect(
-        upperRightPanelBox.x + upperRightPanelBox.width,
-        "upper-right app controls reserve the iPad browser-exit corner",
-      ).toBeLessThanOrEqual(referenceViewport.width - 72);
-      expect(
-        upperRightPanelBox.y,
-        "upper-right app controls reserve the iPad browser-exit corner",
-      ).toBeGreaterThanOrEqual(72);
       await screenshotIfChromium(host, testInfo, "tablet-quick-upper-right");
     }
     await closeQuickPanel(host);
   }
+
+  await host.locator(".table-surface").evaluate((surface) => {
+    surface.setAttribute("data-page-fullscreen", "true");
+  });
+  const fullscreenExitLauncher = host.getByRole("button", {
+    name: "Open table controls from upper left",
+  });
+  const fullscreenExitLauncherBox = await box(fullscreenExitLauncher);
+  expect(fullscreenExitLauncherBox.x).toBeGreaterThanOrEqual(72);
+  expect(fullscreenExitLauncherBox.y).toBeGreaterThanOrEqual(72);
+  for (const corner of ["upper right", "lower left", "lower right"] as const) {
+    await expectFlushToPhysicalCorner(
+      host.getByRole("button", { name: `Open table controls from ${corner}` }),
+      corner,
+      `fullscreen Tablet ${corner} launcher`,
+    );
+  }
+  const fullscreenPanel = await openCorner(host, "upper left");
+  await expectFlushToPhysicalCorner(
+    fullscreenPanel,
+    "upper left",
+    "fullscreen Tablet upper-left quick panel",
+  );
+  await screenshotIfChromium(
+    host,
+    testInfo,
+    "tablet-quick-fullscreen-upper-left",
+  );
+  await closeQuickPanel(host);
+  await host.locator(".table-surface").evaluate((surface) => {
+    surface.removeAttribute("data-page-fullscreen");
+  });
 
   const panel = await openCorner(host, "lower right");
   const panelBox = await box(panel);
@@ -229,6 +300,28 @@ test("Tablet quiet and quick-control states conform to approved geometry", async
   await expect(
     utilityButtons.nth(1).locator("svg.table-close-glyph"),
   ).toBeVisible();
+  expect(
+    await utilityButtons
+      .nth(1)
+      .evaluate((element) => getComputedStyle(element).lineHeight),
+    "the close glyph must not inherit a text baseline",
+  ).toBe("0px");
+  const closeBox = await box(utilityButtons.nth(1));
+  const closeGlyphBox = await box(
+    utilityButtons.nth(1).locator("svg.table-close-glyph"),
+  );
+  expectNear(
+    closeGlyphBox.x + closeGlyphBox.width / 2,
+    closeBox.x + closeBox.width / 2,
+    0.5,
+    "close glyph horizontal center",
+  );
+  expectNear(
+    closeGlyphBox.y + closeGlyphBox.height / 2,
+    closeBox.y + closeBox.height / 2,
+    0.5,
+    "close glyph vertical center",
+  );
 
   const nextCard = await box(panel.getByRole("button", { name: "Next card" }));
   const nextHand = await box(panel.locator(".next-hand-control"));
@@ -330,7 +423,7 @@ test("Tablet quiet and quick-control states conform to approved geometry", async
   await screenshotIfChromium(host, testInfo, "tablet-quiet-deep-navy");
 });
 
-test("quiet seat state stays upright and a shown hand remains large and aligned", async ({
+test("quiet seat status follows its physical side and a shown hand remains large and aligned", async ({
   context,
   page: host,
 }, testInfo) => {
@@ -350,16 +443,27 @@ test("quiet seat state stays upright and a shown hand remains large and aligned"
   await host.getByRole("button", { name: "Table View" }).click();
 
   const sideGlyph = host.locator(
-    '[data-seat-edge-position="3"] [data-seat-status-glyph="screen-upright"]',
+    '[data-seat-edge-position="3"] [data-seat-status-glyph="seat-facing"]',
   );
   await expect(sideGlyph).toBeVisible();
-  const sideGlyphBox = await box(sideGlyph);
-  expect(sideGlyphBox.width).toBeGreaterThan(sideGlyphBox.height);
+  expect(
+    await sideGlyph.evaluate((element) => getComputedStyle(element).transform),
+    "a side player's holding glyph follows that player's reading direction",
+  ).toBe("none");
+  const sideCardSilhouettes = sideGlyph.locator(":scope > span");
+  await expect(sideCardSilhouettes).toHaveCount(2);
+  for (const silhouette of await sideCardSilhouettes.all()) {
+    expect(
+      await silhouette.evaluate(
+        (element) => getComputedStyle(element, "::after").content,
+      ),
+    ).not.toBe("none");
+  }
 
   const shownCards = host.locator(".quiet-shown-hand .card--quiet-shown");
   await expect(shownCards).toHaveCount(4);
   const firstShown = await box(shownCards.first());
-  expect(firstShown.width).toBeGreaterThanOrEqual(84);
+  expect(firstShown.width).toBeGreaterThanOrEqual(100);
   const firstHand = host.locator(".quiet-shown-hand").first();
   const handCards = firstHand.locator(".card--quiet-shown");
   const firstHandCard = await box(handCards.nth(0));
@@ -385,6 +489,21 @@ test("quiet seat state stays upright and a shown hand remains large and aligned"
     );
   }
   const boardCards = await host.locator("[data-board-card]").all();
+  const boardRail = host.locator(".public-table--quiet .dealer-rail");
+  await expect(boardRail).toBeVisible();
+  expect(
+    await boardRail.evaluate((element) => getComputedStyle(element).opacity),
+    "the unchanged community board must remain visually present at showdown",
+  ).toBe("1");
+  const boardRailBox = await box(boardRail);
+  expect(
+    boardRailBox.y,
+    "the unchanged community board remains inside the physical table viewport",
+  ).toBeGreaterThanOrEqual(180);
+  expect(
+    boardRailBox.y + boardRailBox.height,
+    "the unchanged community board remains inside the physical table viewport",
+  ).toBeLessThanOrEqual(760);
   for (const shownCard of await shownCards.all()) {
     const shownBox = await box(shownCard);
     expect(
@@ -417,6 +536,38 @@ test("quiet seat state stays upright and a shown hand remains large and aligned"
   }
   await prepareScreenshot(host);
   await screenshotIfChromium(host, testInfo, "tablet-shown-hands");
+});
+
+test("Tablet showdown preserves the quiet board geometry and places the result note directly below it", async ({
+  context,
+  page: host,
+}, testInfo) => {
+  await installDeterministicEntropy(host);
+  const { alice } = await createTable(host, context);
+  await host.getByRole("button", { name: "Deal the flop" }).click();
+  await host.getByRole("button", { name: "Deal the turn" }).click();
+  await host.getByRole("button", { name: "Deal the river" }).click();
+  await host.getByRole("button", { name: "Table View" }).click();
+
+  const rail = host.locator(".public-table--quiet .dealer-rail");
+  const beforeShow = await box(rail);
+  await alice.getByRole("button", { name: "Show cards to table" }).click();
+  const resultNote = host.getByText("Best available shown hand is marked.");
+  await expect(resultNote).toBeVisible();
+  const afterShow = await box(rail);
+  expectNear(afterShow.x, beforeShow.x, 1, "showdown board left position");
+  expectNear(afterShow.y, beforeShow.y, 1, "showdown board top position");
+  expectNear(afterShow.width, beforeShow.width, 1, "showdown board width");
+  expectNear(afterShow.height, beforeShow.height, 1, "showdown board height");
+  const noteBox = await box(resultNote);
+  expect(noteBox.y).toBeGreaterThanOrEqual(afterShow.y + afterShow.height);
+  expect(
+    noteBox.y - (afterShow.y + afterShow.height),
+    "the showdown explanation belongs immediately below the unchanged board",
+  ).toBeLessThanOrEqual(40);
+
+  await prepareScreenshot(host);
+  await screenshotIfChromium(host, testInfo, "tablet-showdown-stable");
 });
 
 test("every host Tablet secondary action is exercised and player administration mutates state", async ({
@@ -476,16 +627,27 @@ test("every host Tablet secondary action is exercised and player administration 
   }
 
   await host.evaluate(() => {
+    let fullscreenActive = false;
+    Object.defineProperty(document, "fullscreenElement", {
+      configurable: true,
+      get: () => (fullscreenActive ? document.documentElement : null),
+    });
     Object.defineProperty(document.documentElement, "requestFullscreen", {
       configurable: true,
       value: async () => {
+        fullscreenActive = true;
         document.documentElement.dataset.fullscreenRequested = "true";
+        document.dispatchEvent(new Event("fullscreenchange"));
       },
     });
   });
   await invokeSecondary("fullscreen");
   await expect(host.locator("html")).toHaveAttribute(
     "data-fullscreen-requested",
+    "true",
+  );
+  await expect(host.locator(".table-surface")).toHaveAttribute(
+    "data-page-fullscreen",
     "true",
   );
   await invokeSecondary("reconnect");

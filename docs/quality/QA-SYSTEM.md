@@ -68,7 +68,9 @@ Field feedback is authoritative in [FIELD-FEEDBACK-LEDGER.md](FIELD-FEEDBACK-LED
 - Quiet mode contains cards and low-key edge status only—no Board label, counter, table oval, permanent toolbar, player tiles, lock, END, pause bars, or broken-ring symbol.
 - Five cards use nearly the full safe width at the 1366×1024 reference viewport. Warm ivory, old-school typography, subtle dimensional layers, and aligned mirrored corners are retained.
 - D, SB, and BB are distinct, readable tokens. Holding, folded, winner, offline, and sitting-out states use the approved minimal glyph language.
+- A holding/folded/winner status glyph follows its physical seat and is never counter-rotated into a screen-upright or unexplained 90-degree card icon.
 - Four equal corner targets are at least 52×52 CSS pixels. Upper panels and their text rotate 180 degrees for the upper seats.
+- Panels remain flush to their chosen physical edges. Only real iPad page fullscreen may reserve the empirically observed Safari native-exit target; a browser simulation does not establish that native-corner geometry as a fact.
 - Quick panel reference geometry is 650×244; utilities are 52×52 with 20-pixel separation; actions have an 18-pixel gap; Next Card is 190×102; Next Hand is 374×102.
 - Slider track is 156×64 with a 64-pixel circular handle and 92-pixel travel. Track and handle share a 32-pixel radius. Three vertical grip bars remain contained inside the handle. Browser-native range UI is forbidden.
 - The gold thread is a continuous four-pixel path around the approved fillet. It has no thin centre, detached segment, or stray vertical line.
@@ -76,6 +78,8 @@ Field feedback is authoritative in [FIELD-FEEDBACK-LEDGER.md](FIELD-FEEDBACK-LED
 - The centered secondary panel retains a coherent grid for Players & seats, Appearance, Displays & pairing, This device, Connection & recovery, and Diagnostics & history. Capability limits are stated without collapsing the panel into an awkward strip.
 - On a host device in Tablet View, Players & seats opens the real player administration surface. This path is a release-blocking interaction test.
 - Dark Green, Black Gold, and Deep Navy preserve identical geometry and synchronize to every table screen.
+- System dark appearance cannot invert the selected palette or warm ivory cards; table appearance comes only from the synchronized table theme.
+- Showdown preserves the quiet-mode community-board box. Revealed side hands move only along their own edge when needed, and the best-hand note sits directly below the unchanged board.
 
 ## Functional and recovery protocol
 
@@ -141,6 +145,11 @@ pnpm release:verify
 ```
 
 `pnpm qa:release` runs the local automated subset in the required order. CI repeats the locked install and release-blocking browser suite before Pages deployment. `pnpm qa:registry` also verifies that CI preserves browser failure evidence; removing that diagnostic step blocks the release gate.
+
+For iOS Home Screen identity, the browser journey verifies that the selected
+Apple touch icon source has an opaque corner and a versioned URL. The physical
+matrix must still delete and re-add an existing shortcut before judging the
+icon, because a device can retain a previous shortcut asset.
 
 ## Evidence and claim language
 

@@ -66,7 +66,7 @@ Controls and management information appear only on demand.
 | TUI-020 | Owner-set | Preserve the warm ivory paper gradient, subtle inner bevel/rule, and soft depth shadow used in the approved card direction.                                                         |
 | TUI-021 | Owner-set | Support Dark Green, Black Gold, and Deep Navy table themes. Black Gold means black with gold lines.                                                                                 |
 | TUI-022 | Owner-set | The host-selected table theme synchronizes to every player and display, so everyone experiences the same table.                                                                     |
-| TUI-023 | Owner-set | Dark mode is a primary design condition for phones and the Tablet, including battery-conscious use.                                                                                 |
+| TUI-023 | Superseded | System dark-mode inversion is not a supported appearance control. Phones and Tablets follow the host-selected table scheme so warm cards and table colors remain intentional.           |
 | TUI-024 | Owner-set | A downloaded card skin may use compact vector assets, but an offline/Airplane fallback must remain built in.                                                                        |
 | TUI-025 | Owner-set | Remove Muck from the ordinary player flow; retain Fold.                                                                                                                             |
 | TUI-026 | Owner-set | Player and display surfaces should reconnect automatically after app switching or background suspension, with an explicit reconnect action when automatic recovery cannot complete. |
@@ -75,6 +75,10 @@ Controls and management information appear only on demand.
 | TUI-029 | Rejected  | The gold fillet may not taper to a hairline at its curved midpoint; vertical, curve, and horizontal sections need consistent visual weight.                                         |
 | TUI-030 | Accepted  | Revision v6, including the corrected uniform-weight gold fillet, is the approved Tablet UI/UX direction.                                                                            |
 | TUI-031 | Accepted  | Dark Green, Black Gold, and Deep Navy use identical cards, state, geometry, and controls so only the color system changes.                                                          |
+| TUI-032 | Owner-set | A quiet status glyph follows its owner’s physical seat; it must not counter-rotate into a screen-upright, unexplained 90-degree card icon.                                            |
+| TUI-033 | Owner-set | A showdown changes emphasis, not the public-table map: the community board keeps its quiet-mode size/location, revealed hands remain at their owners’ edges, and the explanation sits below the board. |
+| TUI-034 | Owner-set | Tablet/TV panels touch their selected screen edges. Safari native-exit protection is relevant only during actual iPad page fullscreen and may not introduce permanent or broad clearance. |
+| TUI-035 | Owner-set | The iOS Home Screen icon uses an opaque, full-bleed brand source; a repaired icon URL is versioned, while existing shortcuts are re-added during physical verification.                 |
 
 ## Quiet table surface
 
@@ -102,7 +106,7 @@ Airplane Mode always has a complete built-in simple vector deck.
 
 | State       | Visual language                                       | Authority                                  |
 | ----------- | ----------------------------------------------------- | ------------------------------------------ |
-| Holding     | Two small, slightly fanned face-down cards            | Owner-set                                  |
+| Holding     | Two small, slightly fanned face-down cards facing the owner’s physical seat | Owner-set                     |
 | Folded      | The same cards, dimmed and crossed                    | Owner-set direction                        |
 | Winner      | The same cards with a restrained gold highlight/spark | Owner-set direction                        |
 | Offline     | A small phone outline with a red disconnect slash     | Proposed replacement for the rejected ring |
@@ -142,12 +146,26 @@ surface; all exceed 4.5:1. Production still needs component-level contrast QA.
 Four visually quiet corner callouts share the same interaction priority and
 touch-target size. The callout is deliberately smaller than its hit area.
 
-When opened, the panel grows inward from that corner:
+When opened, the panel grows inward from that corner and remains flush to its
+selected screen edges:
 
 - lower-left and lower-right panels face the lower side;
 - upper-left and upper-right panels, including labels, arrows, slider, dots,
   and Close, rotate 180 degrees to face the upper side;
 - no panel assumes that the person operating it is below the Tablet.
+
+During actual iPad page fullscreen, the native Safari exit affordance is a
+system control rather than part of the product. Protect only the empirically
+observed native-exit corner and only for that state. Do not reserve empty
+clearance in ordinary Tablet, TV, or non-fullscreen pages, and do not move an
+entire panel away from its edge.
+
+### Showdown stability
+
+Revealing a hand must not shrink, relocate, or reflow the community cards.
+Shown hole cards remain adjacent to the corresponding edge indicator; side
+hands may move along that same edge to avoid covering a community card. The
+single best-hand explanation is placed directly below the unchanged board.
 
 The panel uses one signature decoration: a gold thread starts beyond the
 rounded inner corner, traces the full fillet, and continues along the panel
@@ -262,6 +280,9 @@ the design direction; first-use comprehension remains a field-test gate.
 - Whether the proposed empty-chair sitting-out symbol is immediately understood.
 - Whether 92px is the best final drag distance on every supported iPad size.
 - Whether the four quiet corner callouts remain discoverable in varied lighting.
+- Which exact iPad Safari corner contains the native page-fullscreen exit on
+  the supported physical orientation/browser combination; the targeted
+  fullscreen regression is a browser simulation until field-verified.
 - Whether the centered second-level information density is appropriate on the
   smallest supported Tablet viewport.
 - Whether the current application and relay architecture satisfy the separate

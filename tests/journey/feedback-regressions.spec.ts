@@ -202,6 +202,32 @@ test("browser appearance cannot recolour the warm cards or developer diagnostics
   expect(darkCardFace).toStrictEqual(lightCardFace);
 });
 
+test("the iOS Home Screen icon points at a freshly versioned opaque source", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const appleTouchIcon = page.locator('head link[rel="apple-touch-icon"]');
+  await expect(appleTouchIcon).toHaveAttribute(
+    "href",
+    /apple-touch-icon-180(?:-[a-zA-Z0-9_-]+)?\.png\?v=opaque-v3/u,
+  );
+  expect(
+    await appleTouchIcon.evaluate(async (link) => {
+      const image = new Image();
+      image.src = (link as HTMLLinkElement).href;
+      await image.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("2D canvas is unavailable.");
+      context.drawImage(image, 0, 0);
+      return context.getImageData(0, 0, 1, 1).data[3];
+    }),
+    "the Apple touch icon must not expose a transparent corner to iOS",
+  ).toBe(255);
+});
+
 test("Player catches up to new hands, can return from sit-out, and can leave permanently", async ({
   context,
   page: host,

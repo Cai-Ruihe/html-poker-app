@@ -237,7 +237,7 @@ function SeatStateGlyph({
     return (
       <span
         className="seat-state-glyph seat-state-glyph--offline"
-        data-seat-status-glyph="screen-upright"
+        data-seat-status-glyph="seat-facing"
         aria-hidden="true"
       >
         <span />
@@ -248,7 +248,7 @@ function SeatStateGlyph({
     return (
       <span
         className="seat-state-glyph seat-state-glyph--sitting-out"
-        data-seat-status-glyph="screen-upright"
+        data-seat-status-glyph="seat-facing"
         aria-hidden="true"
       >
         <span />
@@ -259,7 +259,7 @@ function SeatStateGlyph({
   return (
     <span
       className={`seat-state-glyph seat-state-glyph--cards${folded ? " seat-state-glyph--folded" : ""}${winner ? " seat-state-glyph--winner" : ""}`}
-      data-seat-status-glyph="screen-upright"
+      data-seat-status-glyph="seat-facing"
       aria-hidden="true"
     >
       <span />
@@ -292,6 +292,7 @@ function QuietSeatGrid({
             className={`seat-edge-status seat-edge-status--${position}`}
             data-seat-edge-position={position}
             data-seat-edge-status={statusLabel}
+            {...(seat.holeCards ? { "data-seat-has-shown-hand": "true" } : {})}
             data-seat-id={seat.seatId}
             key={seat.seatId}
             role="img"
@@ -721,6 +722,40 @@ async function togglePageFullscreen(): Promise<void> {
       "This browser does not expose page full screen. Add the table to the Home Screen to remove browser controls.",
     );
   }
+}
+
+function pageFullscreenActive(): boolean {
+  if (typeof document === "undefined") return false;
+
+  const fullscreenDocument = document as Document & {
+    readonly webkitFullscreenElement?: Element;
+  };
+  return Boolean(
+    document.fullscreenElement || fullscreenDocument.webkitFullscreenElement,
+  );
+}
+
+function usePageFullscreen(): boolean {
+  const [pageFullscreen, setPageFullscreen] = useState(pageFullscreenActive);
+
+  useEffect(() => {
+    function syncPageFullscreen(): void {
+      setPageFullscreen(pageFullscreenActive());
+    }
+
+    document.addEventListener("fullscreenchange", syncPageFullscreen);
+    document.addEventListener("webkitfullscreenchange", syncPageFullscreen);
+    syncPageFullscreen();
+    return () => {
+      document.removeEventListener("fullscreenchange", syncPageFullscreen);
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        syncPageFullscreen,
+      );
+    };
+  }, []);
+
+  return pageFullscreen;
 }
 
 type TableCorner = "lower-left" | "lower-right" | "upper-left" | "upper-right";
@@ -1765,6 +1800,7 @@ function PrivateHand(
 
 export function TableSurface(props: TableSurfaceProps) {
   const [hostRootOpen, setHostRootOpen] = useState(false);
+  const pageFullscreen = usePageFullscreen();
   const isPlayer = props.mode === "player" && props.projection.view === "seat";
   const isQuietPublic = ["public", "tablet", "tv"].includes(props.mode);
   const tableTheme = props.projection.tableTheme ?? "dark-green";
@@ -1772,6 +1808,7 @@ export function TableSurface(props: TableSurfaceProps) {
   return (
     <main
       className={`table-surface table-surface--${props.mode}${hostRootOpen ? " table-surface--host-root-open" : ""}`}
+      data-page-fullscreen={pageFullscreen ? "true" : "false"}
       data-theme={tableTheme}
     >
       {props.mode === "host" ? (

@@ -267,12 +267,35 @@ for (const requiredState of [
   "quiet",
   "lower-quick",
   "upper-quick",
+  "fullscreen-quick",
+  "showdown",
   "secondary",
   "manage-players",
 ]) {
   if (!visual?.tablet_states?.includes(requiredState)) {
     failures.push(`visual contract is missing Tablet state ${requiredState}`);
   }
+}
+if (visual?.fullscreen?.applies_to !== "tablet-page-fullscreen-only") {
+  failures.push(
+    "fullscreen visual contract must be scoped to Tablet page fullscreen",
+  );
+}
+if (visual?.fullscreen?.protected_launcher_corner !== "upper-left") {
+  failures.push(
+    "fullscreen visual contract must declare the protected upper-left launcher",
+  );
+}
+if (visual?.fullscreen?.panel_edge_flush !== true) {
+  failures.push("fullscreen visual contract must keep panels edge-flush");
+}
+if (visual?.showdown?.preserve_quiet_board_geometry !== true) {
+  failures.push("showdown visual contract must preserve quiet board geometry");
+}
+if (visual?.showdown?.explanation !== "directly-below-board") {
+  failures.push(
+    "showdown visual contract must place the explanation below the board",
+  );
 }
 
 const visualBaselines = registry.visual_baselines;

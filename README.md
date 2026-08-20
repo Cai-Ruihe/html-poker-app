@@ -122,7 +122,7 @@ The owner-authorized field build is published from `main` only after the configu
 **https://cai-ruihe.github.io/our-poker-table/**
 
 Open that exact HTTPS address on the host and every iPhone, confirm **Build
-0.1.4-phase1**, and create a fresh table. This removes copied-file version drift
+0.1.5-phase1**, and create a fresh table. This removes copied-file version drift
 and gives the in-page QR scanner a normal secure web origin. Use **Enlarge QR**
 before each phone scans the laptop's offer. The page still uses Airplane Mode's
 local, serverless WebRTC path after it loads; GitHub Pages does not receive cards

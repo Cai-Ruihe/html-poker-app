@@ -23,6 +23,11 @@ decision_ids:
   - UI-THEME-SYNC
   - UI-CARD-RENDERING
   - UI-QUIET-STATUS
+  - UI-QUIET-STATUS-FACING
+  - UI-SHOWDOWN-STABILITY
+  - UI-FULLSCREEN-EDGE
+  - UI-SYSTEM-APPEARANCE
+  - UI-IOS-ICON-CACHE
   - UI-DARK-FIRST
   - REMOTE-PUBLIC-TABLE-P2
   - TEST-TV-BROWSERS
@@ -85,6 +90,10 @@ Each mode has its own renderer over a shared semantic design system. Renderers c
 - Dark Green, Black Gold, and Deep Navy share identical geometry and synchronize to every role-filtered projection. Device-local accessibility overrides remain local.
 - Cards use the built-in warm-ivory old-school renderer with dimensional shading. Future skins may replace assets only as complete validated packs; Airplane Mode always retains the built-in fallback.
 - Quiet Tablet, TV, and Public Table surfaces omit the application header, Board label/counter, table oval, permanent player tiles, and dealer toolbar. They retain low-key seat state plus distinct D, SB, and BB tokens.
+- A quiet status glyph follows the physical seat it describes; it does not counter-rotate to the screen and cannot become an unexplained perpendicular-card indicator.
+- A revealed showdown hand is an emphasis state, not a layout mode: the community board keeps the quiet-mode box, side hands remain on their own physical edge, and the explanatory line sits directly below the board.
+- Tablet/TV panels remain edge-flush. Any Safari native-exit protection is permitted only while real iPad page fullscreen is active and only at the field-observed system-control corner; it must not add a permanent clearance gap.
+- Browser/OS color preference cannot recolor the selected table palette or warm cards. The synchronized host-selected theme is the product appearance authority.
 - The product-facing name is **Our Poker Table**. Brand asset version 1.0 uses the approved four-rotation corner-and-dot symbol, Brand Green on light surfaces, and UI Gold on Brand Green; repository and package identifiers remain unchanged until a separately authorized migration.
 - Fold is provisional until its safe boundary. Show has no secrecy undo.
 - Visual seat movement never changes logical action/dealer/blind order.

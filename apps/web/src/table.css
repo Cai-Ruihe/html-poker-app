@@ -5,7 +5,6 @@
   /* The table chooses its own palette. Do not let browser/OS dark-mode
      heuristics invert the warm card stock or diagnostics. */
   color-scheme: only light;
-  --tablet-browser-exit-clearance: max(72px, env(safe-area-inset-top));
   --table-felt: #003f33;
   --table-felt-deep: #002b23;
   --table-panel: #001f19;
@@ -292,7 +291,10 @@
 /* Quiet screens use full, physical card faces for shown hands. Host control
    tiles remain compact on purpose; this is only for people around a table. */
 .table-surface .quiet-shown-hand .card--quiet-shown {
-  width: clamp(4.5rem, 6.5vw, 5.5rem);
+  /* Shown hands need to be legible from every side of a real table. They are
+     deliberately smaller than the community rail, but no longer miniature
+     host-control cards. */
+  width: clamp(5.25rem, 7.6vw, 6.5rem);
   min-width: 0;
   aspect-ratio: 0.7;
   border-radius: clamp(0.48rem, 0.72vw, 0.7rem);
@@ -319,15 +321,15 @@
 }
 
 .table-surface .quiet-shown-hand .card--quiet-shown .card__rank {
-  font-size: clamp(1.36rem, 2.08vw, 1.98rem);
+  font-size: clamp(1.58rem, 2.35vw, 2.24rem);
 }
 
 .table-surface .quiet-shown-hand .card--quiet-shown .card__corner-suit {
-  font-size: clamp(0.93rem, 1.35vw, 1.22rem);
+  font-size: clamp(1.04rem, 1.52vw, 1.38rem);
 }
 
 .table-surface .quiet-shown-hand .card--quiet-shown .card__pip {
-  font-size: clamp(2.25rem, 3.65vw, 3.4rem);
+  font-size: clamp(2.56rem, 4.1vw, 3.82rem);
 }
 
 .table-surface .card__corner {
@@ -394,17 +396,6 @@
   width: min(96rem, 100%);
 }
 
-/* At showdown, full hole cards occupy the physical perimeter. Reserve a real
-   side gutter for them instead of letting a right/left player's cards cover a
-   community card. The ordinary quiet state keeps the full-width board. */
-.table-surface--tablet .public-table--quiet:has(.quiet-shown-hand) .dealer-rail,
-.table-surface--tv .public-table--quiet:has(.quiet-shown-hand) .dealer-rail,
-.table-surface--public
-  .public-table--quiet:has(.quiet-shown-hand)
-  .dealer-rail {
-  width: min(57rem, calc(100% - 22rem));
-}
-
 .table-surface--tablet .public-table--quiet .dealer-rail__cards,
 .table-surface--tv .public-table--quiet .dealer-rail__cards,
 .table-surface--public .public-table--quiet .dealer-rail__cards {
@@ -438,6 +429,20 @@
   transform: translateX(50%);
 }
 
+/* A showdown changes emphasis, never the physical position or scale of the
+   community board. The explanation sits just below that unchanged rail. */
+.public-table--quiet .showdown-note {
+  position: absolute;
+  z-index: 3;
+  top: calc(50% + min(14vw, 15rem));
+  left: 50%;
+  width: max-content;
+  max-width: calc(100% - 3rem);
+  margin: 0;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
 .quiet-seat-grid {
   position: absolute;
   z-index: 2;
@@ -446,7 +451,6 @@
 }
 
 .seat-edge-status {
-  --seat-status-glyph-rotation: 0deg;
   position: absolute;
   display: flex;
   align-items: center;
@@ -461,31 +465,26 @@
   top: 1.1rem;
   left: 18%;
   transform: translateX(-50%) rotate(180deg);
-  --seat-status-glyph-rotation: -180deg;
 }
 .seat-edge-status--1 {
   top: 1.1rem;
   left: 50%;
   transform: translateX(-50%) rotate(180deg);
-  --seat-status-glyph-rotation: -180deg;
 }
 .seat-edge-status--2 {
   top: 1.1rem;
   left: 82%;
   transform: translateX(-50%) rotate(180deg);
-  --seat-status-glyph-rotation: -180deg;
 }
 .seat-edge-status--3 {
   top: 28%;
   right: 1.1rem;
   transform: translateY(-50%) rotate(-90deg);
-  --seat-status-glyph-rotation: 90deg;
 }
 .seat-edge-status--4 {
   top: 68%;
   right: 1.1rem;
   transform: translateY(-50%) rotate(-90deg);
-  --seat-status-glyph-rotation: 90deg;
 }
 .seat-edge-status--5 {
   right: 18%;
@@ -506,13 +505,24 @@
   top: 68%;
   left: 1.1rem;
   transform: translateY(-50%) rotate(90deg);
-  --seat-status-glyph-rotation: -90deg;
 }
 .seat-edge-status--9 {
   top: 28%;
   left: 1.1rem;
   transform: translateY(-50%) rotate(90deg);
-  --seat-status-glyph-rotation: -90deg;
+}
+
+/* A revealed side hand remains on that player's edge but moves clear of the
+   unchanged community rail. This preserves the table's physical map rather
+   than shrinking or rearranging the board at showdown. */
+.seat-edge-status--3[data-seat-has-shown-hand="true"],
+.seat-edge-status--9[data-seat-has-shown-hand="true"] {
+  top: 20%;
+}
+
+.seat-edge-status--4[data-seat-has-shown-hand="true"],
+.seat-edge-status--8[data-seat-has-shown-hand="true"] {
+  top: 80%;
 }
 
 .seat-state-glyph {
@@ -521,8 +531,6 @@
   width: 2.5rem;
   height: 2.15rem;
   opacity: 0.72;
-  transform: rotate(var(--seat-status-glyph-rotation));
-  transform-origin: center;
 }
 
 .seat-state-glyph--cards > span {
@@ -532,6 +540,15 @@
   aspect-ratio: 0.7;
   border: 2px solid currentColor;
   border-radius: 0.24rem;
+}
+
+.seat-state-glyph--cards > span::after {
+  position: absolute;
+  inset: 0.14rem;
+  border: 1px solid currentColor;
+  border-radius: 0.11rem;
+  content: "";
+  opacity: 0.36;
 }
 
 .seat-state-glyph--cards > span:first-child {
@@ -687,8 +704,8 @@
   left: 3rem;
 }
 .table-corner--upper-right {
-  top: var(--tablet-browser-exit-clearance);
-  right: var(--tablet-browser-exit-clearance);
+  top: 0;
+  right: 0;
 }
 .table-corner--upper-right > span {
   top: 1.45rem;
@@ -725,6 +742,16 @@
   bottom: 1.62rem;
 }
 
+/* Safari owns a native exit affordance only while page fullscreen is active.
+   Keep every panel flush to its physical edge; move only the upper-left
+   launcher on the affected iPad surface so the native exit target remains
+   available. The target is intentionally absent from TV and ordinary Tablet
+   view, where adding empty clearance makes the table look broken. */
+.table-surface--tablet[data-page-fullscreen="true"] .table-corner--upper-left {
+  top: max(4.5rem, env(safe-area-inset-top));
+  left: max(4.5rem, env(safe-area-inset-left));
+}
+
 .tablet-quick-panel {
   position: fixed;
   z-index: 30;
@@ -750,8 +777,8 @@
 }
 
 .tablet-quick-panel--upper-right {
-  top: var(--tablet-browser-exit-clearance);
-  right: var(--tablet-browser-exit-clearance);
+  top: 0;
+  right: 0;
   border-radius: 0 0 0 44px;
   box-shadow: -15px 15px 28px rgba(0, 18, 13, 0.44);
 }
@@ -831,6 +858,7 @@
 
 .icon-action--close {
   border-radius: 50%;
+  line-height: 0;
 }
 
 .table-close-glyph {
