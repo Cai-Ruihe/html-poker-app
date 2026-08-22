@@ -34,8 +34,8 @@ phone receives only its own hole cards and legal actions; a tablet or TV
 receives only public table information. Physical chips and conversation stay
 where they belong: around the table.
 
-| Private by projection | Made for the room | Open and portable |
-| --- | --- | --- |
+| Private by projection                                                                               | Made for the room                                                                                        | Open and portable                                                                                                       |
+| --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | Hidden cards are filtered before they leave the Trusted Host—not merely concealed in the interface. | Phones hold private hands while a shared screen becomes the board. Every role gets a purpose-built view. | Run the static Normal build with your own connection service, or preload the standalone Airplane build for local Wi-Fi. |
 
 It is not an online gambling product. It has no money, cash-out, rake, player
@@ -122,7 +122,7 @@ The owner-authorized field build is published from `main` only after the configu
 **https://cai-ruihe.github.io/our-poker-table/**
 
 Open that exact HTTPS address on the host and every iPhone, confirm **Build
-0.1.5-phase1**, and create a fresh table. This removes copied-file version drift
+0.1.6**, and create a fresh table. This removes copied-file version drift
 and gives the in-page QR scanner a normal secure web origin. Use **Enlarge QR**
 before each phone scans the laptop's offer. The page still uses Airplane Mode's
 local, serverless WebRTC path after it loads; GitHub Pages does not receive cards

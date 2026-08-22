@@ -43,6 +43,7 @@ export default defineConfig({
   workers: 1,
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    { name: "mobile-chromium", use: { ...devices["Pixel 7"] } },
     { name: "mobile-webkit", use: { ...devices["iPhone 15"] } },
   ],
 });

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Our Poker Table — RevK card-face review</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Arial, Helvetica, sans-serif;
+        background: #f4efe3;
+        color: #123f35;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; padding: 32px; }
+      header { max-width: 1120px; margin: 0 auto 28px; }
+      h1 { margin: 0 0 8px; font-family: Georgia, serif; font-size: 36px; }
+      p { margin: 0; line-height: 1.5; color: #4b5d57; }
+      section { max-width: 1120px; margin: 0 auto 40px; }
+      h2 { margin: 0 0 16px; border-bottom: 2px solid #d4b86e; padding-bottom: 10px; }
+      .deck { display: grid; grid-template-columns: repeat(13, minmax(58px, 1fr)); gap: 8px; }
+      figure { margin: 0; min-width: 0; }
+      img { display: block; width: 100%; height: auto; filter: drop-shadow(0 4px 4px rgb(0 0 0 / 0.18)); }
+      figcaption { margin-top: 4px; text-align: center; font-size: 11px; font-weight: 700; }
+      .ace-review { display: grid; grid-template-columns: 240px 1fr; gap: 24px; align-items: center; margin-bottom: 28px; }
+      .ace-review img { width: 240px; }
+      @media (max-width: 760px) {
+        body { padding: 18px; }
+        .deck { grid-template-columns: repeat(4, minmax(58px, 1fr)); }
+        .ace-review { grid-template-columns: 1fr; }
+        .ace-review img { width: min(240px, 70vw); }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>RevK card-face review</h1>
+      <p>Normal-mode asset review only. The custom Ace of Spades is identical in both sets.</p>
+    </header>
+    <main>
+      <section>
+        <h2>Corrected Our Poker Table Ace</h2>
+        <div class="ace-review">
+          <img src="../classic/faces/AS.svg" alt="Our Poker Table Ace of Spades" />
+          <p>The approved black spade and gold ornament paths are preserved, the rejected dotted outline is removed, and the pointed head remains visible.</p>
+        </div>
+      </section>
+      <section data-set="classic">
+        <h2>Classic — red and black</h2>
+        <div class="deck"></div>
+      </section>
+      <section data-set="four-colour">
+        <h2>Four Colour — black, red, green, blue</h2>
+        <div class="deck"></div>
+      </section>
+    </main>
+    <script>
+      const ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K"];
+      const suits = ["S", "H", "C", "D"];
+      for (const section of document.querySelectorAll("section[data-set]")) {
+        const set = section.dataset.set;
+        const deck = section.querySelector(".deck");
+        for (const suit of suits) {
+          for (const rank of ranks) {
+            const face = `${rank}${suit}`;
+            const figure = document.createElement("figure");
+            const image = document.createElement("img");
+            image.src = `../${set}/faces/${face}.svg`;
+            image.alt = face;
+            const caption = document.createElement("figcaption");
+            caption.textContent = face;
+            figure.append(image, caption);
+            deck.append(figure);
+          }
+        }
+      }
+    </script>
+  </body>
+</html>

@@ -33,7 +33,9 @@ test("hostile names stay inert and private cards stop at the seat projection", a
   await host.getByRole("button", { name: "Create table" }).click();
   const hostilePlayer = await join(host, context, hostileName);
   const bob = await join(host, context, "Bob");
-  await expect(host.getByText(hostileName, { exact: true })).toBeVisible();
+  await expect(
+    host.locator('button[aria-label^="Seat"]').filter({ hasText: hostileName }),
+  ).toHaveCount(1);
   expect(await host.evaluate(() => "pwn" in globalThis)).toBeFalsy();
   await expect(host.locator('img[src="x"]')).toHaveCount(0);
 

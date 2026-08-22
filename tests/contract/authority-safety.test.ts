@@ -154,6 +154,7 @@ describe("Trusted Host authority safety boundaries", () => {
         async load() {
           return undefined;
         },
+        async remove() {},
       },
       tableId: "table-1",
     });

@@ -256,6 +256,7 @@ describe("Trusted Host command rejection contracts", () => {
         async load() {
           return undefined;
         },
+        async remove() {},
       },
       tableId: "table-1",
     });

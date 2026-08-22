@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -353,6 +353,48 @@ for (const baseline of visualBaselines?.required ?? []) {
     const image = `${baseline.test}-snapshots/${baseline.name}-${platform}-${visualBaselines.project}.png`;
     if (!relativeExists(image)) {
       failures.push(`reviewed visual baseline is missing: ${image}`);
+    }
+  }
+}
+
+// A reviewed snapshot is evidence only while its owning spec still names the
+// screenshot. This filesystem-to-test check prevents deleted/replaced visual
+// scenarios from lingering as apparently current QA evidence and later being
+// swept into human-review contact sheets.
+const journeyDirectory = path.join(root, "tests/journey");
+for (const directoryEntry of await readdir(journeyDirectory, {
+  withFileTypes: true,
+})) {
+  if (
+    !directoryEntry.isDirectory() ||
+    !directoryEntry.name.endsWith("-snapshots")
+  ) {
+    continue;
+  }
+  const specName = directoryEntry.name.replace(/-snapshots$/u, "");
+  const specPath = path.join(journeyDirectory, specName);
+  if (!existsSync(specPath)) {
+    failures.push(
+      `visual snapshot directory has no owning spec: tests/journey/${directoryEntry.name}`,
+    );
+    continue;
+  }
+  const specSource = await readFile(specPath, "utf8");
+  const snapshotDirectory = path.join(journeyDirectory, directoryEntry.name);
+  for (const snapshotEntry of await readdir(snapshotDirectory, {
+    withFileTypes: true,
+  })) {
+    if (!snapshotEntry.isFile() || !snapshotEntry.name.endsWith(".png")) {
+      continue;
+    }
+    const screenshotName = snapshotEntry.name.replace(
+      /-(?:darwin|linux)-(?:chromium|mobile-webkit)\.png$/u,
+      "",
+    );
+    if (!specSource.includes(`"${screenshotName}"`)) {
+      failures.push(
+        `orphaned visual snapshot is not named by its owning spec: tests/journey/${directoryEntry.name}/${snapshotEntry.name}`,
+      );
     }
   }
 }

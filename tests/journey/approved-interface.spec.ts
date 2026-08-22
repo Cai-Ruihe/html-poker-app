@@ -65,7 +65,12 @@ test("the approved theme and dimensional card system is shared by every role", a
       "dark-green",
     );
   }
-  await expect(alice.locator(".card__corner--bottom")).toHaveCount(2);
+  await expect(alice.locator("[data-private-card].card--svg-face")).toHaveCount(
+    2,
+  );
+  await expect(
+    alice.locator("[data-private-card] .card__face-svg"),
+  ).toHaveCount(2);
   await expect(
     alice.getByRole("button", { name: "Reconnect to table" }),
   ).toBeAttached();

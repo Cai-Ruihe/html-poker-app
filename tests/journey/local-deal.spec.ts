@@ -24,7 +24,11 @@ async function joinPlayer(
   await expect(
     player.getByRole("heading", { name: "You have a seat" }),
   ).toBeVisible();
-  await expect(host.getByText(displayName, { exact: true })).toBeVisible();
+  await expect(
+    host.getByRole("button", {
+      name: new RegExp(`^Seat \\d+, ${displayName},`, "u"),
+    }),
+  ).toBeVisible();
   return player;
 }
 
@@ -78,7 +82,9 @@ test("the host device can play and switch to a private hand or public table view
   await expect(
     host.getByRole("heading", { name: "Waiting for players" }),
   ).toBeVisible();
-  await expect(host.getByText("Ruihe", { exact: true })).toBeVisible();
+  await expect(
+    host.getByRole("button", { name: /^Seat 1, Ruihe,/u }),
+  ).toBeVisible();
 
   const bob = await joinPlayer(host, context, "Bob");
   await host.getByRole("button", { name: "Deal first hand" }).click();
@@ -263,9 +269,7 @@ test("two players complete a digital-chip hand only after host settlement confir
   await expect(
     host.getByText("Hand complete", { exact: true }).first(),
   ).toBeVisible();
-  await expect(
-    host.getByText("This Phase 2 tracer ends after one hand."),
-  ).toBeVisible();
+  await expect(host.getByText("This hand is complete.")).toBeVisible();
   await expect(
     host.getByRole("button", { name: "Deal next hand" }),
   ).toHaveCount(0);
@@ -456,10 +460,11 @@ test("a one-use player replacement preserves the seat and revokes the old device
 }) => {
   const { alice } = await createTableWithTwoPlayers(host, context);
   await host.getByRole("button", { name: /^Players/ }).click();
-  const aliceRosterItem = host
-    .locator(".roster li")
-    .filter({ hasText: "Alice" });
-  await aliceRosterItem.getByRole("button", { name: "Replace device" }).click();
+  await host.getByRole("button", { name: /^Seat 1, Alice,/u }).click();
+  await host
+    .getByLabel("Manage Alice")
+    .getByRole("button", { name: "Replace device" })
+    .click();
   const replacementUrl = await host
     .getByLabel("Player replacement link")
     .inputValue();
@@ -493,6 +498,7 @@ test("off-table administration moves seats, voids, corrects, and relocates the d
   await createTableWithTwoPlayers(host, context);
   await host.getByRole("button", { name: /^Players/ }).click();
 
+  await host.getByRole("button", { name: /^Seat 2, Bob,/u }).click();
   await host.getByRole("button", { name: "Move Bob up" }).click();
   await expect(host.locator(".roster li strong").first()).toHaveText("Bob");
 
@@ -510,8 +516,7 @@ test("off-table administration moves seats, voids, corrects, and relocates the d
 
   // Dealer selection is made between hands. Its marker appears only once the
   // selected seat is actually participating in the next hand.
-  const bobRosterItem = host.locator(".roster li").filter({ hasText: "Bob" });
-  await bobRosterItem.getByRole("button", { name: "Make dealer" }).click();
+  await host.getByRole("button", { name: "Make dealer" }).click();
   await host
     .getByRole("button", { name: "Close player administration" })
     .click();

@@ -226,6 +226,27 @@
   font-family: Georgia, "Times New Roman", serif;
 }
 
+/* Approved full faces are self-contained SVG cards. The outer card keeps the
+   shared responsive geometry and emphasis shadow, while the SVG owns the
+   physical face border and artwork. */
+.table-surface .card--svg-face {
+  /* RevK faces are authored at 240 × 336 (5:7). Keeping the container at the
+     same ratio avoids a subtle horizontal squeeze from the generic 0.7 card. */
+  aspect-ratio: 5 / 7;
+  background: transparent;
+}
+
+.table-surface .card--svg-face::after {
+  display: none;
+}
+
+.table-surface .card__face-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
 .table-surface .card::after {
   position: absolute;
   inset: 0.5rem;
@@ -303,18 +324,39 @@
 }
 
 .table-surface .card--compact .card__corner--top {
-  top: 0.32rem;
-  left: 0.32rem;
+  inset: 0;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.14rem;
+  line-height: 1;
+  text-align: center;
 }
 
 .table-surface .card--compact .card__rank {
-  font-size: 0.88rem;
-  letter-spacing: -0.04em;
+  display: block;
+  width: 100%;
+  font-size: 1.28rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  text-align: center;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings:
+    "lnum" 1,
+    "tnum" 1;
 }
 
 .table-surface .card--compact .card__corner-suit {
-  margin-top: 0.08rem;
-  font-size: 0.68rem;
+  display: grid;
+  width: 1.16rem;
+  height: 1.16rem;
+  place-items: center;
+  margin-top: 0;
+  font-size: 1.16rem;
+  line-height: 1;
 }
 
 .table-surface .card--compact .card__corner--bottom,
@@ -322,13 +364,35 @@
   display: none;
 }
 
-/* Quiet screens use full, physical card faces for shown hands. Host control
-   tiles remain compact on purpose; this is only for people around a table. */
+/* Normal phone rails are fast-reading cards, not miniature tabletop cards.
+   Keep one clean perimeter and a little air between rank and suit; the
+   shared Airplane treatment remains deliberately untouched. */
+.table-surface[data-runtime="normal"] .card--minimal {
+  box-shadow: 0 0.3rem 0.55rem rgba(0, 0, 0, 0.25);
+}
+
+.table-surface[data-runtime="normal"] .card--minimal::after {
+  /* One quiet rule gives the concise phone card a little structure without
+     returning to the double inset frame. */
+  inset: 0.26rem;
+}
+
+.table-surface[data-runtime="normal"] .card--minimal.card--best {
+  border-color: var(--table-accent);
+  box-shadow:
+    0 0 0 0.24rem color-mix(in srgb, var(--table-accent) 78%, transparent),
+    0 1.25rem 2rem rgba(0, 23, 17, 0.38),
+    0 0 1.6rem color-mix(in srgb, var(--table-accent) 46%, transparent);
+}
+
+/* Tablet/TV quiet screens use the same approved physical SVG faces for shown
+   hands as the community board. Host-control and phone reading rails remain
+   compact rank+suit cards. */
 .table-surface .quiet-shown-hand .card--quiet-shown {
   /* Shown hands need to be legible from every side of a real table. They are
      deliberately smaller than the community rail, but no longer miniature
      host-control cards. */
-  width: clamp(5.25rem, 7.6vw, 6.5rem);
+  width: clamp(6rem, 8.4vw, 7.25rem);
   min-width: 0;
   aspect-ratio: 0.7;
   border-radius: clamp(0.48rem, 0.72vw, 0.7rem);
@@ -337,6 +401,11 @@
     inset 0 0 0 0.29rem rgba(159, 143, 116, 0.2),
     0 0.72rem 1.2rem rgba(0, 23, 17, 0.32),
     0 0.12rem 0.25rem rgba(0, 0, 0, 0.22);
+}
+
+.table-surface .quiet-shown-hand .card--quiet-shown.card--svg-face {
+  aspect-ratio: 5 / 7;
+  overflow: hidden;
 }
 
 .table-surface .quiet-shown-hand .card--quiet-shown::after {
@@ -393,8 +462,19 @@
 }
 
 .table-surface .card__corner-suit {
+  display: grid;
+  place-items: center;
   margin-top: 0.16em;
   font-size: clamp(0.95rem, 2.2vw, 2rem);
+}
+
+/* Do not rely on a platform's Unicode suit font. These paths use currentColor
+   so classic/four-colour styles stay identical on iOS and Android. */
+.table-surface .card__suit-glyph {
+  display: block;
+  width: 1em;
+  height: 1em;
+  overflow: visible;
 }
 
 .table-surface .card__pip {
@@ -404,6 +484,11 @@
   font-size: clamp(2.5rem, 7vw, 7.4rem);
   line-height: 1;
   transform: translate(-50%, -50%);
+}
+
+.table-surface .card__pip > .card__suit-glyph {
+  width: 1em;
+  height: 1em;
 }
 
 .table-surface .card__pip--court {
@@ -510,7 +595,7 @@
 
 .seat-edge-status--0 {
   top: 1.1rem;
-  left: 18%;
+  left: 29%;
   transform: translateX(-50%) rotate(180deg);
 }
 .seat-edge-status--1 {
@@ -520,7 +605,7 @@
 }
 .seat-edge-status--2 {
   top: 1.1rem;
-  left: 82%;
+  left: 71%;
   transform: translateX(-50%) rotate(180deg);
 }
 .seat-edge-status--3 {
@@ -534,7 +619,7 @@
   transform: translateY(-50%) rotate(-90deg);
 }
 .seat-edge-status--5 {
-  right: 18%;
+  right: 29%;
   bottom: 1.1rem;
   transform: translateX(50%);
 }
@@ -545,7 +630,7 @@
 }
 .seat-edge-status--7 {
   bottom: 1.1rem;
-  left: 18%;
+  left: 29%;
   transform: translateX(-50%);
 }
 .seat-edge-status--8 {
@@ -559,17 +644,91 @@
   transform: translateY(-50%) rotate(90deg);
 }
 
+/* A TV is a wall display, not a shared tabletop. All ten seats therefore use
+   two viewer-facing rows: five above and five below the unchanged community
+   board. No TV card, status glyph, or D/SB/BB marker is rotated toward a
+   hypothetical player sitting beside the screen. */
+.table-surface--tv .seat-edge-status {
+  right: auto;
+  transform: translateX(-50%);
+}
+
+.table-surface--tv .seat-edge-status--0,
+.table-surface--tv .seat-edge-status--1,
+.table-surface--tv .seat-edge-status--2,
+.table-surface--tv .seat-edge-status--3,
+.table-surface--tv .seat-edge-status--4 {
+  top: 1.1rem;
+  bottom: auto;
+}
+
+.table-surface--tv .seat-edge-status--5,
+.table-surface--tv .seat-edge-status--6,
+.table-surface--tv .seat-edge-status--7,
+.table-surface--tv .seat-edge-status--8,
+.table-surface--tv .seat-edge-status--9 {
+  top: auto;
+  bottom: 1.1rem;
+}
+
+.table-surface--tv .seat-edge-status--0,
+.table-surface--tv .seat-edge-status--9 {
+  left: 10%;
+}
+
+.table-surface--tv .seat-edge-status--1,
+.table-surface--tv .seat-edge-status--8 {
+  left: 30%;
+}
+
+.table-surface--tv .seat-edge-status--2,
+.table-surface--tv .seat-edge-status--7 {
+  left: 50%;
+}
+
+.table-surface--tv .seat-edge-status--3,
+.table-surface--tv .seat-edge-status--6 {
+  left: 70%;
+}
+
+.table-surface--tv .seat-edge-status--4,
+.table-surface--tv .seat-edge-status--5 {
+  left: 90%;
+}
+
 /* A revealed side hand remains on that player's edge but moves clear of the
    unchanged community rail. This preserves the table's physical map rather
    than shrinking or rearranging the board at showdown. */
 .seat-edge-status--3[data-seat-has-shown-hand="true"],
 .seat-edge-status--9[data-seat-has-shown-hand="true"] {
-  top: 20%;
+  top: 16%;
 }
 
 .seat-edge-status--4[data-seat-has-shown-hand="true"],
 .seat-edge-status--8[data-seat-has-shown-hand="true"] {
-  top: 80%;
+  top: 84%;
+}
+
+.table-surface--tv
+  .seat-edge-status[data-seat-has-shown-hand="true"]:is(
+    .seat-edge-status--0,
+    .seat-edge-status--1,
+    .seat-edge-status--2,
+    .seat-edge-status--3,
+    .seat-edge-status--4
+  ) {
+  top: 1.1rem;
+}
+
+.table-surface--tv
+  .seat-edge-status[data-seat-has-shown-hand="true"]:is(
+    .seat-edge-status--5,
+    .seat-edge-status--6,
+    .seat-edge-status--7,
+    .seat-edge-status--8,
+    .seat-edge-status--9
+  ) {
+  top: auto;
 }
 
 .seat-state-glyph {
@@ -687,6 +846,33 @@
   display: flex;
   gap: clamp(0.42rem, 0.72vw, 0.7rem);
   align-items: center;
+}
+
+/* A revealed hand owns a compact two-row seat module: the cards stay together
+   on the first row, while the status and D/SB/BB markers share a dedicated
+   second row. Keeping metadata out of the card row prevents adjacent ten-seat
+   hands from covering the table-position and connection indicators. */
+.seat-edge-status[data-seat-has-shown-hand="true"] {
+  display: grid;
+  grid-template-areas:
+    "hand hand"
+    "state roles";
+  grid-template-columns: auto auto;
+  justify-items: center;
+  column-gap: 0.65rem;
+  row-gap: 0.38rem;
+}
+
+.seat-edge-status[data-seat-has-shown-hand="true"] > .quiet-shown-hand {
+  grid-area: hand;
+}
+
+.seat-edge-status[data-seat-has-shown-hand="true"] > .seat-state-glyph {
+  grid-area: state;
+}
+
+.seat-edge-status[data-seat-has-shown-hand="true"] > .seat-edge-status__roles {
+  grid-area: roles;
 }
 
 .quiet-shown-hand .card--best {
@@ -1289,6 +1475,39 @@ button.secondary-control-card:disabled {
   transform: translateY(-50%);
 }
 
+.secondary-control-card--danger {
+  border-color: color-mix(in srgb, var(--red) 58%, var(--table-rule));
+  background: color-mix(
+    in srgb,
+    var(--red-soft) 55%,
+    var(--table-panel-raised)
+  );
+}
+
+.secondary-control-card--danger .secondary-control-card__icon {
+  color: var(--red);
+}
+
+.secondary-control-card--danger > button {
+  justify-self: start;
+  min-height: 36px;
+  margin-top: 14px;
+  border: 1px solid color-mix(in srgb, var(--red) 72%, transparent);
+  border-radius: 12px;
+  padding: 7px 12px;
+  color: var(--red);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.secondary-control-card--danger > button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
 .secondary-device-actions,
 .surface-theme-picker,
 .surface-card-style-picker {
@@ -1570,7 +1789,7 @@ button.secondary-control-card:disabled {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0;
+  gap: 0.14rem;
   line-height: 1;
   text-align: center;
 }
@@ -1578,7 +1797,7 @@ button.secondary-control-card:disabled {
 .table-surface .mini-hand .card--compact .card__rank {
   display: block;
   width: 100%;
-  font-size: 1.22rem;
+  font-size: 1.3rem;
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1;
@@ -1590,12 +1809,30 @@ button.secondary-control-card:disabled {
 }
 
 .table-surface .mini-hand .card--compact .card__corner-suit {
-  display: block;
-  width: 100%;
+  display: grid;
+  width: 1.18rem;
+  height: 1.18rem;
+  place-items: center;
   margin-top: 0;
-  font-size: 1.08rem;
+  font-size: 1.18rem;
   line-height: 1;
   text-align: center;
+}
+
+/* A shown hand is a status cue beside a seat, not a second community board.
+   Normal keeps its contents deliberately smaller; Airplane retains its
+   existing compact scale. */
+.table-surface[data-runtime="normal"] .mini-hand .card--compact .card__rank {
+  font-size: 1.05rem;
+}
+
+.table-surface[data-runtime="normal"]
+  .mini-hand
+  .card--compact
+  .card__corner-suit {
+  width: 0.98rem;
+  height: 0.98rem;
+  font-size: 0.92rem;
 }
 
 .table-surface .mini-hand .card--compact.card--best {
@@ -1615,35 +1852,36 @@ button.secondary-control-card:disabled {
    display: one rank and one suit per card keep five cards legible on Android. */
 .table-surface .player-board .card--minimal .card__corner--top {
   inset: 0;
-  display: grid;
+  display: flex;
   min-width: 0;
-  grid-template-rows: 1em 1em;
-  align-content: center;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.08rem;
+  gap: 0.52rem;
   line-height: 1;
   text-align: center;
 }
 
 .table-surface .player-board .card--minimal .card__rank {
-  display: grid;
-  width: 100%;
-  place-items: center;
-  font-size: clamp(1.5rem, 7.1vw, 1.9rem);
+  display: block;
+  width: auto;
+  min-width: 1.1em;
+  font-size: clamp(1.7rem, 8vw, 2.05rem);
   font-variant-numeric: tabular-nums;
   font-feature-settings:
     "lnum" 1,
     "tnum" 1;
   line-height: 1;
+  text-align: center;
 }
 
 .table-surface .player-board .card--minimal .card__corner-suit {
   display: grid;
-  width: 100%;
+  width: 1.18em;
+  height: 1.18em;
   place-items: center;
   margin-top: 0;
-  font-size: clamp(1.3rem, 6.1vw, 1.65rem);
+  font-size: clamp(1.5rem, 7vw, 1.85rem);
   line-height: 1;
 }
 
@@ -1658,41 +1896,53 @@ button.secondary-control-card:disabled {
    on a small host screen. */
 .table-surface--host .public-table .card--minimal .card__corner--top {
   inset: 0;
-  display: grid;
+  display: flex;
   min-width: 0;
-  grid-template-rows: 1em 1em;
-  align-content: center;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.08rem;
+  gap: 0.52rem;
   line-height: 1;
   text-align: center;
 }
 
 .table-surface--host .public-table .card--minimal .card__rank {
-  display: grid;
-  width: 100%;
-  place-items: center;
-  font-size: clamp(1.25rem, 6vw, 1.7rem);
+  display: block;
+  width: auto;
+  min-width: 1.1em;
+  font-size: clamp(1.5rem, 7vw, 1.9rem);
   font-variant-numeric: tabular-nums;
   font-feature-settings:
     "lnum" 1,
     "tnum" 1;
   line-height: 1;
+  text-align: center;
 }
 
 .table-surface--host .public-table .card--minimal .card__corner-suit {
   display: grid;
-  width: 100%;
+  width: 1.18em;
+  height: 1.18em;
   place-items: center;
   margin-top: 0;
-  font-size: clamp(1.05rem, 5.1vw, 1.45rem);
+  font-size: clamp(1.3rem, 6vw, 1.65rem);
   line-height: 1;
 }
 
 .table-surface--host .public-table .card--minimal .card__corner--bottom,
 .table-surface--host .public-table .card--minimal .card__pip {
   display: none;
+}
+
+/* Airplane preserves its existing compact rendering. Normal Mode's compact
+   rail uses one shared rank/suit group for every rank, including 6. */
+.table-surface[data-runtime="airplane"]
+  .card--compact[data-card^="6"]
+  .card__corner--top,
+.table-surface[data-runtime="airplane"]
+  .card--minimal[data-card^="6"]
+  .card__corner--top {
+  transform: translateY(0.04em);
 }
 .table-surface .player-board .dealer-rail {
   width: min(34rem, 100%);

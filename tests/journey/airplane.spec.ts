@@ -130,7 +130,9 @@ async function pairPlayer(
         player.getByRole("heading", { name: "You have a seat" }),
       ).toBeVisible(),
   );
-  await expect(host.getByText(displayName, { exact: true })).toBeVisible();
+  await expect(
+    host.locator('button[aria-label^="Seat"]').filter({ hasText: displayName }),
+  ).toHaveCount(1);
 }
 
 test("standalone artifact boots from file with no external request", async ({
@@ -153,6 +155,12 @@ test("standalone artifact boots from file with no external request", async ({
   expect(source).toContain(
     "<title>Our Poker Table Airplane — Standalone digital dealer</title>",
   );
+  // Airplane is deliberately the compact Four Colour build. Court artwork and
+  // Normal Mode's appearance picker must not be carried in this standalone
+  // file merely because the runtime hides them.
+  expect(source).not.toContain("data-court-rank");
+  expect(source).not.toContain("Deck appearance");
+  expect(source).not.toContain("court illustration");
   expect(await context.cookies()).toEqual([]);
 });
 
@@ -160,10 +168,40 @@ test("the Airplane start screen has no unexplained red ornaments", async ({
   context,
 }) => {
   const page = await openAirplanePage(context);
-  await expect(
-    page.getByText("Build 0.1.5-phase1", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText("Build 0.1.6", { exact: true })).toBeVisible();
   expect(await unexplainedRedDecorations(page)).toEqual([]);
+});
+
+test("Airplane mode fixes the table to the Four Colour deck", async ({
+  context,
+}, testInfo: TestInfo) => {
+  test.skip(
+    testInfo.project.name === "mobile-webkit",
+    "The file-origin host-self-join prerequisite has no local route in headless Mobile WebKit; Chromium and Android-like Chromium cover the complete automated deck journey.",
+  );
+  const host = await openAirplanePage(context);
+  const player = await openAirplanePage(context);
+  await host.getByRole("button", { name: "Create table" }).click();
+  await pairPlayer(host, player, "Deck test player");
+  await host.getByLabel("My display name").fill("Deck test host");
+  await host
+    .getByRole("button", { name: "Join my own table on this device" })
+    .click();
+  await host.getByRole("button", { name: "Host Controls" }).click();
+  await host.getByRole("button", { name: "Deal first hand" }).click();
+  await host.getByRole("button", { name: "Table View" }).click();
+  await expect(host.locator(".table-surface")).toHaveAttribute(
+    "data-card-style",
+    "four-colour",
+  );
+  await host
+    .locator(
+      '[data-qa-control="tablet-corner-open"][data-qa-variant="lower-right"]',
+    )
+    .click();
+  await host.locator('[data-qa-control="tablet-quick-more"]').click();
+  await expect(host.locator(".secondary-controls")).toBeVisible();
+  await expect(host.locator('[data-qa-control^="card-style-"]')).toHaveCount(0);
 });
 
 test("the host can enlarge a dense Airplane QR for phone scanning", async ({
@@ -507,8 +545,14 @@ test("a closed Airplane phone can be replaced into the same active seat", async 
     await alice.close();
 
     await host.getByRole("button", { name: /^Players/ }).click();
-    const aliceRoster = host.locator(".roster li").filter({ hasText: "Alice" });
-    await aliceRoster.getByRole("button", { name: "Replace device" }).click();
+    const aliceMapSeat = host.getByRole("button", {
+      name: /^Seat 1, Alice,/u,
+    });
+    await aliceMapSeat.click();
+    const aliceAdministration = host.getByLabel("Manage Alice");
+    await aliceAdministration
+      .getByRole("button", { name: "Replace device" })
+      .click();
     await host
       .getByRole("button", { name: "Pair Replacement for Alice" })
       .click();
@@ -563,7 +607,7 @@ test("a closed Airplane phone can be replaced into the same active seat", async 
           ),
       )
       .toEqual(cardsBeforeClose);
-    await expect(aliceRoster.getByText("Alice", { exact: true })).toBeVisible();
+    await expect(aliceMapSeat).toBeVisible();
   } finally {
     await Promise.all([
       hostContext.close(),

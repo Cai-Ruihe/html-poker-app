@@ -77,7 +77,11 @@ async function joinPlayer(
   } else {
     await join.click();
   }
-  await expect(host.getByText(displayName, { exact: true })).toBeVisible();
+  await expect(
+    host
+      .locator('[data-qa-control="roster-map-seat"]')
+      .filter({ hasText: displayName }),
+  ).toBeVisible();
   return player;
 }
 
@@ -102,6 +106,17 @@ async function openSecondary(host: Page): Promise<Locator> {
   const secondary = host.locator(".secondary-controls");
   await expect(secondary).toBeVisible();
   return secondary;
+}
+
+async function dragSliderToConfirm(host: Page, slider: Locator): Promise<void> {
+  const track = await slider.boundingBox();
+  if (!track) throw new Error("The next-hand slider is not measurable.");
+  await host.mouse.move(track.x + 32, track.y + track.height / 2);
+  await host.mouse.down();
+  await host.mouse.move(track.x + 124, track.y + track.height / 2, {
+    steps: 8,
+  });
+  await host.mouse.up();
 }
 
 test("Home buttons, selectors, pasted invitations, and QR fallback have verified outcomes", async ({
@@ -438,11 +453,20 @@ test("Host lobby, roster, invitations, diagnostics, and corrections verify their
       ),
   );
 
+  const bobMapSeat = administration.getByRole("button", {
+    name: /^Seat 2, Bob,/u,
+  });
+  const bobSeatId = await bobMapSeat.getAttribute("data-qa-variant");
+  if (!bobSeatId) throw new Error("Bob's spatial seat identity is missing.");
+  await exerciseControl(
+    "roster-map-seat",
+    bobMapSeat,
+    (target) => target.click(),
+    () => expect(administration.getByLabel("Manage Bob")).toBeVisible(),
+  );
   await exerciseControl(
     "roster-seat-move-up",
-    administration
-      .locator('[data-qa-control="roster-seat-move-up"]:enabled')
-      .last(),
+    controlVariant(administration, "roster-seat-move-up", bobSeatId),
     (target) => target.click(),
     () =>
       expect(administration.locator(".roster li strong").first()).toHaveText(
@@ -451,21 +475,16 @@ test("Host lobby, roster, invitations, diagnostics, and corrections verify their
   );
   await exerciseControl(
     "roster-seat-move-down",
-    administration
-      .locator('[data-qa-control="roster-seat-move-down"]:enabled')
-      .first(),
+    controlVariant(administration, "roster-seat-move-down", bobSeatId),
     (target) => target.click(),
     () =>
       expect(administration.locator(".roster li strong").last()).toHaveText(
         "Bob",
       ),
   );
-  const bobRoster = administration
-    .locator(".roster li")
-    .filter({ hasText: "Bob" });
   await exerciseControl(
     "roster-replace-device",
-    control(bobRoster, "roster-replace-device"),
+    controlVariant(administration, "roster-replace-device", bobSeatId),
     (target) => target.click(),
     () => expect(host.getByLabel("Player replacement link")).toBeVisible(),
   );
@@ -525,9 +544,13 @@ test("Host lobby, roster, invitations, diagnostics, and corrections verify their
   );
   // A dealer is selected between hands; the marker is only visible once that
   // seat participates in the next hand.
+  await administration
+    .locator('[data-qa-control="roster-map-seat"]')
+    .filter({ hasText: "Bob" })
+    .click();
   await exerciseControl(
     "roster-make-dealer",
-    control(bobRoster, "roster-make-dealer"),
+    controlVariant(administration, "roster-make-dealer", bobSeatId),
     (target) => target.click(),
     () =>
       expect(
@@ -1023,16 +1046,20 @@ test("Tablet quick and secondary controls all produce their registered outcomes"
   await control(host, "device-view-tablet").click();
   await controlVariant(host, "tablet-corner-open", "lower-right").click();
   const slider = control(host, "tablet-next-hand");
+  await slider.dblclick();
+  await expect(host.locator("[data-control-facing]")).toHaveCount(1);
+  await expect(slider).toHaveAttribute("aria-disabled", "false");
   await exerciseControl(
     "tablet-next-hand",
     slider,
-    (target) => target.dblclick(),
+    (target) => dragSliderToConfirm(host, target),
     async () => {
       await expect(host.locator("[data-control-facing]")).toHaveCount(0);
+      await expect(host.locator("[data-board-card]")).toHaveCount(0);
       await controlVariant(host, "tablet-corner-open", "lower-right").click();
-      await expect(control(host, "tablet-next-card")).toBeDisabled();
+      await expect(control(host, "tablet-next-card")).toBeEnabled();
       await expect(control(host, "tablet-next-card")).toContainText(
-        "Board complete",
+        "Deal the flop",
       );
     },
   );

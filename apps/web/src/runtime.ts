@@ -45,7 +45,7 @@ import {
   type HostAirplanePairing,
 } from "./airplane";
 
-export const BUILD_VERSION = "0.1.5-phase1";
+export const BUILD_VERSION = "0.1.6";
 export const PROTOCOL_VERSION = 2;
 
 const requestTimeoutMs = 7_500;
@@ -1906,6 +1906,26 @@ export class HostTableRuntime {
     this.lease.release();
   }
 
+  async dissolve(): Promise<void> {
+    await this.runExclusive(async () => {
+      await this.assertExclusiveAuthority();
+      this.identity.closeJoinWindow();
+      for (const credential of this.identity.exportRecoveryState()
+        .credentials) {
+        if (!credential.revoked) this.identity.revoke(credential.capabilityId);
+      }
+      this.invitations.clear();
+      this.invitationByDigest.clear();
+      this.capabilitySecrets.clear();
+      this.broadcastChange();
+      await Promise.all([
+        this.recoveryStore.remove(),
+        authorityStore(this.tableId).remove(),
+      ]);
+      this.recordDiagnostic("lifecycle", "accepted", "table-dissolved");
+    });
+  }
+
   async createAirplaneOffer(
     role: CapabilityRole,
   ): Promise<AirplaneOfferDetails> {
@@ -2144,7 +2164,7 @@ export class HostTableRuntime {
         type: "SetCardStyle",
       });
       if (receipt.status === "rejected") {
-        throw new Error(`Deck appearance rejected: ${receipt.code}`);
+        throw new Error(`Card style rejected: ${receipt.code}`);
       }
     });
   }

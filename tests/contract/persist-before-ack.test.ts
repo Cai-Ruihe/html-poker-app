@@ -16,6 +16,7 @@ describe("Trusted Host persistence boundary", () => {
         async load() {
           return undefined;
         },
+        async remove() {},
       },
       tableId: "table-1",
     });

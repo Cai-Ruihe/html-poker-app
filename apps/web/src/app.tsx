@@ -13,7 +13,7 @@ import jsQR from "jsqr";
 
 import type { CapabilityRole } from "@html-poker/identity-capabilities";
 import type { CardStyle, TableTheme } from "@html-poker/game-core";
-import { TableSurface } from "@html-poker/presentation";
+import { TableSurface, tableSeatPosition } from "@html-poker/presentation";
 
 import brandHorizontalLight from "../../../assets/brand/svg/horizontal-light-transparent.svg?inline";
 import brandSymbolGold from "../../../assets/brand/svg/symbol-gold.svg?inline";
@@ -1516,6 +1516,15 @@ function SeatRoster({
   const orderedSeats = [...snapshot.roster.seats].sort(
     (left, right) => left.displayPosition - right.displayPosition,
   );
+  const [selectedSeatId, setSelectedSeatId] = useState<string | undefined>(
+    orderedSeats[0]?.seatId,
+  );
+  const selectedSeat =
+    orderedSeats.find((seat) => seat.seatId === selectedSeatId) ??
+    orderedSeats[0];
+  const selectedSeatIndex = selectedSeat
+    ? orderedSeats.findIndex((seat) => seat.seatId === selectedSeat.seatId)
+    : -1;
   const digitalJoinLocked =
     runtime?.rulesProfile.id === "nlhe-home-v1" && snapshot.stage === "table";
   return (
@@ -1552,16 +1561,69 @@ function SeatRoster({
           <p>The first player appears here as soon as the QR is redeemed.</p>
         </div>
       ) : (
-        <ol>
-          {orderedSeats.map((seat, index) => (
-            <li key={seat.seatId}>
-              <span>{index + 1}</span>
-              <div className="roster-seat-copy">
-                <strong>{seat.displayName}</strong>
+        <>
+          <div className="roster-map-copy">
+            <strong>Table positions</strong>
+            <span>Tap a player where they sit to manage that seat.</span>
+          </div>
+          <ol
+            className="roster-table-map"
+            data-seat-count={orderedSeats.length}
+          >
+            {orderedSeats.map((seat, index) => {
+              const edgePosition = tableSeatPosition(
+                index,
+                orderedSeats.length,
+              );
+              const status = seat.connected
+                ? seat.state.replace("-", " ")
+                : `${seat.state.replace("-", " ")} · offline`;
+              return (
+                <li
+                  className={`roster-table-map__seat roster-table-map__seat--${edgePosition}`}
+                  data-roster-seat-id={seat.seatId}
+                  data-table-edge-position={edgePosition}
+                  key={seat.seatId}
+                >
+                  <button
+                    aria-label={`Seat ${index + 1}, ${seat.displayName}, ${tableEdgeLabel(edgePosition)}, ${status}`}
+                    aria-pressed={selectedSeat?.seatId === seat.seatId}
+                    className="roster-map-seat-button"
+                    data-qa-control="roster-map-seat"
+                    data-qa-variant={seat.seatId}
+                    onClick={() => setSelectedSeatId(seat.seatId)}
+                    type="button"
+                  >
+                    <span>{index + 1}</span>
+                    <span className="roster-seat-copy">
+                      <strong>{seat.displayName}</strong>
+                      <small>{status}</small>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+            <li aria-hidden="true" className="roster-table-map__centre">
+              <i className="roster-table-map__community-cards">
+                {Array.from({ length: 5 }, (_, index) => (
+                  <span key={index} />
+                ))}
+              </i>
+              <span>Community cards</span>
+            </li>
+          </ol>
+          {selectedSeat ? (
+            <section
+              aria-label={`Manage ${selectedSeat.displayName}`}
+              className="roster-seat-detail"
+            >
+              <div>
+                <span>Seat {selectedSeatIndex + 1}</span>
+                <strong>{selectedSeat.displayName}</strong>
                 <small>
-                  {seat.connected
-                    ? seat.state.replace("-", " ")
-                    : `${seat.state.replace("-", " ")} · offline`}
+                  {tableEdgeLabel(
+                    tableSeatPosition(selectedSeatIndex, orderedSeats.length),
+                  )}
                 </small>
               </div>
               {onMove || onReplace || onRelocateDealer ? (
@@ -1569,34 +1631,38 @@ function SeatRoster({
                   {onMove ? (
                     <>
                       <button
-                        aria-label={`Move ${seat.displayName} up`}
+                        aria-label={`Move ${selectedSeat.displayName} up`}
                         data-qa-control="roster-seat-move-up"
-                        data-qa-variant={seat.seatId}
-                        disabled={index === 0}
-                        onClick={() => onMove(seat.seatId, index - 1)}
+                        data-qa-variant={selectedSeat.seatId}
+                        disabled={selectedSeatIndex === 0}
+                        onClick={() =>
+                          onMove(selectedSeat.seatId, selectedSeatIndex - 1)
+                        }
                         type="button"
                       >
-                        ↑
+                        Move anticlockwise
                       </button>
                       <button
-                        aria-label={`Move ${seat.displayName} down`}
+                        aria-label={`Move ${selectedSeat.displayName} down`}
                         data-qa-control="roster-seat-move-down"
-                        data-qa-variant={seat.seatId}
-                        disabled={index === orderedSeats.length - 1}
-                        onClick={() => onMove(seat.seatId, index + 1)}
+                        data-qa-variant={selectedSeat.seatId}
+                        disabled={selectedSeatIndex === orderedSeats.length - 1}
+                        onClick={() =>
+                          onMove(selectedSeat.seatId, selectedSeatIndex + 1)
+                        }
                         type="button"
                       >
-                        ↓
+                        Move clockwise
                       </button>
                     </>
                   ) : null}
                   {onRelocateDealer &&
                   snapshot.projection?.phase === "complete" &&
-                  snapshot.projection.dealerSeatId !== seat.seatId ? (
+                  snapshot.projection.dealerSeatId !== selectedSeat.seatId ? (
                     <button
                       data-qa-control="roster-make-dealer"
-                      data-qa-variant={seat.seatId}
-                      onClick={() => onRelocateDealer(seat.seatId)}
+                      data-qa-variant={selectedSeat.seatId}
+                      onClick={() => onRelocateDealer(selectedSeat.seatId)}
                       type="button"
                     >
                       Make dealer
@@ -1605,8 +1671,8 @@ function SeatRoster({
                   {onReplace ? (
                     <button
                       data-qa-control="roster-replace-device"
-                      data-qa-variant={seat.seatId}
-                      onClick={() => onReplace(seat.seatId)}
+                      data-qa-variant={selectedSeat.seatId}
+                      onClick={() => onReplace(selectedSeat.seatId)}
                       type="button"
                     >
                       Replace device
@@ -1614,11 +1680,28 @@ function SeatRoster({
                   ) : null}
                 </div>
               ) : null}
-            </li>
-          ))}
-        </ol>
+            </section>
+          ) : null}
+        </>
       )}
     </section>
+  );
+}
+
+function tableEdgeLabel(position: number): string {
+  return (
+    [
+      "upper left",
+      "upper centre",
+      "upper right",
+      "right upper",
+      "right lower",
+      "lower right",
+      "lower centre",
+      "lower left",
+      "left lower",
+      "left upper",
+    ][position] ?? "table edge"
   );
 }
 
@@ -1888,6 +1971,7 @@ function JoinOwnDeviceCard({
 
 function HostLobby({
   activeView,
+  onDissolve,
   onJoinOwnDevice,
   onViewChange,
   playerRuntime,
@@ -1895,6 +1979,7 @@ function HostLobby({
   runtime,
 }: {
   readonly activeView: HostDeviceView;
+  readonly onDissolve: () => Promise<void>;
   readonly onJoinOwnDevice: (displayName: string) => Promise<void>;
   readonly onViewChange: (view: HostDeviceView) => void;
   readonly playerRuntime?: TableClientRuntime;
@@ -1944,6 +2029,7 @@ function HostLobby({
           activeView === "table" || activeView === "tv" ? activeView : "host"
         }
         hasPlayer={Boolean(playerRuntime)}
+        onDissolve={onDissolve}
         onViewChange={onViewChange}
         runtime={runtime}
       />
@@ -2073,11 +2159,13 @@ function useDealerActionGuard() {
 function HostTable({
   activeView,
   hasPlayer,
+  onDissolve,
   onViewChange,
   runtime,
 }: {
   readonly activeView: "host" | "table" | "tv";
   readonly hasPlayer: boolean;
+  readonly onDissolve: () => Promise<void>;
   readonly onViewChange: (view: HostDeviceView) => void;
   readonly runtime: HostTableRuntime;
 }) {
@@ -2136,6 +2224,7 @@ function HostTable({
         />
       ) : null}
       <TableSurface
+        airplaneMode={isAirplaneMode()}
         brandSymbolSrc={brandSymbolGold}
         busy={busy || actionGuard.busy}
         connectionLabel={snapshot.connectionLabel}
@@ -2164,6 +2253,7 @@ function HostTable({
             runtime.exportDiagnostics(),
           )
         }
+        onDissolveTable={onDissolve}
         onEndHand={() => performDealerAction(() => runtime.endHand())}
         onManageDisplays={() => {
           setAdminFocus("displays");
@@ -2671,6 +2761,7 @@ function PlayerExperience({
   return (
     <>
       <TableSurface
+        airplaneMode={isAirplaneMode()}
         brandSymbolSrc={brandSymbolGold}
         busy={busy}
         connectionLabel={snapshot.connectionLabel}
@@ -2831,6 +2922,7 @@ function RoleExperience({ runtime }: { readonly runtime: TableClientRuntime }) {
 
   return (
     <TableSurface
+      airplaneMode={isAirplaneMode()}
       brandSymbolSrc={brandSymbolGold}
       busy={actionGuard.busy}
       connectionLabel={snapshot.connectionLabel}
@@ -3317,6 +3409,23 @@ export function App() {
     }
   }
 
+  async function dissolveHostedTable(): Promise<void> {
+    if (!hostRuntime) return;
+    const confirmed = globalThis.confirm(
+      "Dissolve this table for every connected player and display? This cannot be undone.",
+    );
+    if (!confirmed) return;
+    await hostRuntime.dissolve();
+    hostPlayerRuntime?.close();
+    hostRuntime.close();
+    setHostPlayerRuntime(undefined);
+    setHostRuntime(undefined);
+    setHostDeviceView("host");
+    const home = new URL(globalThis.location.href);
+    home.hash = "";
+    globalThis.history.replaceState(null, "", home);
+  }
+
   if (clientRuntime) {
     return clientRuntime.role === "player" ? (
       <PlayerExperience runtime={clientRuntime} />
@@ -3328,6 +3437,7 @@ export function App() {
     return (
       <HostLobby
         activeView={hostDeviceView}
+        onDissolve={dissolveHostedTable}
         onJoinOwnDevice={joinOwnDevice}
         onViewChange={showHostDeviceView}
         {...(hostPlayerRuntime ? { playerRuntime: hostPlayerRuntime } : {})}

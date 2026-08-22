@@ -93,6 +93,9 @@ describe("same-browser Trusted Host recovery", () => {
           state: structuredClone(saved.state),
         };
       },
+      async remove() {
+        saved = undefined;
+      },
     };
     const first = createTrustedHostAuthority({
       authorityEpoch: "epoch-1",

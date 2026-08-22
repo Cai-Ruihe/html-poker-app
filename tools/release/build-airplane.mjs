@@ -1,10 +1,21 @@
+import { execFile } from "node:child_process";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { promisify } from "node:util";
 
 const root = process.cwd();
-const normalDirectory = path.join(root, "dist", "normal");
+const execFileAsync = promisify(execFile);
+const airplaneBundleDirectory = path.join(root, "dist", "airplane-bundle");
 const outputDirectory = path.join(root, "dist", "airplane");
-const inputPath = path.join(normalDirectory, "index.html");
+await execFileAsync("pnpm", ["--filter", "@html-poker/web", "build"], {
+  cwd: root,
+  env: {
+    ...process.env,
+    HTML_POKER_AIRPLANE_BUILD: "1",
+    HTML_POKER_OUTPUT_DIR: "../../dist/airplane-bundle",
+  },
+});
+const inputPath = path.join(airplaneBundleDirectory, "index.html");
 const thirdPartyLicensesPath = path.join(
   root,
   "apps",
@@ -34,18 +45,18 @@ if (!moduleMatch?.[1] || !stylesheetMatch?.[1]) {
 }
 
 const javascript = await readFile(
-  path.join(normalDirectory, moduleMatch[1]),
+  path.join(airplaneBundleDirectory, moduleMatch[1]),
   "utf8",
 );
 let stylesheet = await readFile(
-  path.join(normalDirectory, stylesheetMatch[1]),
+  path.join(airplaneBundleDirectory, stylesheetMatch[1]),
   "utf8",
 );
 for (const match of stylesheet.matchAll(/url\((['"]?)(\.\/[^)'"\s]+)\1\)/gu)) {
   const reference = match[2];
   if (!reference) continue;
   const asset = await readFile(
-    path.join(normalDirectory, "assets", reference.slice(2)),
+    path.join(airplaneBundleDirectory, "assets", reference.slice(2)),
   );
   stylesheet = stylesheet.replace(
     match[0],

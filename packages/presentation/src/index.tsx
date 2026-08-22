@@ -17,6 +17,17 @@ import type {
   TableTheme,
 } from "@html-poker/game-core";
 
+import { cardFaceSrc } from "./card-face-assets";
+
+declare const __HTML_POKER_AIRPLANE_BUILD__: boolean | undefined;
+
+// Vite replaces this at build time. Keeping the compile-time branch here
+// lets the standalone artifact omit Normal-only court and full-face markup,
+// rather than merely hiding it at runtime.
+const airplaneBuild =
+  typeof __HTML_POKER_AIRPLANE_BUILD__ !== "undefined" &&
+  __HTML_POKER_AIRPLANE_BUILD__;
+
 export type PresentationMode = "host" | "player" | "tablet" | "tv" | "public";
 
 type ActionResult = boolean | void | Promise<boolean | void>;
@@ -34,6 +45,8 @@ export interface TableSurfaceProps {
   readonly onBettingAction?: (action: BettingActionIntent) => void;
   readonly onConfirmSettlement?: () => ActionResult;
   readonly onDownloadLog?: () => void;
+  /** Trusted Host-only destructive action; runtime confirmation is owned by the app. */
+  readonly onDissolveTable?: () => ActionResult;
   readonly onEndHand?: () => ActionResult;
   readonly onFinalizeFold?: () => void;
   readonly onFold?: () => void;
@@ -55,6 +68,8 @@ export interface TableSurfaceProps {
   readonly onUndoFold?: () => void;
   readonly projection: PublicProjection | SeatProjection;
   readonly productName: string;
+  /** Airplane is intentionally limited to its compact four-colour deck. */
+  readonly airplaneMode?: boolean;
 }
 
 const suitDetails = {
@@ -80,7 +95,32 @@ function cardDetails(card: Card) {
     isRed: suit === "d" || suit === "h",
     rank,
     suit: suitDetails[suit].symbol,
+    suitCode: suit,
   };
+}
+
+type SuitCode = keyof typeof suitDetails;
+
+function SuitGlyph({ suit }: { readonly suit: SuitCode }) {
+  const paths: Record<SuitCode, string> = {
+    // One continuous RevK-derived silhouette preserves the familiar three
+    // lobes and flared stem when rasterised at the smallest phone sizes. The
+    // previous four disconnected circles/stem read as a pawn or tree.
+    c: "M52.5 62.5C52.92 82.08 57.08 83.33 60.83 91.67H39.17C42.92 83.33 47.08 82.08 47.5 62.5A0.83 0.83 0 0 0 45.83 62.5A17.5 17.5 0 1 1 39.67 45.75A0.83 0.83 0 0 0 40.83 44.58A19.17 19.17 0 1 1 59.17 44.58A0.83 0.83 0 0 0 60.33 45.75A17.5 17.5 0 1 1 54.17 62.5A0.83 0.83 0 0 0 52.5 62.5Z",
+    d: "M50 2 98 50 50 98 2 50Z",
+    h: "M50 94 10 53C-5 38 1 8 25 7c12 0 20 6 25 16C55 13 63 7 75 7c24 1 30 31 15 46Z",
+    s: "M50 3C36 24 10 36 10 58c0 15 11 25 25 25 8 0 14-4 18-10-2 10-6 18-13 26h20c-7-8-11-16-13-26 4 6 10 10 18 10 14 0 25-10 25-25C90 36 64 24 50 3Z",
+  };
+  return (
+    <svg
+      aria-hidden="true"
+      className="card__suit-glyph"
+      focusable="false"
+      viewBox="0 0 100 100"
+    >
+      <path d={paths[suit]} fill="currentColor" />
+    </svg>
+  );
 }
 
 function CourtFace({
@@ -190,25 +230,34 @@ function CourtFace({
 export function PlayingCard({
   card,
   compact = false,
+  compactGlyphsOnly = false,
   cardStyle = "classic",
   emphasis,
   marker,
   minimal = false,
   quietShown = false,
+  fullFace = false,
 }: {
   readonly card: Card;
   readonly cardStyle?: CardStyle;
   readonly compact?: boolean;
+  /** Normal phone/host cards render only a rank and suit glyph. */
+  readonly compactGlyphsOnly?: boolean;
   readonly emphasis?: "best" | "unused";
   readonly marker: "board" | "private" | "shown";
   readonly minimal?: boolean;
   readonly quietShown?: boolean;
+  /** Render the approved full SVG face (Normal Mode only). */
+  readonly fullFace?: boolean;
 }) {
   const details = cardDetails(card);
+  const renderFullFace = !airplaneBuild && fullFace;
   const displayRank =
     cardStyle === "classic" && details.rank === "T" ? "10" : details.rank;
   const hasCourtFace =
+    !airplaneBuild &&
     cardStyle === "classic" &&
+    !compactGlyphsOnly &&
     !minimal &&
     ["J", "Q", "K"].includes(details.rank);
   const markerProps =
@@ -220,33 +269,51 @@ export function PlayingCard({
   return (
     <span
       aria-label={details.accessibleName}
-      className={`card card--${cardStyle} card--suit-${card[1]}${details.isRed ? " card--red" : ""}${compact ? " card--compact" : ""}${minimal ? " card--minimal" : ""}${quietShown ? " card--quiet-shown" : ""}${emphasis ? ` card--${emphasis}` : ""}`}
+      className={`card card--${cardStyle} card--suit-${card[1]}${details.isRed ? " card--red" : ""}${compact ? " card--compact" : ""}${minimal ? " card--minimal" : ""}${quietShown ? " card--quiet-shown" : ""}${renderFullFace ? " card--svg-face" : ""}${emphasis ? ` card--${emphasis}` : ""}`}
       data-card={card}
       {...(emphasis === "best" ? { "data-best-five-card": "true" } : {})}
       role="img"
       {...markerProps}
     >
-      <span className="card__corner card__corner--top" aria-hidden="true">
-        <span className="card__rank">{displayRank}</span>
-        <span className="card__corner-suit">{details.suit}</span>
-      </span>
-      <span
-        className={`card__pip${hasCourtFace ? " card__pip--court" : ""}`}
-        aria-hidden="true"
-      >
-        {hasCourtFace ? (
-          <CourtFace
-            rank={details.rank as "J" | "K" | "Q"}
-            suit={details.suit}
-          />
-        ) : (
-          details.suit
-        )}
-      </span>
-      <span className="card__corner card__corner--bottom" aria-hidden="true">
-        <span className="card__rank">{displayRank}</span>
-        <span className="card__corner-suit">{details.suit}</span>
-      </span>
+      {renderFullFace ? (
+        <img
+          alt=""
+          aria-hidden="true"
+          className="card__face-svg"
+          src={cardFaceSrc(cardStyle, card)}
+        />
+      ) : (
+        <>
+          <span className="card__corner card__corner--top" aria-hidden="true">
+            <span className="card__rank">{displayRank}</span>
+            <span className="card__corner-suit">
+              <SuitGlyph suit={details.suitCode} />
+            </span>
+          </span>
+          <span
+            className={`card__pip${hasCourtFace ? " card__pip--court" : ""}`}
+            aria-hidden="true"
+          >
+            {hasCourtFace ? (
+              <CourtFace
+                rank={details.rank as "J" | "K" | "Q"}
+                suit={details.suit}
+              />
+            ) : (
+              <SuitGlyph suit={details.suitCode} />
+            )}
+          </span>
+          <span
+            className="card__corner card__corner--bottom"
+            aria-hidden="true"
+          >
+            <span className="card__rank">{displayRank}</span>
+            <span className="card__corner-suit">
+              <SuitGlyph suit={details.suitCode} />
+            </span>
+          </span>
+        </>
+      )}
     </span>
   );
 }
@@ -269,11 +336,15 @@ function BoardRail({
   bestCards,
   board,
   cardStyle = "classic",
+  compactGlyphsOnly = false,
+  fullFace = false,
   minimal = false,
 }: {
   readonly bestCards?: ReadonlySet<Card>;
   readonly board: readonly Card[];
   readonly cardStyle?: CardStyle;
+  readonly compactGlyphsOnly?: boolean;
+  readonly fullFace?: boolean;
   readonly minimal?: boolean;
 }) {
   return (
@@ -286,6 +357,8 @@ function BoardRail({
             <PlayingCard
               card={card}
               cardStyle={cardStyle}
+              compactGlyphsOnly={compactGlyphsOnly}
+              fullFace={fullFace}
               minimal={minimal}
               {...(bestCards?.size
                 ? { emphasis: bestCards.has(card) ? "best" : "unused" }
@@ -344,7 +417,7 @@ function blindSeatIds(projection: PublicProjection | SeatProjection): {
   };
 }
 
-function quietSeatPosition(index: number, count: number): number {
+export function tableSeatPosition(index: number, count: number): number {
   if (count <= 1) return 5;
   return Math.round((index * 10) / count) % 10;
 }
@@ -401,9 +474,11 @@ function SeatStateGlyph({
 
 function QuietSeatGrid({
   cardStyle = "classic",
+  fullFaceShown = false,
   projection,
 }: {
   readonly cardStyle?: CardStyle;
+  readonly fullFaceShown?: boolean;
   readonly projection: PublicProjection | SeatProjection;
 }) {
   const { bigBlindSeatId, smallBlindSeatId } = blindSeatIds(projection);
@@ -418,7 +493,7 @@ function QuietSeatGrid({
         const statusLabel = !connected
           ? "offline"
           : seat.status.replace("-", " ");
-        const position = quietSeatPosition(index, projection.seats.length);
+        const position = tableSeatPosition(index, projection.seats.length);
         return (
           <div
             aria-label={`${seat.displayName}, ${statusLabel}`}
@@ -444,6 +519,7 @@ function QuietSeatGrid({
                   <PlayingCard
                     card={card}
                     cardStyle={cardStyle}
+                    fullFace={fullFaceShown}
                     quietShown
                     {...(winners.has(seat.seatId) && seat.evaluation
                       ? {
@@ -479,15 +555,25 @@ function QuietSeatGrid({
 
 function SeatGrid({
   cardStyle = "classic",
+  compactGlyphsOnly = false,
+  fullFaceShown = false,
   projection,
   mode,
 }: {
   readonly cardStyle?: CardStyle;
+  readonly compactGlyphsOnly?: boolean;
+  readonly fullFaceShown?: boolean;
   readonly mode: PresentationMode;
   readonly projection: PublicProjection | SeatProjection;
 }) {
   if (["player", "public", "tablet", "tv"].includes(mode)) {
-    return <QuietSeatGrid cardStyle={cardStyle} projection={projection} />;
+    return (
+      <QuietSeatGrid
+        cardStyle={cardStyle}
+        fullFaceShown={fullFaceShown}
+        projection={projection}
+      />
+    );
   }
   const selfSeatId =
     projection.view === "seat" ? projection.self.seatId : undefined;
@@ -538,6 +624,7 @@ function SeatGrid({
                   card={card}
                   cardStyle={cardStyle}
                   compact
+                  compactGlyphsOnly={compactGlyphsOnly}
                   {...(winners.has(seat.seatId) && seat.evaluation
                     ? {
                         emphasis: seat.evaluation.bestFive.includes(card)
@@ -682,11 +769,7 @@ function DealerControls(props: TableSurfaceProps) {
   const progression = nextStreetByPhase[props.projection.phase];
   if (props.projection.phase === "complete") {
     if (props.projection.accounting) {
-      return (
-        <p className="dealer-guidance">
-          This Phase 2 tracer ends after one hand.
-        </p>
-      );
+      return <p className="dealer-guidance">This hand is complete.</p>;
     }
     return (
       <div className="dealer-actions">
@@ -818,7 +901,8 @@ function TableThemeButtons(props: TableSurfaceProps) {
 }
 
 function CardStyleButtons(props: TableSurfaceProps) {
-  if (!props.onCardStyleChange) return null;
+  if (airplaneBuild || !props.onCardStyleChange || props.airplaneMode)
+    return null;
   return (
     <div
       className="surface-card-style-picker"
@@ -956,7 +1040,7 @@ function TabletControls(props: TableSurfaceProps) {
     props.busy ||
     (props.projection.phase === "complete"
       ? !props.onStartNextHand
-      : !props.onEndHand);
+      : !props.onEndHand || !props.onStartNextHand);
   const corners: readonly {
     readonly id: TableCorner;
     readonly label: string;
@@ -986,7 +1070,11 @@ function TabletControls(props: TableSurfaceProps) {
     const action =
       props.projection.phase === "complete"
         ? props.onStartNextHand
-        : props.onEndHand;
+        : async (): Promise<boolean | void> => {
+            const ended = await props.onEndHand?.();
+            if (ended === false) return false;
+            return props.onStartNextHand?.();
+          };
     await invoke(action);
     setSliderPosition(0);
     sliderCommitting.current = false;
@@ -1205,7 +1293,6 @@ function TabletControls(props: TableSurfaceProps) {
                   className="next-hand-slider"
                   data-qa-control="tablet-next-hand"
                   data-slider-travel="92"
-                  onDoubleClick={() => void commitNextHand()}
                   onKeyDown={controlSliderFromKeyboard}
                   onPointerCancel={cancelSlider}
                   onPointerDown={beginSliderDrag}
@@ -1232,7 +1319,7 @@ function TabletControls(props: TableSurfaceProps) {
                   <small>
                     {props.projection.phase === "complete"
                       ? "Slide · deal now"
-                      : "Slide · end now"}
+                      : "Slide · clear & deal"}
                   </small>
                 </span>
               </div>
@@ -1435,6 +1522,7 @@ type HostControlIconKind =
   | "device"
   | "diagnostics"
   | "displays"
+  | "dissolve"
   | "players";
 
 function HostControlIcon({ kind }: { readonly kind: HostControlIconKind }) {
@@ -1513,6 +1601,12 @@ function HostControlIcon({ kind }: { readonly kind: HostControlIconKind }) {
               {...common}
               d="M11.3 15.8h9.4M14 12.8l-3 3 3 3M18 12.8l3 3-3 3"
             />
+          </>
+        ) : null}
+        {kind === "dissolve" ? (
+          <>
+            <circle {...common} cx="16" cy="16" r="10.5" />
+            <path {...common} d="m11.5 11.5 9 9M20.5 11.5l-9 9" />
           </>
         ) : null}
       </svg>
@@ -1675,6 +1769,24 @@ function HostControlCenter({
             <small>The authoritative browser remains the source of truth</small>
             <em>{props.connectionLabel}</em>
           </section>
+          {props.onDissolveTable ? (
+            <section className="secondary-control-card secondary-control-card--danger">
+              <HostControlIcon kind="dissolve" />
+              <strong>Dissolve this table</strong>
+              <small>End the session for every connected display</small>
+              <button
+                data-qa-control="host-dissolve-table"
+                disabled={props.busy}
+                onClick={() => {
+                  void props.onDissolveTable?.();
+                  onClose();
+                }}
+                type="button"
+              >
+                Dissolve table
+              </button>
+            </section>
+          ) : null}
         </div>
         {fullscreenError ? (
           <p className="secondary-controls__error" role="alert">
@@ -1829,7 +1941,9 @@ function PrivateHand(
   const selfIsLeader =
     props.projection.showdown?.leaders.includes(props.projection.self.seatId) ??
     false;
-  const cardStyle: CardStyle = props.projection.cardStyle ?? "classic";
+  const cardStyle: CardStyle = props.airplaneMode
+    ? "four-colour"
+    : (props.projection.cardStyle ?? "classic");
 
   useEffect(() => {
     setCardsVisibleOnDevice(false);
@@ -1862,6 +1976,7 @@ function PrivateHand(
           <PlayingCard
             card={card}
             cardStyle={cardStyle}
+            fullFace={!props.airplaneMode}
             {...(selfIsLeader && selfEvaluation
               ? {
                   emphasis: selfEvaluation.bestFive.includes(card)
@@ -1970,11 +2085,15 @@ export function TableSurface(props: TableSurfaceProps) {
   const isPlayer = props.mode === "player" && props.projection.view === "seat";
   const isQuietPublic = ["public", "tablet", "tv"].includes(props.mode);
   const tableTheme = props.projection.tableTheme ?? "dark-green";
-  const cardStyle: CardStyle = props.projection.cardStyle ?? "classic";
+  const cardStyle: CardStyle = props.airplaneMode
+    ? "four-colour"
+    : (props.projection.cardStyle ?? "classic");
   const bestCards = winningBestCards(props.projection);
+  const compactGlyphsOnly = !props.airplaneMode;
   return (
     <main
       className={`table-surface table-surface--${props.mode}${hostRootOpen ? " table-surface--host-root-open" : ""}`}
+      data-runtime={props.airplaneMode ? "airplane" : "normal"}
       data-page-fullscreen={pageFullscreen ? "true" : "false"}
       data-card-style={cardStyle}
       data-theme={tableTheme}
@@ -2066,10 +2185,20 @@ export function TableSurface(props: TableSurfaceProps) {
             {...(bestCards ? { bestCards } : {})}
             board={props.projection.board}
             cardStyle={cardStyle}
+            compactGlyphsOnly={compactGlyphsOnly}
+            fullFace={
+              !props.airplaneMode &&
+              (props.mode === "tablet" || props.mode === "tv")
+            }
             minimal={props.mode === "host"}
           />
           <SeatGrid
             cardStyle={cardStyle}
+            compactGlyphsOnly={compactGlyphsOnly}
+            fullFaceShown={
+              !props.airplaneMode &&
+              (props.mode === "tablet" || props.mode === "tv")
+            }
             mode={props.mode}
             projection={props.projection}
           />
@@ -2091,6 +2220,7 @@ export function TableSurface(props: TableSurfaceProps) {
             {...(bestCards ? { bestCards } : {})}
             board={props.projection.board}
             cardStyle={cardStyle}
+            compactGlyphsOnly={compactGlyphsOnly}
             minimal
           />
           <SeatGrid

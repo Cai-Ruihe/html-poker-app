@@ -3,10 +3,59 @@ import {
   expect,
   test,
   type BrowserContext,
+  type Locator,
   type Page,
   type TestInfo,
 } from "@playwright/test";
 import { exerciseControl } from "./control-qa";
+
+async function expectSvgFacesLoaded(images: Locator): Promise<void> {
+  await expect
+    .poll(
+      () =>
+        images.evaluateAll((elements) =>
+          elements.every((element) => {
+            const image = element as HTMLImageElement;
+            return (
+              image.complete &&
+              image.naturalWidth > 0 &&
+              image.naturalHeight > 0
+            );
+          }),
+        ),
+      { message: "SVG card faces should finish loading" },
+    )
+    .toBe(true);
+  const states = await images.evaluateAll((elements) =>
+    elements.map((element) => {
+      const image = element as HTMLImageElement;
+      return {
+        complete: image.complete,
+        naturalHeight: image.naturalHeight,
+        naturalWidth: image.naturalWidth,
+      };
+    }),
+  );
+  expect(states.length).toBeGreaterThan(0);
+  for (const state of states) {
+    expect(state.complete).toBe(true);
+    expect(state.naturalWidth).toBeGreaterThan(0);
+    expect(state.naturalHeight).toBeGreaterThan(0);
+  }
+}
+
+async function expectFiveBySevenCardGeometry(cards: Locator): Promise<void> {
+  const ratios = await cards.evaluateAll((elements) =>
+    elements.map((element) => {
+      const box = element.getBoundingClientRect();
+      return box.width / box.height;
+    }),
+  );
+  expect(ratios.length).toBeGreaterThan(0);
+  for (const ratio of ratios) {
+    expect(ratio).toBeCloseTo(5 / 7, 2);
+  }
+}
 
 async function joinPlayer(
   host: Page,
@@ -67,6 +116,35 @@ async function screenshotIfChromium(
     animations: "disabled",
     fullPage: true,
   });
+}
+
+async function screenshotEveryProject(page: Page, name: string): Promise<void> {
+  await page.evaluate(async () => document.fonts.ready);
+  const testInfo = test.info();
+  // The Android project supplies the required real-engine review evidence but
+  // does not inherit Apple/desktop pixel baselines. Its captures are attached
+  // for the user-facing cross-browser pack instead of being auto-approved.
+  if (testInfo.project.name === "mobile-chromium") {
+    const path = testInfo.outputPath(`${name}.png`);
+    await page.screenshot({ animations: "disabled", fullPage: true, path });
+    await testInfo.attach(name, { contentType: "image/png", path });
+    return;
+  }
+  await expect(page).toHaveScreenshot(`${name}.png`, {
+    animations: "disabled",
+    fullPage: true,
+  });
+}
+
+async function attachCompactCardReviewImage(
+  page: Page,
+  testInfo: TestInfo,
+  viewport: { readonly height: number; readonly width: number },
+): Promise<void> {
+  const name = `normal-compact-six-${testInfo.project.name}-${viewport.width}`;
+  const path = testInfo.outputPath(`${name}.png`);
+  await page.screenshot({ fullPage: true, path });
+  await testInfo.attach(name, { contentType: "image/png", path });
 }
 
 test("Home can open a pasted player invitation and exposes an in-page QR scanner", async ({
@@ -487,15 +565,21 @@ test("Phone host cards stay compact while Table View shown cards are full, and s
       const rankStyle = getComputedStyle(
         element.querySelector<HTMLElement>(".card__rank")!,
       );
+      const suitStyle = getComputedStyle(
+        element.querySelector<HTMLElement>(".card__corner-suit")!,
+      );
       return {
         decoration: getComputedStyle(element, "::after").content,
         height: element.getBoundingClientRect().height,
         rankSize: Number.parseFloat(rankStyle.fontSize),
+        suitSize: Number.parseFloat(suitStyle.fontSize),
         width: element.getBoundingClientRect().width,
       };
     });
     expect(compactStyle.height / compactStyle.width).toBeLessThan(1.35);
     expect(compactStyle.rankSize).toBeGreaterThanOrEqual(16);
+    expect(compactStyle.rankSize).toBeLessThanOrEqual(17);
+    expect(compactStyle.suitSize).toBeLessThanOrEqual(15);
     expect(compactStyle.decoration).toBe("none");
   }
   // Host Controls is a phone control surface: its five community cards use
@@ -517,8 +601,12 @@ test("Phone host cards stay compact while Table View shown cards are full, and s
         .getBoundingClientRect();
       return {
         cardCenter: cardBox.width / 2,
+        decoration: getComputedStyle(element, "::after").content,
+        decorationBorderWidth: getComputedStyle(element, "::after")
+          .borderTopWidth,
         rankCenter: rankBox.left + rankBox.width / 2 - cardBox.left,
         suitCenter: suitBox.left + suitBox.width / 2 - cardBox.left,
+        verticalGap: suitBox.top - rankBox.bottom,
       };
     });
     expect(Math.abs(hostGlyph.rankCenter - hostGlyph.cardCenter)).toBeLessThan(
@@ -527,6 +615,9 @@ test("Phone host cards stay compact while Table View shown cards are full, and s
     expect(Math.abs(hostGlyph.suitCenter - hostGlyph.cardCenter)).toBeLessThan(
       1,
     );
+    expect(hostGlyph.decoration).toBe('""');
+    expect(hostGlyph.decorationBorderWidth).toBe("1px");
+    expect(hostGlyph.verticalGap).toBeGreaterThanOrEqual(8);
   }
   expect(
     await host.evaluate(() =>
@@ -554,9 +645,14 @@ test("Phone host cards stay compact while Table View shown cards are full, and s
       return {
         rankSize: Number.parseFloat(getComputedStyle(rank).fontSize),
         suitSize: Number.parseFloat(getComputedStyle(suit).fontSize),
+        decoration: getComputedStyle(element, "::after").content,
+        decorationBorderWidth: getComputedStyle(element, "::after")
+          .borderTopWidth,
+        boxShadow: getComputedStyle(element).boxShadow,
         rankCenter: rankBox.left + rankBox.width / 2 - cardBox.left,
         suitCenter: suitBox.left + suitBox.width / 2 - cardBox.left,
         cardCenter: cardBox.width / 2,
+        verticalGap: suitBox.top - rankBox.bottom,
       };
     });
     expect(minimalFace.rankSize).toBeGreaterThanOrEqual(24);
@@ -567,6 +663,39 @@ test("Phone host cards stay compact while Table View shown cards are full, and s
     expect(
       Math.abs(minimalFace.suitCenter - minimalFace.cardCenter),
     ).toBeLessThan(1);
+    expect(minimalFace.decoration).toBe('""');
+    expect(minimalFace.decorationBorderWidth).toBe("1px");
+    expect(minimalFace.boxShadow).not.toContain("inset");
+    expect(minimalFace.verticalGap).toBeGreaterThanOrEqual(8);
+  }
+  for (const viewport of [
+    { height: 780, width: 360 },
+    { height: 852, width: 393 },
+    { height: 915, width: 412 },
+  ]) {
+    await alice.setViewportSize(viewport);
+    const geometries = await playerBoardCards.evaluateAll((cards) =>
+      cards.map((card) => {
+        const rank = card.querySelector<HTMLElement>(".card__rank")!;
+        const suit = card.querySelector<HTMLElement>(".card__corner-suit")!;
+        const rankBox = rank.getBoundingClientRect();
+        const suitBox = suit.getBoundingClientRect();
+        const cardBox = card.getBoundingClientRect();
+        return {
+          contained:
+            rankBox.top >= cardBox.top &&
+            suitBox.bottom <= cardBox.bottom &&
+            rankBox.left >= cardBox.left &&
+            suitBox.right <= cardBox.right,
+          verticalGap: suitBox.top - rankBox.bottom,
+        };
+      }),
+    );
+    expect(geometries).toHaveLength(5);
+    for (const geometry of geometries) {
+      expect(geometry.contained).toBe(true);
+      expect(geometry.verticalGap).toBeGreaterThanOrEqual(8);
+    }
   }
   const cardBoxes = await Promise.all(
     (await playerBoardCards.all()).map((card) => card.boundingBox()),
@@ -594,13 +723,10 @@ test("Phone host cards stay compact while Table View shown cards are full, and s
   expect(Number(glyphLayers[1]?.zIndex)).toBeGreaterThan(
     Number(glyphLayers[0]?.zIndex),
   );
-  await screenshotIfChromium(
-    alice,
-    testInfo,
-    "phone-player-board-minimal-cards",
-  );
+  await alice.setViewportSize({ height: 852, width: 393 });
+  await screenshotEveryProject(alice, "phone-player-board-minimal-cards");
 
-  await screenshotIfChromium(host, testInfo, "phone-host-showdown");
+  await screenshotEveryProject(host, "phone-host-showdown");
   const accessibility = await new AxeBuilder({ page: host }).analyze();
   expect(accessibility.violations).toEqual([]);
 
@@ -611,10 +737,10 @@ test("Phone host cards stay compact while Table View shown cards are full, and s
   await expect(rootControls).toBeVisible();
   await expect(
     rootControls.locator(".secondary-control-card__icon svg"),
-  ).toHaveCount(6);
+  ).toHaveCount(7);
   await expect(
     rootControls.locator(".secondary-control-card__icon"),
-  ).toHaveCount(6);
+  ).toHaveCount(7);
   const controlCenterIcons = rootControls.locator(
     ".secondary-control-card__icon",
   );
@@ -625,11 +751,15 @@ test("Phone host cards stay compact while Table View shown cards are full, and s
     "device",
     "diagnostics",
     "connection",
+    "dissolve",
   ]) {
     await expect(
       rootControls.locator(`[data-control-center-icon="${kind}"]`),
     ).toHaveCount(1);
   }
+  await expect(
+    rootControls.getByRole("button", { name: "Dissolve table" }),
+  ).toBeVisible();
   const iconSizes = await controlCenterIcons.evaluateAll((elements) =>
     elements.map((element) => {
       const style = getComputedStyle(element);
@@ -665,18 +795,13 @@ test("Phone host cards stay compact while Table View shown cards are full, and s
   await expect(quietCards).toHaveCount(2);
   const quietCardStyle = await quietCards.first().evaluate((element) => ({
     decoration: getComputedStyle(element, "::after").content,
-    rankSize: Number.parseFloat(
-      getComputedStyle(element.querySelector<HTMLElement>(".card__rank")!)
-        .fontSize,
-    ),
+    height: element.getBoundingClientRect().height,
+    width: element.getBoundingClientRect().width,
   }));
   expect(quietCardStyle.decoration).not.toBe("none");
-  expect(quietCardStyle.rankSize).toBeGreaterThanOrEqual(20);
-  await expect(
-    quietCards.first().locator(".card__corner--bottom"),
-  ).toBeVisible();
-  await expect(quietCards.first().locator(".card__pip")).toBeVisible();
-  await expect(quietCards.locator('[data-court-rank="K"]')).toBeVisible();
+  expect(quietCardStyle.height).toBeGreaterThan(quietCardStyle.width);
+  await expect(quietCards.locator(".card__face-svg")).toHaveCount(2);
+  await expectSvgFacesLoaded(quietCards.locator(".card__face-svg"));
   await screenshotIfChromium(host, testInfo, "tablet-private-card-status");
 });
 
@@ -790,7 +915,59 @@ test("DECK-APPEARANCE-001: Trusted Host synchronizes the built-in deck appearanc
     return Object.fromEntries(colours);
   }, expectedFourColour);
   expect(allSuitColours).toEqual(expectedFourColour);
-  await screenshotIfChromium(alice, testInfo, "phone-four-colour-deck");
+
+  // Normal Mode uses the approved full face set for private phone cards and
+  // the shared-table community rail. The compact phone board remains the
+  // intentionally separate rank-and-suit reading rail above.
+  const fourColourPrivateFaces = alice.locator(
+    ".private-hand [data-private-card]",
+  );
+  await expect(fourColourPrivateFaces).toHaveCount(2);
+  for (const privateFace of await fourColourPrivateFaces.all()) {
+    await expect(privateFace).toHaveClass(/card--svg-face/);
+  }
+  const fourColourPrivateSources = await fourColourPrivateFaces
+    .locator(".card__face-svg")
+    .evaluateAll((elements) =>
+      elements.map((element) => element.getAttribute("src")),
+    );
+  expect(fourColourPrivateSources).toHaveLength(2);
+  expect(
+    fourColourPrivateSources.every((src) =>
+      src?.includes("/four-colour/faces/"),
+    ),
+  ).toBe(true);
+  await expectSvgFacesLoaded(fourColourPrivateFaces.locator(".card__face-svg"));
+  await expectFiveBySevenCardGeometry(fourColourPrivateFaces);
+
+  await controlCenter
+    .getByRole("button", { name: "Close table control center" })
+    .click();
+  await host.getByRole("button", { name: "Table View" }).click();
+  const fourColourTableFaces = host.locator(".public-table [data-board-card]");
+  await expect(fourColourTableFaces).toHaveCount(5);
+  for (const tableFace of await fourColourTableFaces.all()) {
+    await expect(tableFace).toHaveClass(/card--svg-face/);
+  }
+  await expect(fourColourTableFaces.locator(".card__face-svg")).toHaveCount(5);
+  const fourColourTableSources = await fourColourTableFaces
+    .locator(".card__face-svg")
+    .evaluateAll((elements) =>
+      elements.map((element) => element.getAttribute("src")),
+    );
+  expect(
+    fourColourTableSources.every((src) => src?.includes("/four-colour/faces/")),
+  ).toBe(true);
+  await expectSvgFacesLoaded(fourColourTableFaces.locator(".card__face-svg"));
+  await expectFiveBySevenCardGeometry(fourColourTableFaces);
+  await host
+    .getByRole("button", { name: "Open table controls from lower right" })
+    .click();
+  await host.getByRole("button", { name: "More table controls" }).click();
+  await host.getByRole("button", { name: "Host Controls" }).click();
+  await host.getByRole("button", { name: "Open table control center" }).click();
+  await expect(controlCenter).toBeVisible();
+  await screenshotEveryProject(alice, "phone-four-colour-deck");
 
   await exerciseControl(
     "card-style-classic",
@@ -819,7 +996,104 @@ test("DECK-APPEARANCE-001: Trusted Host synchronizes the built-in deck appearanc
   await expect(
     alice.locator(".player-board [data-board-card] .card__pip").first(),
   ).toBeHidden();
+  const classicPrivateSources = await alice
+    .locator(".private-hand [data-private-card] .card__face-svg")
+    .evaluateAll((elements) =>
+      elements.map((element) => element.getAttribute("src")),
+    );
+  expect(classicPrivateSources).toHaveLength(2);
+  expect(
+    classicPrivateSources.every((src) => src?.includes("/classic/faces/")),
+  ).toBe(true);
+  await expectSvgFacesLoaded(
+    alice.locator(".private-hand [data-private-card] .card__face-svg"),
+  );
   await screenshotIfChromium(alice, testInfo, "phone-deck-appearance");
+});
+
+test("PHONE-CROSS-BROWSER-CARD-001: the actual Normal Mode six shares the compact group baseline", async ({
+  context,
+  page: host,
+}, testInfo: TestInfo) => {
+  await host.addInitScript(() => {
+    // The resulting board is A♣, Q♣, 9♠, 5♦, 6♥. Only one-byte Card Custody
+    // randomness is controlled, so unrelated browser/runtime entropy cannot
+    // perturb this real application fixture.
+    let nextByte = 31;
+    Object.defineProperty(globalThis.crypto, "getRandomValues", {
+      configurable: true,
+      value: <T extends ArrayBufferView>(values: T): T => {
+        const bytes = new Uint8Array(
+          values.buffer,
+          values.byteOffset,
+          values.byteLength,
+        );
+        if (bytes.length !== 1) return values;
+        bytes[0] = nextByte;
+        nextByte = (nextByte + 1) % 251;
+        return values;
+      },
+    });
+  });
+  const { alice } = await createTable(host, context);
+  await host.getByRole("button", { name: "Deal the flop" }).click();
+  await host.getByRole("button", { name: "Deal the turn" }).click();
+  await host.getByRole("button", { name: "Deal the river" }).click();
+
+  const expectedBoard = ["Ac", "Qc", "9s", "5d", "6h"];
+  const viewports = [
+    { height: 780, width: 360 },
+    { height: 852, width: 393 },
+    { height: 915, width: 412 },
+  ];
+  for (const viewport of viewports) {
+    await host.setViewportSize(viewport);
+    await alice.setViewportSize(viewport);
+    for (const [surface, cards] of [
+      ["Host Controls", host.locator(".public-table [data-board-card]")],
+      ["Player", alice.locator(".player-board [data-board-card]")],
+    ] as const) {
+      await expect(cards).toHaveCount(5);
+      const metrics = await cards.evaluateAll((elements) =>
+        elements.map((element) => {
+          const card = element.getBoundingClientRect();
+          const group =
+            element.querySelector<HTMLElement>(".card__corner--top")!;
+          const groupBox = group.getBoundingClientRect();
+          return {
+            card: element.getAttribute("data-card"),
+            courtFaces: element.querySelectorAll(".card__court").length,
+            fullFaceImages: element.querySelectorAll(".card__face-svg").length,
+            groupOffset: groupBox.top - card.top,
+            groupTransform: getComputedStyle(group).transform,
+          };
+        }),
+      );
+      expect(metrics.map((metric) => metric.card)).toEqual(expectedBoard);
+      expect(metrics.every((metric) => metric.courtFaces === 0)).toBe(true);
+      expect(metrics.every((metric) => metric.fullFaceImages === 0)).toBe(true);
+      const six = metrics.find((metric) => metric.card === "6h");
+      const otherOffsets = metrics
+        .filter((metric) => metric.card !== "6h")
+        .map((metric) => metric.groupOffset);
+      if (!six || otherOffsets.length !== 4) {
+        throw new Error(
+          `${surface} did not render the deterministic six card.`,
+        );
+      }
+      expect(six.groupTransform).toBe("none");
+      for (const offset of otherOffsets) {
+        expect(Math.abs(six.groupOffset - offset)).toBeLessThanOrEqual(0.1);
+      }
+    }
+    await attachCompactCardReviewImage(alice, testInfo, viewport);
+  }
+
+  await alice.getByRole("button", { name: "Show cards to table" }).click();
+  const compactCourt = host.locator('.mini-hand [data-card="Jd"]');
+  await expect(compactCourt).toHaveCount(1);
+  await expect(compactCourt.locator(".card__court")).toHaveCount(0);
+  await expect(compactCourt.locator(".card__face-svg")).toHaveCount(0);
 });
 
 test("registered phone, tablet, desktop, and TV viewports remain free of clipping and horizontal overflow", async ({
@@ -896,4 +1170,43 @@ test("registered phone, tablet, desktop, and TV viewports remain free of clippin
       }
     }
   }
+});
+
+test("Trusted Host can dissolve a table and its saved authority cannot be recovered", async ({
+  context,
+  page: host,
+}) => {
+  const { alice } = await createTable(host, context);
+  const recoveryUrl = host.url();
+
+  await host.getByRole("button", { name: "Open table control center" }).click();
+  const dissolve = host.getByRole("button", { name: "Dissolve table" });
+  await expect(dissolve).toBeVisible();
+  await exerciseControl(
+    "host-dissolve-table",
+    dissolve,
+    async (target) => {
+      host.once("dialog", (dialog) => dialog.accept());
+      await target.click();
+    },
+    () =>
+      expect(host.getByRole("button", { name: "Create table" })).toBeVisible(),
+  );
+  expect(new URL(host.url()).hash).toBe("");
+  await expect
+    .poll(() =>
+      alice.getByRole("button", { name: "Reconnect to table" }).isVisible(),
+    )
+    .toBe(true);
+
+  const staleHost = await context.newPage();
+  await staleHost.goto(recoveryUrl);
+  await expect(
+    staleHost.getByRole("heading", {
+      name: "This saved table cannot be opened",
+    }),
+  ).toBeVisible();
+  await expect(
+    staleHost.getByText("No saved Trusted Host table was found."),
+  ).toBeVisible();
 });

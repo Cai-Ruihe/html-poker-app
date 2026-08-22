@@ -17,6 +17,7 @@ export interface AtomicTableStore<State> {
     next: VersionedRecord<State>,
   ): Promise<CommitResult>;
   load(): Promise<VersionedRecord<State> | undefined>;
+  remove(): Promise<void>;
 }
 
 export function createMemoryTableStore<State>(): AtomicTableStore<State> {
@@ -33,6 +34,9 @@ export function createMemoryTableStore<State>(): AtomicTableStore<State> {
     },
     async load() {
       return current ? structuredClone(current) : undefined;
+    },
+    async remove() {
+      current = undefined;
     },
   };
 }
@@ -267,6 +271,17 @@ export function createIndexedDbTableStore<State>(
         );
       }
       return structuredClone(parsed);
+    },
+    async remove() {
+      const database = await databasePromise;
+      const transaction = database.transaction(
+        ["records", "vault"],
+        "readwrite",
+      );
+      const finished = transactionFinished(transaction);
+      transaction.objectStore("records").delete(options.recordKey);
+      transaction.objectStore("vault").delete(`table-key:${options.recordKey}`);
+      await finished;
     },
   };
 }

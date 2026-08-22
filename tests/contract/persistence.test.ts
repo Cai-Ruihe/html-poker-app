@@ -31,4 +31,15 @@ describe("in-memory atomic table store", () => {
       store.commit(0, { revision: 2, state: { value: 2 } }),
     ).resolves.toEqual({ actualRevision: 1, status: "revision-conflict" });
   });
+
+  it("removes a dissolved table so it cannot be recovered", async () => {
+    const store = createMemoryTableStore<{ value: number }>();
+    await store.commit(0, { revision: 1, state: { value: 1 } });
+
+    await expect(store.remove()).resolves.toBeUndefined();
+    await expect(store.load()).resolves.toBeUndefined();
+    await expect(
+      store.commit(0, { revision: 1, state: { value: 2 } }),
+    ).resolves.toEqual({ status: "committed" });
+  });
 });

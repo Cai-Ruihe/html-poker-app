@@ -1139,37 +1139,155 @@ button:disabled {
   gap: 0.35rem;
 }
 
-.roster ol {
+.roster-map-copy {
   display: grid;
-  gap: 0;
+  gap: 0.18rem;
+  margin-top: 1rem;
+}
+
+.roster-map-copy strong {
+  color: var(--ink);
+  font-size: 0.82rem;
+}
+
+.roster-map-copy span {
+  color: var(--quiet);
+  font-size: 0.68rem;
+}
+
+.roster-table-map {
+  position: relative;
+  min-height: 21.5rem;
+  margin: 0.8rem 0 0;
+  border: 1px solid var(--rule);
+  border-radius: 1.15rem;
+  padding: 0;
+  background:
+    radial-gradient(
+      circle at 50% 46%,
+      rgba(213, 181, 99, 0.08),
+      transparent 42%
+    ),
+    color-mix(in srgb, var(--surface) 85%, var(--canvas));
+  list-style: none;
+}
+
+.roster-table-map::before {
+  position: absolute;
+  inset: 4.4rem 6.1rem;
+  border: 1px solid color-mix(in srgb, var(--green) 30%, transparent);
+  border-radius: 0.85rem;
+  content: "";
+}
+
+.roster-table-map__seat {
+  position: absolute;
+  z-index: 2;
+  width: 5.7rem;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.roster li {
-  display: grid;
-  grid-template-columns: 2rem 1fr auto;
-  align-items: center;
-  gap: 0.65rem;
-  border-bottom: 1px solid var(--rule);
-  padding: 0.85rem 0;
+.roster-table-map__seat--0 {
+  top: 0.65rem;
+  left: 28%;
+  transform: translateX(-50%);
 }
 
-.roster li > span {
+.roster-table-map__seat--1 {
+  top: 0.65rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.roster-table-map__seat--2 {
+  top: 0.65rem;
+  left: 72%;
+  transform: translateX(-50%);
+}
+
+.roster-table-map__seat--3 {
+  top: 31%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+}
+
+.roster-table-map__seat--4 {
+  top: 69%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+}
+
+.roster-table-map__seat--5 {
+  bottom: 0.65rem;
+  left: 72%;
+  transform: translateX(-50%);
+}
+
+.roster-table-map__seat--6 {
+  bottom: 0.65rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.roster-table-map__seat--7 {
+  bottom: 0.65rem;
+  left: 28%;
+  transform: translateX(-50%);
+}
+
+.roster-table-map__seat--8 {
+  top: 69%;
+  left: 0.5rem;
+  transform: translateY(-50%);
+}
+
+.roster-table-map__seat--9 {
+  top: 31%;
+  left: 0.5rem;
+  transform: translateY(-50%);
+}
+
+.roster-map-seat-button {
+  min-height: 3rem;
+  width: 100%;
   display: grid;
-  width: 1.6rem;
+  grid-template-columns: 1.5rem 1fr;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 0.7rem;
+  padding: 0.58rem;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  box-shadow: 0 0.45rem 1.2rem rgba(15, 31, 27, 0.08);
+  cursor: pointer;
+  text-align: left;
+}
+
+.roster-map-seat-button[aria-pressed="true"] {
+  border-color: var(--gold);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--gold) 22%, transparent),
+    0 0.55rem 1.35rem rgba(15, 31, 27, 0.12);
+}
+
+.roster-map-seat-button > span:first-child {
+  display: grid;
+  width: 1.45rem;
   aspect-ratio: 1;
   place-items: center;
-  border: 1px solid var(--rule-strong);
+  border: 1px solid var(--gold);
   border-radius: 50%;
-  color: var(--quiet);
+  color: var(--green);
   font-size: 0.65rem;
+  font-weight: 760;
 }
 
-.roster li strong {
+.roster-map-seat-button strong {
   overflow: hidden;
-  font-size: 0.82rem;
+  font-size: 0.74rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1180,6 +1298,69 @@ button:disabled {
   gap: 0.12rem;
 }
 
+.roster-table-map__centre {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: 8rem;
+  display: grid;
+  justify-items: center;
+  gap: 0.42rem;
+  color: var(--quiet);
+  transform: translate(-50%, -50%);
+  font-size: 0.58rem;
+  font-weight: 720;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.roster-table-map__community-cards {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.18rem;
+  width: 6.2rem;
+  height: 2.1rem;
+}
+
+.roster-table-map__community-cards span {
+  display: block;
+  width: 0.92rem;
+  height: 1.35rem;
+  border: 1px solid color-mix(in srgb, var(--green) 46%, var(--rule));
+  border-radius: 0.2rem;
+  background: transparent;
+}
+
+.roster-seat-detail {
+  display: grid;
+  grid-template-columns: minmax(7rem, 0.7fr) 1.3fr;
+  align-items: center;
+  gap: 0.9rem;
+  margin-top: 0.75rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 0.8rem;
+  padding: 0.85rem;
+  background: var(--surface);
+}
+
+.roster-seat-detail > div:first-child {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.roster-seat-detail > div:first-child span,
+.roster-seat-detail > div:first-child small {
+  color: var(--quiet);
+  font-size: 0.62rem;
+  text-transform: capitalize;
+}
+
+.roster-seat-detail > div:first-child strong {
+  font-size: 0.86rem;
+}
+
 .roster-seat-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1188,13 +1369,14 @@ button:disabled {
 }
 
 .roster-seat-actions button {
+  min-height: 2.75rem;
   border: 1px solid var(--rule);
   border-radius: 0.35rem;
-  padding: 0.32rem 0.42rem;
+  padding: 0.48rem 0.62rem;
   color: var(--ink-soft);
   background: var(--surface);
   cursor: pointer;
-  font-size: 0.58rem;
+  font-size: 0.64rem;
   font-weight: 680;
 }
 
@@ -1203,10 +1385,42 @@ button:disabled {
   opacity: 0.35;
 }
 
-.roster li small {
+.roster-map-seat-button small {
+  overflow: hidden;
   color: var(--quiet);
-  font-size: 0.66rem;
+  font-size: 0.58rem;
+  text-overflow: ellipsis;
   text-transform: capitalize;
+  white-space: nowrap;
+}
+
+@media (max-width: 30rem) {
+  .roster-table-map {
+    min-height: 19rem;
+  }
+
+  .roster-table-map::before {
+    inset: 4.1rem 5.4rem;
+  }
+
+  .roster-table-map__seat {
+    width: 5.55rem;
+  }
+
+  .roster-map-seat-button {
+    grid-template-columns: 1.25rem 1fr;
+    gap: 0.34rem;
+    padding: 0.48rem;
+  }
+
+  .roster-map-seat-button > span:first-child {
+    width: 1.22rem;
+    font-size: 0.56rem;
+  }
+
+  .roster-seat-detail {
+    grid-template-columns: 1fr;
+  }
 }
 
 .empty-roster {

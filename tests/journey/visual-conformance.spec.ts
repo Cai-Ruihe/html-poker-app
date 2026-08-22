@@ -61,6 +61,29 @@ function expectNear(
   ).toBeLessThanOrEqual(tolerance);
 }
 
+function boxesOverlap(
+  first: {
+    readonly height: number;
+    readonly width: number;
+    readonly x: number;
+    readonly y: number;
+  },
+  second: {
+    readonly height: number;
+    readonly width: number;
+    readonly x: number;
+    readonly y: number;
+  },
+  clearance = 0,
+): boolean {
+  return (
+    first.x - clearance < second.x + second.width &&
+    first.x + first.width + clearance > second.x &&
+    first.y - clearance < second.y + second.height &&
+    first.y + first.height + clearance > second.y
+  );
+}
+
 async function openCorner(
   host: Page,
   corner: "lower left" | "lower right" | "upper left" | "upper right",
@@ -129,6 +152,15 @@ async function installDeterministicEntropy(page: Page): Promise<void> {
         return values;
       },
     });
+    let uuidCounter = 1;
+    Object.defineProperty(globalThis.crypto, "randomUUID", {
+      configurable: true,
+      value: (): `${string}-${string}-${string}-${string}-${string}` => {
+        const suffix = uuidCounter.toString(16).padStart(12, "0");
+        uuidCounter += 1;
+        return `00000000-0000-4000-8000-${suffix}`;
+      },
+    });
   });
 }
 
@@ -137,6 +169,96 @@ async function prepareScreenshot(page: Page): Promise<void> {
     content: "*{caret-color:transparent!important}",
   });
   await page.evaluate(async () => document.fonts.ready);
+}
+
+async function expectRosterMapGeometry(
+  administration: Locator,
+  expectedCount: number,
+): Promise<void> {
+  const seatMap = administration.locator(".roster-table-map");
+  const seatButtons = seatMap.locator('[data-qa-control="roster-map-seat"]');
+  await expect(seatButtons).toHaveCount(expectedCount);
+  const communityCards = seatMap.locator(
+    ".roster-table-map__community-cards > span",
+  );
+  await expect(
+    communityCards,
+    "management map identifies the community-card area with five card outlines",
+  ).toHaveCount(5);
+  const centreChildren = seatMap.locator(".roster-table-map__centre > *");
+  await expect(centreChildren.nth(0)).toHaveClass(
+    "roster-table-map__community-cards",
+  );
+  await expect(centreChildren.nth(1)).toHaveText("Community cards");
+  const mapBox = await box(seatMap);
+  expect(
+    mapBox.width,
+    "management map mirrors a landscape rectangular table",
+  ).toBeGreaterThan(mapBox.height);
+  const mapRadius = await seatMap.evaluate((element) =>
+    Number.parseFloat(getComputedStyle(element).borderTopLeftRadius),
+  );
+  expect(
+    mapRadius,
+    "management map must not regress to an oval table",
+  ).toBeLessThanOrEqual(24);
+  const buttonLocators = await seatButtons.all();
+  const buttonBoxes = await Promise.all(
+    buttonLocators.map((button) => box(button)),
+  );
+  for (const [index, buttonBox] of buttonBoxes.entries()) {
+    expect(
+      buttonBox.width,
+      `map seat ${index + 1} touch width`,
+    ).toBeGreaterThanOrEqual(44);
+    expect(
+      buttonBox.height,
+      `map seat ${index + 1} touch height`,
+    ).toBeGreaterThanOrEqual(44);
+    expect(buttonBox.x).toBeGreaterThanOrEqual(mapBox.x - 1);
+    expect(buttonBox.y).toBeGreaterThanOrEqual(mapBox.y - 1);
+    expect(buttonBox.x + buttonBox.width).toBeLessThanOrEqual(
+      mapBox.x + mapBox.width + 1,
+    );
+    expect(buttonBox.y + buttonBox.height).toBeLessThanOrEqual(
+      mapBox.y + mapBox.height + 1,
+    );
+  }
+  for (let first = 0; first < buttonBoxes.length; first += 1) {
+    for (let second = first + 1; second < buttonBoxes.length; second += 1) {
+      expect(
+        boxesOverlap(buttonBoxes[first]!, buttonBoxes[second]!),
+        `management map seats ${first + 1} and ${second + 1} must not overlap`,
+      ).toBe(false);
+    }
+  }
+  const actualPositions = await seatMap
+    .locator("[data-table-edge-position]")
+    .evaluateAll((seats) =>
+      seats.map((seat) =>
+        Number(seat.getAttribute("data-table-edge-position")),
+      ),
+    );
+  const expectedPositions = Array.from({ length: expectedCount }, (_, index) =>
+    expectedCount <= 1 ? 5 : Math.round((index * 10) / expectedCount) % 10,
+  );
+  expect(actualPositions).toEqual(expectedPositions);
+  const upright = await seatButtons.evaluateAll((buttons) =>
+    buttons.every((button) => {
+      const transform = getComputedStyle(button).transform;
+      if (transform === "none") return true;
+      const matrix = new DOMMatrixReadOnly(transform);
+      return (
+        Math.abs(matrix.b) < 0.01 &&
+        Math.abs(matrix.c) < 0.01 &&
+        matrix.a > 0 &&
+        matrix.d > 0
+      );
+    }),
+  );
+  expect(upright, "every management-map player label remains upright").toBe(
+    true,
+  );
 }
 
 async function screenshotIfChromium(
@@ -160,15 +282,38 @@ async function screenshotIfChromium(
   });
 }
 
+async function screenshotLocatorIfChromium(
+  locator: Locator,
+  testInfo: TestInfo,
+  name: string,
+): Promise<void> {
+  if (testInfo.project.name !== "chromium") return;
+  await locator.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
+  );
+  await expect(locator).toHaveScreenshot(`${name}.png`, {
+    animations: "disabled",
+  });
+}
+
 test("Tablet quiet and quick-control states conform to approved geometry", async ({
   context,
   page: host,
 }, testInfo) => {
   await installDeterministicEntropy(host);
   await createTable(host, context);
-  await host.getByRole("button", { name: "Deal the flop" }).click();
-  await host.getByRole("button", { name: "Deal the turn" }).click();
-  await host.getByRole("button", { name: "Deal the river" }).click();
+  for (const actionName of [
+    "Deal the flop",
+    "Deal the turn",
+    "Deal the river",
+  ]) {
+    const action = host.getByRole("button", { name: actionName });
+    await expect(action).toBeEnabled();
+    await action.click();
+  }
   await host.getByRole("button", { name: "Table View" }).click();
 
   await expect(host.locator("[data-table-corner]")).toHaveCount(4);
@@ -423,23 +568,64 @@ test("Tablet quiet and quick-control states conform to approved geometry", async
   await screenshotIfChromium(host, testInfo, "tablet-quiet-deep-navy");
 });
 
-test("quiet seat status follows its physical side and a shown hand remains large and aligned", async ({
+test("Tablet and TV keep ten simultaneous shown hands large, distinct, and clear of the board", async ({
   context,
   page: host,
 }, testInfo) => {
+  test.skip(
+    testInfo.project.name === "mobile-webkit",
+    "The iPhone-WebKit profile covers phone journeys; it cannot represent a wall TV plus ten live device sessions in one browser context.",
+  );
+  test.setTimeout(60_000);
   await installDeterministicEntropy(host);
   await host.setViewportSize(referenceViewport);
   await host.goto("/");
   await host.getByRole("button", { name: "Create table" }).click();
-  const alice = await joinPlayer(host, context, "Alice");
-  const bob = await joinPlayer(host, context, "Bob");
-  await joinPlayer(host, context, "Carol");
+  await host.getByRole("button", { name: "Create TV link" }).click();
+  const tvUrl = await host.getByLabel("TV invitation link").inputValue();
+  const players: Page[] = [];
+  // Seat joins are authoritative commits, so serialize them. Parallel joins
+  // intentionally exercise the revision-conflict path and are not a stable
+  // way to construct this visual fixture.
+  for (const name of [
+    "Alice",
+    "Bob",
+    "Carol",
+    "Dana",
+    "Evan",
+    "Faye",
+    "Gus",
+    "Hana",
+    "Ivan",
+    "Jules",
+  ]) {
+    players.push(await joinPlayer(host, context, name));
+    if (players.length === 6) {
+      const roster = host.locator(".roster");
+      await roster.scrollIntoViewIfNeeded();
+      await expectRosterMapGeometry(roster, 6);
+      await screenshotLocatorIfChromium(
+        roster,
+        testInfo,
+        "host-manage-six-spatial-seats",
+      );
+    }
+  }
+  const tenPlayerRoster = host.locator(".roster");
+  await tenPlayerRoster.scrollIntoViewIfNeeded();
+  await expectRosterMapGeometry(tenPlayerRoster, 10);
+  await screenshotLocatorIfChromium(
+    tenPlayerRoster,
+    testInfo,
+    "host-manage-ten-spatial-seats",
+  );
   await host.getByRole("button", { name: "Deal first hand" }).click();
   await host.getByRole("button", { name: "Deal the flop" }).click();
   await host.getByRole("button", { name: "Deal the turn" }).click();
   await host.getByRole("button", { name: "Deal the river" }).click();
-  await alice.getByRole("button", { name: "Show cards to table" }).click();
-  await bob.getByRole("button", { name: "Show cards to table" }).click();
+  for (const player of players) {
+    await player.getByRole("button", { name: "Show cards to table" }).click();
+  }
   await host.getByRole("button", { name: "Table View" }).click();
 
   const sideGlyph = host.locator(
@@ -460,82 +646,159 @@ test("quiet seat status follows its physical side and a shown hand remains large
     ).not.toBe("none");
   }
 
-  const shownCards = host.locator(".quiet-shown-hand .card--quiet-shown");
-  await expect(shownCards).toHaveCount(4);
-  const firstShown = await box(shownCards.first());
-  expect(firstShown.width).toBeGreaterThanOrEqual(100);
-  const firstHand = host.locator(".quiet-shown-hand").first();
-  const handCards = firstHand.locator(".card--quiet-shown");
-  const firstHandCard = await box(handCards.nth(0));
-  const secondHandCard = await box(handCards.nth(1));
-  expect(
-    Math.abs(secondHandCard.x - firstHandCard.x),
-    "shown cards must not overlap at a physical table edge",
-  ).toBeGreaterThanOrEqual(firstHandCard.width + 5);
-  const shownHandBoxes = await Promise.all(
-    (await host.locator(".quiet-shown-hand").all()).map((hand) => box(hand)),
-  );
-  for (let index = 1; index < shownHandBoxes.length; index += 1) {
-    const earlier = shownHandBoxes[index - 1];
-    const later = shownHandBoxes[index];
-    if (!earlier || !later) throw new Error("Shown hand did not render.");
-    const handsOverlap =
-      earlier.x < later.x + later.width &&
-      earlier.x + earlier.width > later.x &&
-      earlier.y < later.y + later.height &&
-      earlier.y + earlier.height > later.y;
-    expect(handsOverlap, "shown hands must retain separate table edges").toBe(
-      false,
-    );
-  }
-  const boardCards = await host.locator("[data-board-card]").all();
-  const boardRail = host.locator(".public-table--quiet .dealer-rail");
-  await expect(boardRail).toBeVisible();
-  expect(
-    await boardRail.evaluate((element) => getComputedStyle(element).opacity),
-    "the unchanged community board must remain visually present at showdown",
-  ).toBe("1");
-  const boardRailBox = await box(boardRail);
-  expect(
-    boardRailBox.y,
-    "the unchanged community board remains inside the physical table viewport",
-  ).toBeGreaterThanOrEqual(180);
-  expect(
-    boardRailBox.y + boardRailBox.height,
-    "the unchanged community board remains inside the physical table viewport",
-  ).toBeLessThanOrEqual(760);
-  for (const shownCard of await shownCards.all()) {
-    const shownBox = await box(shownCard);
-    expect(
-      shownBox.x,
-      "shown cards stay inside the table viewport",
-    ).toBeGreaterThanOrEqual(0);
-    expect(
-      shownBox.y,
-      "shown cards stay inside the table viewport",
-    ).toBeGreaterThanOrEqual(0);
-    expect(
-      shownBox.x + shownBox.width,
-      "shown cards stay inside the table viewport",
-    ).toBeLessThanOrEqual(referenceViewport.width);
-    expect(
-      shownBox.y + shownBox.height,
-      "shown cards stay inside the table viewport",
-    ).toBeLessThanOrEqual(referenceViewport.height);
-    for (const boardCard of boardCards) {
-      const boardBox = await box(boardCard);
-      const overlaps =
-        shownBox.x < boardBox.x + boardBox.width &&
-        shownBox.x + shownBox.width > boardBox.x &&
-        shownBox.y < boardBox.y + boardBox.height &&
-        shownBox.y + shownBox.height > boardBox.y;
-      expect(overlaps, "shown cards must not cover community cards").toBe(
-        false,
+  async function expectTenHandGeometry(
+    surface: Page,
+    viewport: { readonly height: number; readonly width: number },
+    layout: "tablet" | "tv",
+  ): Promise<void> {
+    const shownCards = surface.locator(".quiet-shown-hand .card--quiet-shown");
+    await expect(surface.locator(".quiet-shown-hand")).toHaveCount(10);
+    await expect(shownCards).toHaveCount(20);
+    await expect(shownCards.locator(".card__face-svg")).toHaveCount(20);
+    const facesLoaded = await shownCards
+      .locator(".card__face-svg")
+      .evaluateAll((images) =>
+        images.every(
+          (image) =>
+            image instanceof HTMLImageElement &&
+            image.complete &&
+            image.naturalWidth > 0 &&
+            image.naturalHeight > 0,
+        ),
       );
+    expect(facesLoaded, "all twenty full SVG shown cards must load").toBe(true);
+
+    const shownBoxes = await Promise.all(
+      (await shownCards.all()).map((card) => box(card)),
+    );
+    for (const shownBox of shownBoxes) {
+      expect(
+        Math.min(shownBox.width, shownBox.height),
+        "shown cards use the larger quiet-table face",
+      ).toBeGreaterThanOrEqual(90);
+      expect(shownBox.x, "shown card left edge").toBeGreaterThanOrEqual(0);
+      expect(shownBox.y, "shown card top edge").toBeGreaterThanOrEqual(0);
+      expect(
+        shownBox.x + shownBox.width,
+        "shown card right edge",
+      ).toBeLessThanOrEqual(viewport.width);
+      expect(
+        shownBox.y + shownBox.height,
+        "shown card bottom edge",
+      ).toBeLessThanOrEqual(viewport.height);
+      if (layout === "tv") {
+        expect(
+          shownBox.height,
+          "wall-mounted TV shown cards stay upright",
+        ).toBeGreaterThan(shownBox.width);
+      }
+    }
+    for (let first = 0; first < shownBoxes.length; first += 1) {
+      for (let second = first + 1; second < shownBoxes.length; second += 1) {
+        const earlier = shownBoxes[first]!;
+        const later = shownBoxes[second]!;
+        const overlaps = boxesOverlap(earlier, later);
+        expect(
+          overlaps,
+          `shown card ${first + 1} must not overlap shown card ${second + 1}`,
+        ).toBe(false);
+      }
+    }
+
+    const boardCards = surface.locator("[data-board-card]");
+    await expect(boardCards).toHaveCount(5);
+    await expect(boardCards.locator(".card__face-svg")).toHaveCount(5);
+    const boardBoxes = await Promise.all(
+      (await boardCards.all()).map((card) => box(card)),
+    );
+    for (let shownIndex = 0; shownIndex < shownBoxes.length; shownIndex += 1) {
+      const shownBox = shownBoxes[shownIndex]!;
+      for (
+        let boardIndex = 0;
+        boardIndex < boardBoxes.length;
+        boardIndex += 1
+      ) {
+        const boardBox = boardBoxes[boardIndex]!;
+        const overlaps = boxesOverlap(shownBox, boardBox);
+        expect(
+          overlaps,
+          `shown card ${shownIndex + 1} must not cover community card ${boardIndex + 1}`,
+        ).toBe(false);
+      }
+    }
+
+    const seatIndicators = surface.locator(
+      "[data-seat-status-glyph], .position-token",
+    );
+    await expect(seatIndicators).toHaveCount(13);
+    const indicatorLocators = await seatIndicators.all();
+    const indicatorBoxes = await Promise.all(
+      indicatorLocators.map((indicator) => box(indicator)),
+    );
+    const indicatorLabels = await Promise.all(
+      indicatorLocators.map((indicator) =>
+        indicator.evaluate((element) => {
+          const seat = element.closest("[data-seat-id]");
+          const seatId = seat?.getAttribute("data-seat-id") ?? "unknown-seat";
+          const kind = element.classList.contains("position-token")
+            ? element.textContent?.trim() || "position"
+            : "status";
+          return `${seatId}:${kind}`;
+        }),
+      ),
+    );
+    for (let shownIndex = 0; shownIndex < shownBoxes.length; shownIndex += 1) {
+      const shownBox = shownBoxes[shownIndex]!;
+      for (
+        let indicatorIndex = 0;
+        indicatorIndex < indicatorBoxes.length;
+        indicatorIndex += 1
+      ) {
+        expect(
+          boxesOverlap(shownBox, indicatorBoxes[indicatorIndex]!, 4),
+          `shown card ${shownIndex + 1} must keep clear of ${indicatorLabels[indicatorIndex]}`,
+        ).toBe(false);
+      }
+    }
+
+    if (layout === "tv") {
+      const orientations = await surface
+        .locator(".seat-edge-status")
+        .evaluateAll((seats) =>
+          seats.map((seat) => {
+            const transform = getComputedStyle(seat).transform;
+            if (transform === "none") return true;
+            const matrix = new DOMMatrixReadOnly(transform);
+            return (
+              Math.abs(matrix.b) < 0.01 &&
+              Math.abs(matrix.c) < 0.01 &&
+              matrix.a > 0 &&
+              matrix.d > 0
+            );
+          }),
+        );
+      expect(
+        orientations.every(Boolean),
+        "every TV seat, card, role, and status indicator faces the wall viewer",
+      ).toBe(true);
     }
   }
+
+  await expectTenHandGeometry(host, referenceViewport, "tablet");
   await prepareScreenshot(host);
-  await screenshotIfChromium(host, testInfo, "tablet-shown-hands");
+  await screenshotIfChromium(host, testInfo, "tablet-ten-player-shown-hands");
+
+  const tv = await context.newPage();
+  const tvViewport = { height: 1_080, width: 1_920 };
+  await tv.setViewportSize(tvViewport);
+  // Mobile WebKit can keep the full-page load event open for non-critical
+  // resources when the ten-seat fixture has several role pages. The rendered
+  // public-table heading below is the relevant readiness signal.
+  await tv.goto(tvUrl, { waitUntil: "commit" });
+  await expect(tv.getByRole("heading", { name: "Public table" })).toBeVisible();
+  await expectTenHandGeometry(tv, tvViewport, "tv");
+  await prepareScreenshot(tv);
+  await screenshotIfChromium(tv, testInfo, "tv-ten-player-shown-hands");
 });
 
 test("Tablet showdown preserves the quiet board geometry and places the result note directly below it", async ({
@@ -697,14 +960,33 @@ test("every host Tablet secondary action is exercised and player administration 
   await expect(
     roster.getByRole("button", { name: "Close join window" }),
   ).toBeVisible();
+  const seatMap = roster.locator(".roster-table-map");
+  await expect(seatMap).toBeVisible();
+  await expect(
+    seatMap.getByRole("button", { name: /^Seat 1, Alice,/u }),
+  ).toBeVisible();
+  await expect(
+    seatMap.getByRole("button", { name: /^Seat 2, Bob,/u }),
+  ).toBeVisible();
+  const aliceMapBox = await box(
+    seatMap.getByRole("button", { name: /^Seat 1, Alice,/u }),
+  );
+  const bobMapBox = await box(
+    seatMap.getByRole("button", { name: /^Seat 2, Bob,/u }),
+  );
+  expect(
+    Math.abs(aliceMapBox.y - bobMapBox.y),
+    "two players must occupy visibly different table edges rather than an abstract number list",
+  ).toBeGreaterThan(120);
   await expect(
     roster.getByRole("button", { name: "Replace device" }),
-  ).toHaveCount(2);
+  ).toHaveCount(1);
   expect((await box(roster)).y).toBeLessThan(
     (await box(administration.locator(".invite-panel"))).y,
   );
   await prepareScreenshot(host);
   await screenshotIfChromium(host, testInfo, "tablet-manage-players");
+  await seatMap.getByRole("button", { name: /^Seat 2, Bob,/u }).click();
   await administration.getByRole("button", { name: "Move Bob up" }).click();
   await expect(administration.locator(".roster li strong").first()).toHaveText(
     "Bob",
@@ -729,7 +1011,7 @@ test("every host Tablet secondary action is exercised and player administration 
   expect([...exercisedActionIds].sort()).toEqual(expectedActionIds);
 });
 
-test("the short physical slider supports drag and double-click with automatic panel closure", async ({
+test("the short physical slider immediately begins a fresh hand with automatic panel closure", async ({
   context,
   page: host,
 }) => {
@@ -740,6 +1022,7 @@ test("the short physical slider supports drag and double-click with automatic pa
   let slider = host.getByRole("slider", {
     name: "Slide to deal next hand",
   });
+  await expect(slider).toHaveAttribute("aria-disabled", "false");
   const track = await box(slider);
   await host.mouse.move(track.x + 32, track.y + 32);
   await host.mouse.down();
@@ -751,13 +1034,34 @@ test("the short physical slider supports drag and double-click with automatic pa
   await host.getByRole("button", { name: "More table controls" }).click();
   await host.getByRole("button", { name: "Host Controls" }).click();
   await expect(
+    host.getByText("Pre-flop", { exact: true }).first(),
+  ).toBeVisible();
+  await expect(host.locator("[data-board-card]")).toHaveCount(0);
+
+  await host.getByRole("button", { name: "End hand" }).click();
+  await host.getByRole("button", { name: "End this hand" }).click();
+  await expect(
     host.getByText("Hand complete", { exact: true }).first(),
   ).toBeVisible();
-
   await host.getByRole("button", { name: "Table View" }).click();
   await openCorner(host, "upper left");
   slider = host.getByRole("slider", { name: "Slide to deal next hand" });
-  await slider.dblclick();
+  await expect(slider).toHaveAttribute("aria-disabled", "false");
+  const upperTrack = await box(slider);
+  await host.mouse.move(
+    upperTrack.x + upperTrack.width - 32,
+    upperTrack.y + 32,
+  );
+  await host.mouse.down();
+  await host.mouse.move(
+    upperTrack.x + upperTrack.width - 124,
+    upperTrack.y + 32,
+    {
+      steps: 8,
+    },
+  );
+  await expect(slider).toHaveAttribute("aria-valuetext", "Release to confirm");
+  await host.mouse.up();
   await expect(host.locator("[data-control-facing]")).toHaveCount(0);
   await openCorner(host, "upper left");
   await host.getByRole("button", { name: "More table controls" }).click();
